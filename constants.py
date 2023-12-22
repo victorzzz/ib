@@ -5,27 +5,27 @@ import pytz
 from typing import List
 from typing import Generator
 
-data_folder = "BI_Data"
-merged_data_folder = "BI_MergedData"
-data_check_folder = "BI_DataCheck"
+data_folder = "IB_Data"
+merged_data_folder = "IB_MergedData"
+data_check_folder = "IB_DataCheck"
 
-stock_events_folder = "BI_StockEvents"
-financials_folder = "BI_Financials"
-dividends_folder = "BI_Dividends"
+stock_events_folder = "IB_StockEvents"
+financials_folder = "IB_Financials"
+dividends_folder = "IB_Dividends"
 
 test_data_folder = "TestData"
 test_merged_data_folder = "TestMergedData"
 
-data_sets_folder = "bi_data_sets"
-data_sets_summary_folder = "bi_data_sets_summary"
+data_sets_folder = "ib_data_sets"
+data_sets_summary_folder = "ib_data_sets_summary"
 
-data_long_term_sets_folder = "bi_data_long_term_sets"
-data_long_term_sets_summary_folder = "bi_data_long_term_sets_summary"
+data_long_term_sets_folder = "ib_data_long_term_sets"
+data_long_term_sets_summary_folder = "ib_data_long_term_sets_summary"
 
-data_sets_for_training_folder = "bi_data_sets_for_training"
+data_sets_for_training_folder = "ib_data_sets_for_training"
 
-merged_data_with_indicators_folder = "bi_merged_data_with_indicators"
-merged_data_with_vp_folder = "bi_merged_data_with_vp"
+merged_data_with_indicators_folder = "ib_merged_data_with_indicators"
+merged_data_with_vp_folder = "ib_merged_data_with_vp"
 
 second_multipliers = {
     1.0: "1 secs", 
