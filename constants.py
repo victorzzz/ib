@@ -1,0 +1,69 @@
+import numpy as np
+import os
+import datetime
+import pytz
+from typing import List
+from typing import Generator
+
+data_folder = "BI_Data"
+merged_data_folder = "BI_MergedData"
+data_check_folder = "BI_DataCheck"
+
+stock_events_folder = "BI_StockEvents"
+financials_folder = "BI_Financials"
+dividends_folder = "BI_Dividends"
+
+test_data_folder = "TestData"
+test_merged_data_folder = "TestMergedData"
+
+data_sets_folder = "bi_data_sets"
+data_sets_summary_folder = "bi_data_sets_summary"
+
+data_long_term_sets_folder = "bi_data_long_term_sets"
+data_long_term_sets_summary_folder = "bi_data_long_term_sets_summary"
+
+data_sets_for_training_folder = "bi_data_sets_for_training"
+
+merged_data_with_indicators_folder = "bi_merged_data_with_indicators"
+merged_data_with_vp_folder = "bi_merged_data_with_vp"
+
+second_multipliers = {
+    1.0: "1 secs", 
+    5.0: "5 secs", 
+    10.0: "10 secs", 
+    15.0: "15 secs", 
+    30.0: "30 secs" 
+}
+
+minute_multipliers = {
+    1.0: "1 min", 
+    2.0: "2 min", 
+    3.0: "3 min", 
+    5.0: "5 min", 
+    10.0: "10 min", 
+    30.0: "30 min",
+    60.0: "1 hour"
+    }
+
+ema_spans = (7, 14, 28, 56, 112, 224)
+rsi_spans = (7, 14, 28)
+
+volume_profile_depths = (28, 56, 112, 224)
+
+long_term_prediction_time_frames = {
+    (10, "minute"): ( 42 * 3, 42 * 5, 42 * 7)#,
+    #(30, "minute"): ( 14 * 3, 14 * 5)
+}
+
+long_term_buy_thresholds = (0.021, 0.035, 0.049)
+
+loss_levels = np.array([0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0, 1.125, 1.25, 1.375, 1.5, 1.625, 1.75, 1.875, 2.0])
+gain_levels = np.array([0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0, 1.125, 1.25, 1.375, 1.5, 1.625, 1.75, 1.875, 2.0, 2.125, 2.25, 2.375, 2.5, 2.625, 2.75, 2.875, 3.0])
+
+loss_level_for_training = 0.625
+gain_level_for_training = 1.125
+
+
+complex_processing_batch_size = 16
+
+float_nan = float("nan")
