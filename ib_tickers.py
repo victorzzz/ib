@@ -36,7 +36,7 @@ def get_all_tickers_list() -> List[Dict[str, List[int]]]:
 
 def get_all_tickers() -> Generator[Dict[str, List[int]], None, None]:
     for values in ticker_groups.values():
-        for value in values:
+        for value in values.items():
             yield value
 
 def get_test_tickers() -> Generator[Dict[str, List[int]], None, None]:
