@@ -37,12 +37,12 @@ second_multipliers = {
 
 minute_multipliers = {
     1.0: "1 min", 
-    2.0: "2 min", 
-    3.0: "3 min", 
-    5.0: "5 min", 
-    10.0: "10 min", 
-    30.0: "30 min",
-    60.0: "1 hour"
+    # 2.0: "2 mins", 
+    3.0: "3 mins", 
+    # 5.0: "5 mins", 
+    10.0: "10 mins", 
+    30.0: "30 mins" #,
+    #60.0: "1 hour"
     }
 
 ema_spans = (7, 14, 28, 56, 112, 224)

@@ -1,4 +1,6 @@
 from typing import Tuple
+from typing import Dict
+from typing import List
 
 from os.path import exists
 import time
@@ -13,30 +15,37 @@ import ib_constants as ib_cnts
 import ib_tickers as ib_tckrs
 import SECRETS as secrets
 
-from_date:dt.date = dt.datetime.now().date()
+#from_date:dt.date = dt.datetime.now().date()
+
+from_date:dt.date = dt.datetime(2023, 12, 24)
+
 fb_from_date:dt.date = dt.datetime(2022, 6, 8).date()
 meta_to_day:dt.date = dt.datetime(2022, 6, 9).date()
 
-ten_years_days:int = 365 * 10
+ten_years_days:int = 366 * 10
 
-# ticker: (Symbol, IBKR_ConID)
+# five_years_days:int = 366 * 5
+
+minute_to_days_for_iteration = 10
+
 def download_stock_bars(
         date:dt.date, 
         ib_client:IB, 
-        ticker_info:Tuple[str, int], 
+        ticker_info:Tuple[str, Dict[str,int]], 
         minute_multiplier:float, 
         save_as:str = None, 
         max_days_history:int = ten_years_days):
     
-    iteration_time_delta = dt.timedelta(days=4 * minute_multiplier)
+    iteration_time_delta = dt.timedelta(days = minute_to_days_for_iteration * minute_multiplier)
 
-    maximum_time_delta = dt.timedelta(days=max_days_history)
+    maximum_time_delta = dt.timedelta(days = max_days_history) + dt.timedelta(days = minute_multiplier)
     limit_date = date - maximum_time_delta
 
-    ticker = ticker_info[0]
-    ticker_con_ids = ticker_info[1]
+    ticker:str = ticker_info[0]
+    ticker_con_ids:Dict[str,int] = ticker_info[1]
 
     # read previously downloaded and merged data
+    """
     merged_data_file_name = f"{cnts.merged_data_folder}/{ticker}--price-candle--{minute_multiplier}--minute.csv"
 
     if exists(merged_data_file_name):
@@ -49,6 +58,7 @@ def download_stock_bars(
         last_date = cnts.nyse_msec_timestamp_to_date_time(las_time_stamp).date()
 
         limit_date = max(limit_date, last_date)
+    """
 
     while date > limit_date:
         date_from = date - iteration_time_delta
@@ -66,25 +76,30 @@ def download_stock_bars(
         if (duration_days == 0):
             duration_days = 1
 
-        for ticker_con_id_index in range(len(ticker_con_ids)):
-            ticker_con_id = ticker_con_ids[ticker_con_id_index]
+        if "TSX" in ticker_con_ids:
 
-            file_name = f"{cnts.data_folder}/{tiker_to_save}-{ticker_con_id_index}--ib--{minute_multiplier}--minute--{date_from_str}--{date_to_str}.csv"
+            ticker_con_id = ticker_con_ids["TSX"];
+
+            qualifyContractStartTime = time.time()    
+            contract = Contract(conId=ticker_con_id)
+            ib_client.qualifyContracts(contract)
+            qualifyContractEndTime = time.time()
+            print(f"qualifyContract delay {qualifyContractEndTime - qualifyContractStartTime}")
+
+            file_name = f"{cnts.data_folder}/{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{date_from_str}--{date_to_str}.csv"
             if exists(file_name):
                 print(f"File {file_name} exists")
             else:
 
-                final_data_frame:pd.DataFrame = pd.DataFrame()
+                final_data_frame:pd.DataFrame = None
 
                 for data_type in ib_cnts.hist_data_types:
 
-                    print(f"Call {data_type} {ticker}-{ticker_con_id_index}--ib--{minute_multiplier}--minute--{date_from_str}--{date_to_str}")
+                    print(f"Call {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{date_from_str}--{date_to_str}")
 
                     try:
-                        contract = Contract(conId=ticker_con_id)
 
-                        ib_client.qualifyContracts(contract)
-
+                        reqHistoricalDataStartTime = time.time()
                         bars = ib_client.reqHistoricalData(
                             contract = contract,
                             endDateTime = date_to,
@@ -93,28 +108,63 @@ def download_stock_bars(
                             whatToShow=data_type,
                             useRTH = True
                         )
+                        reqHistoricalDataEndTime = time.time()
+                        reqHistoricalDataDelay = reqHistoricalDataEndTime - reqHistoricalDataStartTime
+                        print(f"reqHistoricalData delay {reqHistoricalDataDelay}")
 
-                        df = pd.DataFrame(bars)
-                        pd.concat([final_data_frame, df], axis=1)
+                        bars_to_save:List[Dict[str, float]] = None
+
+                        if (data_type == "TRADES"):
+                            bars_to_save = [
+                                {
+                                    "timestamp": int(dt.datetime.timestamp(bar.date)),
+                                    "TRADES_open": bar.open,
+                                    "TRADES_high": bar.high,
+                                    "TRADES_low": bar.low,
+                                    "TRADES_close": bar.close,
+                                    "TRADES_volume": bar.volume,
+                                    "TRADES_average": bar.average,
+                                    "TRADES_barCount": bar.barCount
+                                } 
+                                for bar in bars]
+                        else:
+                            bars_to_save = [
+                                {
+                                    "timestamp": int(dt.datetime.timestamp(bar.date)),
+                                    f"{data_type}_open": bar.open,
+                                    f"{data_type}_high": bar.high,
+                                    f"{data_type}_low": bar.low,
+                                    f"{data_type}_close": bar.close
+                                } 
+                                for bar in bars]
+
+                        df = pd.DataFrame(bars_to_save)
+                        df.set_index('timestamp', inplace=True)
+
+                        if (final_data_frame is None):
+                            final_data_frame = df
+                        else:
+                            final_data_frame = pd.concat([final_data_frame, df], axis=1, sort=True)
 
                     except Exception as ex:
                         print(f"Downloading error {ex}")
 
-                    print(" ")
-                    time.sleep(0.5)
+                    waitTime = max(0.0, 10.0 - (time.time() - reqHistoricalDataStartTime))
+                    print(f"waiting for {waitTime} seconds")
+                    time.sleep(waitTime)
 
-                df.to_csv(file_name, index=False)
-                print(f"Saving file {file_name}. {len(bars)}") 
+                print(f"Saving file {file_name}. {len(final_data_frame)}") 
+                final_data_frame.to_csv(file_name)
 
-            date = date - iteration_time_delta - dt.timedelta(days=1)
+        date = date - iteration_time_delta - dt.timedelta(days=1)
 
 def do_step():
     ib_client:IB = IB()
     ib_client.connect(
         readonly=True,
-        port=ib_cnts.hist_data_loader_port,
-        clientId=ib_cnts.hist_data_loader_client_id,
-        host=ib_cnts.hist_data_loader_host)
+        port=ib_cnts.hist_data_loader_live_port,
+        clientId=ib_cnts.hist_data_loader_live_client_id,
+        host=ib_cnts.hist_data_loader_live_host)
 
     # all except META
     for ticker_info in ib_tckrs.get_all_tickers_list():

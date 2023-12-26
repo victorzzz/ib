@@ -1,13 +1,18 @@
-hist_data_loader_port = 4001
-hist_data_loader_client_id = 1
-hist_data_loader_host = "127.0.0.1"
+hist_data_loader_live_port = 4001
+hist_data_loader_live_client_id = 1
+hist_data_loader_live_host = "127.0.0.1"
+
+hist_data_loader_paper_port = 4001
+hist_data_loader_paper_client_id = 10000
+hist_data_loader_paper_host = "127.0.0.1"
+
 
 hist_data_types = (
-    "TRADES",
     "MIDPOINT",
     "BID",
-    "ASK", 
-    "BID_ASK")
+    "ASK",
+    "OPTION_IMPLIED_VOLATILITY",
+    "TRADES")
 
 hist_data_bar_sizes = (
     "30 secs",
