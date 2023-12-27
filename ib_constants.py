@@ -2,7 +2,7 @@ hist_data_loader_live_port = 4001
 hist_data_loader_live_client_id = 1
 hist_data_loader_live_host = "127.0.0.1"
 
-hist_data_loader_paper_port = 4001
+hist_data_loader_paper_port = 4002
 hist_data_loader_paper_client_id = 10000
 hist_data_loader_paper_host = "127.0.0.1"
 

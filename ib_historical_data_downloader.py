@@ -8,12 +8,12 @@ import datetime as dt
 
 from ib_insync import *
 
+import multiprocessing
 import pandas as pd
 
 import constants as cnts
 import ib_constants as ib_cnts
 import ib_tickers as ib_tckrs
-import SECRETS as secrets
 
 #from_date:dt.date = dt.datetime.now().date()
 
@@ -158,24 +158,57 @@ def download_stock_bars(
 
         date = date - iteration_time_delta - dt.timedelta(days=1)
 
-def do_step():
+def download_stock_bars_for_tickers(
+        tickers:List[Dict[str, Dict[str, int]]],
+        port:int,
+        client_id:int,
+        host:str) :
+    
+    print(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers}")
+
     ib_client:IB = IB()
     ib_client.connect(
         readonly=True,
-        port=ib_cnts.hist_data_loader_live_port,
-        clientId=ib_cnts.hist_data_loader_live_client_id,
-        host=ib_cnts.hist_data_loader_live_host)
+        port=port,
+        clientId=client_id,
+        host=host)
 
-    # all except META
-    for ticker_info in ib_tckrs.get_all_tickers_list():
+    for ticker_info in tickers:
         if (ticker_info[0] == "META"):
             continue
 
         for multiplier in cnts.minute_multipliers:
             download_stock_bars(from_date, ib_client, ticker_info, multiplier)
 
-    # META / FB
 
+def do_step():
+
+    all_tickers = ib_tckrs.get_all_tickers_list()
+    even_tickers = ib_tckrs.get_even_items(all_tickers)
+    odd_tickers = ib_tckrs.get_odd_items(all_tickers)
+
+    process1 = multiprocessing.Process(
+        target=download_stock_bars_for_tickers,
+        args=(even_tickers,
+            ib_cnts.hist_data_loader_live_port,
+            ib_cnts.hist_data_loader_live_client_id,
+            ib_cnts.hist_data_loader_live_host))
+
+    process1.start()
+
+    process2 = multiprocessing.Process(
+        target=download_stock_bars_for_tickers,
+        args=(odd_tickers,
+            ib_cnts.hist_data_loader_paper_port,
+            ib_cnts.hist_data_loader_paper_client_id,
+            ib_cnts.hist_data_loader_paper_host))
+
+    process2.start()    
+
+    process1.join()
+    process2.join()
+
+    # META / FB
     """
     for ticker_info[0] in ["FB"]:
         for multiplier in cnts.minute_multipliers:

@@ -6,20 +6,17 @@ nyse_timezone = pytz.timezone("America/New_York")
 total_seconds = (16 - 9.5) * 60 * 60
 start_time = datetime.time(hour=9, minute=30)
 
-def nyse_msec_timestamp_to_date_time(msec_timestamp:int) -> datetime:
-    epoch_time = msec_timestamp / 1000
+def nyse_timestamp_to_date_time(epoch_time:int) -> datetime:
 
     # Convert epoch time to a datetime object in the specified timezone
     dt = datetime.datetime.fromtimestamp(epoch_time, nyse_timezone)
 
     return dt
 
-def nyse_msec_timestamp_to_float_with_round_6(msec_timestamp:int) -> float:
-    return round(nyse_msec_timestamp_to_float(msec_timestamp), 6)
+def nyse_timestamp_to_float_with_round_6(epoch_time:int) -> float:
+    return round(nyse_timestamp_to_float(epoch_time), 6)
 
-def nyse_msec_timestamp_to_float(msec_timestamp:int) -> float:
-    
-    epoch_time = msec_timestamp / 1000
+def nyse_timestamp_to_float(epoch_time:int) -> float:
 
     # Convert epoch time to a datetime object in the specified timezone
     dt = datetime.datetime.fromtimestamp(epoch_time, nyse_timezone)
@@ -38,36 +35,36 @@ def nyse_msec_timestamp_to_float(msec_timestamp:int) -> float:
     
     return float_value
 
-def nyse_msec_timestamp_to_normalized_week_with_round_3(msec_timestamp:int) -> float:
+def nyse_timestamp_to_normalized_week_with_round_3(epoch_time:int) -> float:
     
-    week = nyse_msec_timestamp_to_week(msec_timestamp) - 1
+    week = nyse_timestamp_to_week(epoch_time) - 1
 
     normalized_week = week / 51.0
 
     return round(normalized_week, 3)
 
 
-def nyse_msec_timestamp_to_week(msec_timestamp:int) -> int:
+def nyse_timestamp_to_week(epoch_time:int) -> int:
 
-    dt = nyse_msec_timestamp_to_date_time(msec_timestamp)
+    dt = nyse_timestamp_to_date_time(epoch_time)
 
     week_number = dt.isocalendar()[1]
 
     return week_number
 
 
-def nyse_msec_timestamp_to_normalized_day_of_week_with_round_2(msec_timestamp:int) -> float:
+def nyse_timestamp_to_normalized_day_of_week_with_round_2(epoch_time:int) -> float:
 
-    day_of_week = nyse_msec_timestamp_to_day_of_week(msec_timestamp) - 1
+    day_of_week = nyse_timestamp_to_day_of_week(epoch_time) - 1
     
     normalized_day_of_week = day_of_week / 6.0
 
     return round(normalized_day_of_week, 2)
 
 
-def nyse_msec_timestamp_to_day_of_week(msec_timestamp:int) -> int:
+def nyse_timestamp_to_day_of_week(epoch_time:int) -> int:
 
-    dt = nyse_msec_timestamp_to_date_time(msec_timestamp)
+    dt = nyse_timestamp_to_date_time(epoch_time)
 
     day_of_week = dt.isocalendar()[2]
 

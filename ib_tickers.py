@@ -62,3 +62,9 @@ def batch_generator(sequence:Generator[Dict[str, Dict[str, int]], None, None], b
             batch = []
     if batch:
         yield batch
+
+def get_even_items(list:List[Dict[str, Dict[str, int]]]) -> List[Dict[str, Dict[str, int]]] :
+    return list[::2]
+
+def get_odd_items(list:List[Dict[str, Dict[str, int]]]) -> List[Dict[str, Dict[str, int]]] :
+    return list[1::2]
