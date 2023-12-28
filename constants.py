@@ -6,8 +6,8 @@ from typing import List
 from typing import Generator
 
 data_folder = "IB_Data"
+data_archived_folder = "IB_Data_Archived"
 merged_data_folder = "IB_MergedData"
-data_check_folder = "IB_DataCheck"
 
 stock_events_folder = "IB_StockEvents"
 financials_folder = "IB_Financials"
