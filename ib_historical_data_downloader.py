@@ -97,6 +97,8 @@ def download_stock_bars(
 
                     print(f"Call {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{date_from_str}--{date_to_str}")
 
+                    bars:List[BarData] = None
+
                     try:
 
                         reqHistoricalDataStartTime = time.time()
@@ -112,49 +114,56 @@ def download_stock_bars(
                         reqHistoricalDataDelay = reqHistoricalDataEndTime - reqHistoricalDataStartTime
                         print(f"reqHistoricalData delay {reqHistoricalDataDelay}")
 
-                        bars_to_save:List[Dict[str, float]] = None
-
-                        if (data_type == "TRADES"):
-                            bars_to_save = [
-                                {
-                                    "timestamp": int(dt.datetime.timestamp(bar.date)),
-                                    "TRADES_open": bar.open,
-                                    "TRADES_high": bar.high,
-                                    "TRADES_low": bar.low,
-                                    "TRADES_close": bar.close,
-                                    "TRADES_volume": bar.volume,
-                                    "TRADES_average": bar.average,
-                                    "TRADES_barCount": bar.barCount
-                                } 
-                                for bar in bars]
-                        else:
-                            bars_to_save = [
-                                {
-                                    "timestamp": int(dt.datetime.timestamp(bar.date)),
-                                    f"{data_type}_open": bar.open,
-                                    f"{data_type}_high": bar.high,
-                                    f"{data_type}_low": bar.low,
-                                    f"{data_type}_close": bar.close
-                                } 
-                                for bar in bars]
-
-                        df = pd.DataFrame(bars_to_save)
-                        df.set_index('timestamp', inplace=True)
-
-                        if (final_data_frame is None):
-                            final_data_frame = df
-                        else:
-                            final_data_frame = pd.concat([final_data_frame, df], axis=1, sort=True)
-
                     except Exception as ex:
                         print(f"Downloading error {ex}")
+
+                    if (bars is None or len(bars) == 0):
+                        print(f"!!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{date_from_str}--{date_to_str}")
+                        continue
+
+                    bars_to_save:List[Dict[str, float]] = None
+
+                    if (data_type == "TRADES"):
+                        bars_to_save = [
+                            {
+                                "timestamp": int(dt.datetime.timestamp(bar.date)),
+                                "TRADES_open": bar.open,
+                                "TRADES_high": bar.high,
+                                "TRADES_low": bar.low,
+                                "TRADES_close": bar.close,
+                                "TRADES_volume": bar.volume,
+                                "TRADES_average": bar.average,
+                                "TRADES_barCount": bar.barCount
+                            } 
+                            for bar in bars]
+                    else:
+                        bars_to_save = [
+                            {
+                                "timestamp": int(dt.datetime.timestamp(bar.date)),
+                                f"{data_type}_open": bar.open,
+                                f"{data_type}_high": bar.high,
+                                f"{data_type}_low": bar.low,
+                                f"{data_type}_close": bar.close
+                            } 
+                            for bar in bars]
+
+                    df = pd.DataFrame(bars_to_save)
+                    df.set_index('timestamp', inplace=True)
+
+                    if (final_data_frame is None):
+                        final_data_frame = df
+                    else:
+                        final_data_frame = pd.concat([final_data_frame, df], axis=1, sort=True)
 
                     waitTime = max(0.0, 10.0 - (time.time() - reqHistoricalDataStartTime))
                     print(f"waiting for {waitTime} seconds")
                     time.sleep(waitTime)
 
-                print(f"Saving file {file_name}. {len(final_data_frame)}") 
-                final_data_frame.to_csv(file_name)
+                if (final_data_frame is None):
+                    print(f"***** Empty data for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{date_from_str}--{date_to_str}")
+                else:
+                    print(f"Saving file {file_name}. {len(final_data_frame)}") 
+                    final_data_frame.to_csv(file_name)
 
         date = date - iteration_time_delta - dt.timedelta(days=1)
 

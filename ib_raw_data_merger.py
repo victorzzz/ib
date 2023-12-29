@@ -58,18 +58,22 @@ def do_step():
     raw_files:List[str] = list(fsu.iterate_files(cnts.data_folder))
 
     for tikers_batch in ib_tckrs.get_all_tickets_batches(cnts.complex_processing_batch_size):
+        processed_ticker_symbols = [ticker[0] for ticker in tikers_batch]
+               
         print("-------------------------------------")
-        print(f"Group '{', '.join(tikers_batch)}' ...")
+        print(f"Group '{', '.join(processed_ticker_symbols)}' ...")
         print("-------------------------------------")
 
-        process = multiprocessing.Process(target=merge_csv_files, args=(tikers_batch, raw_files,))
-        processes.append(process)
-        process.start()
+        # process = multiprocessing.Process(target=merge_csv_files, args=(tikers_batch, raw_files,))
+        # processes.append(process)
+        # process.start()
 
-    # Wait for all processes to finish
-    print(f"Waiting for '{', '.join(tikers_batch)}' ...")
-    for process in processes:
-        process.join()
+        # Wait for all processes to finish
+        print(f"Waiting for '{', '.join(processed_ticker_symbols)}' ...")
+        for process in processes:
+            pass
+
+        # process.join()
 
 # ----------------------------
 
