@@ -1,12 +1,13 @@
 from typing import Tuple
 from typing import Dict
 from typing import List
+from typing import Optional
 
 from os.path import exists
 import time
 import datetime as dt
 
-from ib_insync import *
+from ib_insync import IB, Contract, BarData
 
 import multiprocessing
 import pandas as pd
@@ -14,6 +15,7 @@ import pandas as pd
 import constants as cnts
 import ib_constants as ib_cnts
 import ib_tickers as ib_tckrs
+import date_time_utils as dt_utils
 
 #from_date:dt.date = dt.datetime.now().date()
 
@@ -33,7 +35,7 @@ def download_stock_bars(
         ib_client:IB, 
         ticker_info:Tuple[str, Dict[str,int]], 
         minute_multiplier:float, 
-        save_as:str = None, 
+        save_as:Optional[str] = None, 
         max_days_history:int = ten_years_days):
     
     iteration_time_delta = dt.timedelta(days = minute_to_days_for_iteration * minute_multiplier)
@@ -91,17 +93,17 @@ def download_stock_bars(
                 print(f"File {file_name} exists")
             else:
 
-                final_data_frame:pd.DataFrame = None
+                final_data_frame:Optional[pd.DataFrame] = None
 
                 for data_type in ib_cnts.hist_data_types:
 
                     print(f"Call {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{date_from_str}--{date_to_str}")
 
-                    bars:List[BarData] = None
-
+                    bars:Optional[List[BarData]] = None
+                    reqHistoricalDataStartTime = time.time()
+                    
                     try:
 
-                        reqHistoricalDataStartTime = time.time()
                         bars = ib_client.reqHistoricalData(
                             contract = contract,
                             endDateTime = date_to,
@@ -121,12 +123,12 @@ def download_stock_bars(
                         print(f"!!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{date_from_str}--{date_to_str}")
                         continue
 
-                    bars_to_save:List[Dict[str, float]] = None
+                    bars_to_save:Optional[List[Dict[str, float]]] = None
 
                     if (data_type == "TRADES"):
                         bars_to_save = [
                             {
-                                "timestamp": int(dt.datetime.timestamp(bar.date)),
+                                "timestamp": dt_utils.bar_date_to_epoch_time(bar.date),
                                 "TRADES_open": bar.open,
                                 "TRADES_high": bar.high,
                                 "TRADES_low": bar.low,
@@ -139,7 +141,7 @@ def download_stock_bars(
                     else:
                         bars_to_save = [
                             {
-                                "timestamp": int(dt.datetime.timestamp(bar.date)),
+                                "timestamp": dt_utils.bar_date_to_epoch_time(bar.date),
                                 f"{data_type}_open": bar.open,
                                 f"{data_type}_high": bar.high,
                                 f"{data_type}_low": bar.low,
@@ -168,7 +170,7 @@ def download_stock_bars(
         date = date - iteration_time_delta - dt.timedelta(days=1)
 
 def download_stock_bars_for_tickers(
-        tickers:List[Dict[str, Dict[str, int]]],
+        tickers:List[Tuple[str, Dict[str, int]]],
         port:int,
         client_id:int,
         host:str) :
