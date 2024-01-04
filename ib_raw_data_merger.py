@@ -28,6 +28,7 @@ def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str
                 filtered_raw_files:List[str] = [file for file in raw_files if file.startswith(f"{cnts.data_folder}\\{ticker_symbvol}-{contract_id}--ib--{minute_multiplier:.0f}--minute--")]
 
                 if len(filtered_raw_files) == 0:
+                    print(f"No files for '{ticker_symbvol}-{contract_id}--ib--{minute_multiplier:.0f}--minute--' ...")
                     continue
 
                 merged_file_name = f"{cnts.merged_data_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged.csv"
@@ -57,6 +58,7 @@ def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str
 
                     if(duplicated_array.sum() > 0):
 
+                        print(f"Found {duplicated_array.sum()} duplicates in {raw_file} ...")
                         print("raw_data_frame: ")
                         print(raw_data_frame)
                         

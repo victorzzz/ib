@@ -2,6 +2,7 @@ import time
 import datetime as dt
 
 from typing import Tuple
+from typing import Optional
 from typing import Dict
 from typing import List
 
@@ -44,7 +45,7 @@ for data_type in ib_cnts.hist_data_types:
         useRTH = True
     )
 
-    bars_to_save:List[Dict[str, float]] = None
+    bars_to_save:Optional[List[Dict[str, float]]] = None
 
     if (data_type == "TRADES"):
         bars_to_save = [
