@@ -19,10 +19,10 @@ import date_time_utils as dt_utils
 
 #from_date:dt.date = dt.datetime.now().date()
 
-from_date:dt.date = dt.datetime(2023, 12, 24)
+from_date:dt.date = dt.date(2024, 1, 16)
 
-fb_from_date:dt.date = dt.datetime(2022, 6, 8).date()
-meta_to_day:dt.date = dt.datetime(2022, 6, 9).date()
+fb_from_date:dt.date = dt.date(2022, 6, 8)
+meta_to_day:dt.date = dt.date(2022, 6, 9)
 
 ten_years_days:int = 366 * 10
 
@@ -157,11 +157,12 @@ def download_stock_bars(
             file_name = f"{cnts.data_folder}/{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}.csv"
             if exists(file_name):
                 print(f"File {file_name} exists")
+                processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
             else:
 
                 final_data_frame:Optional[pd.DataFrame] = None
 
-                last_dates:List[dt.date] = []
+                oldest_dates:List[dt.date] = []
 
                 for data_type in ib_cnts.hist_data_types:
                     
@@ -180,6 +181,9 @@ def download_stock_bars(
                         print(f"!!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                         continue
 
+                    oldest_date = dt_utils.bar_date_to_date(bars[0].date)
+                    oldest_dates.append(oldest_date)
+                    
                     df:pd.DataFrame = bars_to_dataframe(data_type, bars)
 
                     if (final_data_frame is None):
@@ -197,7 +201,11 @@ def download_stock_bars(
                     print(f"Saving file {file_name}. {len(final_data_frame)}") 
                     final_data_frame.to_csv(file_name)
 
-            processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
+                if (len(oldest_dates) > 0):
+                    min_oldest_date = min(oldest_dates)
+                    processing_date = min_oldest_date - dt.timedelta(days=1)
+                else:
+                    processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
 
 def download_stock_bars_for_tickers(
         tickers:List[Tuple[str, Dict[str, int]]],
@@ -247,7 +255,7 @@ def do_step():
     process2.start()    
 
     process1.join()
-    process2.join()
+    # process2.join()
 
     # META / FB
     """

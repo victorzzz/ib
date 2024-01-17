@@ -83,4 +83,11 @@ def bar_date_to_epoch_time(bar_date:Union[date, datetime]) -> int:
         # It's a date object, convert to datetime by assuming midnight
         return int(datetime.combine(bar_date, time.min).timestamp())
 
+def bar_date_to_date(bar_date:Union[date, datetime]) -> date:
 
+    if isinstance(bar_date, datetime):
+        # It's a datetime object
+        return bar_date.date()
+    elif isinstance(bar_date, date):
+        # It's a date object, convert to datetime by assuming midnight
+        return bar_date
