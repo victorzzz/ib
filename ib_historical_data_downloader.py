@@ -16,6 +16,7 @@ import constants as cnts
 import ib_constants as ib_cnts
 import ib_tickers as ib_tckrs
 import date_time_utils as dt_utils
+import file_system_utils as fs_utils
 
 #from_date:dt.date = dt.datetime.now().date()
 
@@ -100,9 +101,22 @@ def bars_to_dataframe(data_type:str, bars:List[BarData]) -> pd.DataFrame:
             for bar in bars]
 
     df = pd.DataFrame(bars_to_save)
-    df.set_index('timestamp', inplace=True)
 
     return df
+
+def get_oldest_date_from_saved_data(file_name:str) -> Optional[dt.date]:
+
+    if not exists(file_name):
+        return None
+
+    df = pd.read_csv(file_name)
+
+    if (len(df) == 0):
+        return None
+
+    oldest_date = dt_utils.nyse_timestamp_to_date_time(df['timestamp'].values[-1])
+
+    return oldest_date
 
 def download_stock_bars(
         date:dt.date, 
@@ -157,7 +171,12 @@ def download_stock_bars(
             file_name = f"{cnts.data_folder}/{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}.csv"
             if exists(file_name):
                 print(f"File {file_name} exists")
-                processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
+                oldest_date_in_data_from_file = get_oldest_date_from_saved_data(file_name)
+                if (oldest_date_in_data_from_file is None):
+                    print(f"No data in existing file {file_name}")                
+                    processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
+                else:
+                    processing_date = oldest_date_in_data_from_file - dt.timedelta(days=1)
             else:
 
                 final_data_frame:Optional[pd.DataFrame] = None
@@ -181,7 +200,9 @@ def download_stock_bars(
                         print(f"!!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                         continue
 
-                    oldest_date = dt_utils.bar_date_to_date(bars[0].date)
+                    bars.reverse()
+
+                    oldest_date = dt_utils.bar_date_to_date(bars[-1].date)
                     oldest_dates.append(oldest_date)
                     
                     df:pd.DataFrame = bars_to_dataframe(data_type, bars)
@@ -189,7 +210,7 @@ def download_stock_bars(
                     if (final_data_frame is None):
                         final_data_frame = df
                     else:
-                        final_data_frame = pd.concat([final_data_frame, df], axis=1, sort=True)
+                        final_data_frame = pd.concat([final_data_frame, df], axis=1)
 
                     waitTime = max(0.1, 10.0 - reqHistoricalDataDelay + 0.1)
                     print(f"waiting for {waitTime} seconds")
@@ -199,7 +220,7 @@ def download_stock_bars(
                     print(f"***** Empty data for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                 else:
                     print(f"Saving file {file_name}. {len(final_data_frame)}") 
-                    final_data_frame.to_csv(file_name)
+                    final_data_frame.to_csv(file_name, index=False)
 
                 if (len(oldest_dates) > 0):
                     min_oldest_date = min(oldest_dates)
@@ -232,6 +253,11 @@ def download_stock_bars_for_tickers(
 
 def do_step():
 
+    fs_utils.create_folder_if_not_exists(cnts.data_folder)
+    fs_utils.create_folder_if_not_exists(cnts.data_archived_folder)
+    fs_utils.create_folder_if_not_exists(cnts.merged_data_folder)
+    fs_utils.create_folder_if_not_exists(cnts.merged_data_duplicates_folder)
+
     all_tickers = ib_tckrs.get_all_tickers_list()
     even_tickers = ib_tckrs.get_even_items(all_tickers)
     odd_tickers = ib_tckrs.get_odd_items(all_tickers)
@@ -255,7 +281,7 @@ def do_step():
     process2.start()    
 
     process1.join()
-    # process2.join()
+    process2.join()
 
     # META / FB
     """

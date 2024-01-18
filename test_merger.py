@@ -3,7 +3,7 @@ from typing import Tuple
 from typing import Dict
 from typing import List
 import ib_tickers as ib_tckrs
-import file_systen_utils as fsu
+import file_system_utils as fsu
 import df_date_time_utils as df_dt_utils
 import constants as cnts
 from typing import List, Tuple, Dict

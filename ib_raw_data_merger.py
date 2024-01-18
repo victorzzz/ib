@@ -8,7 +8,7 @@ from typing import Dict
 from typing import Tuple
 from typing import Optional
 import ib_tickers as ib_tckrs
-import file_systen_utils as fsu
+import file_system_utils as fsu
 import df_date_time_utils as df_dt_utils
 
 def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str]):
