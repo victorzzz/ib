@@ -17,6 +17,7 @@ import ib_constants as ib_cnts
 import ib_tickers as ib_tckrs
 import date_time_utils as dt_utils
 import file_system_utils as fs_utils
+import logging
 
 #from_date:dt.date = dt.datetime.now().date()
 
@@ -114,9 +115,39 @@ def get_oldest_date_from_saved_data(file_name:str) -> Optional[dt.date]:
     if (len(df) == 0):
         return None
 
-    oldest_date = dt_utils.nyse_timestamp_to_date_time(df['timestamp'].values[-1])
+    epoch_time = df['timestamp'].values[-1]
+    if epoch_time is None:
+        return None
+
+    oldest_date = dt_utils.nyse_timestamp_to_date_time(int(epoch_time)).date()
 
     return oldest_date
+
+def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame) -> Optional[pd.DataFrame]:
+
+    if (df1 is None):
+        return df2
+
+    if (df2 is None):
+        return df1
+
+    if (len(df1) != len(df2)):
+        print(f"Dataframes have different length {len(df1)} != {len(df2)}")
+        return None
+    
+    df1_first_timestamp = df1['timestamp'].iloc[0].item()
+    df2_first_timestamp = df2['timestamp'].iloc[0].item()
+
+    df1_last_timestamp = df1['timestamp'].iloc[-1].item()
+    df2_last_timestamp = df2['timestamp'].iloc[-1].item()
+
+    if (df1_first_timestamp != df2_first_timestamp or df1_last_timestamp != df2_last_timestamp):
+        print(f"Dataframes have different timestamps {df1_first_timestamp} != {df2_first_timestamp} or {df1_last_timestamp} != {df2_last_timestamp}")
+        return None
+
+    df2.drop(columns=['timestamp'], inplace=True)
+
+    return pd.concat([df1, df2], axis=1)
 
 def download_stock_bars(
         date:dt.date, 
@@ -197,7 +228,7 @@ def download_stock_bars(
                         minute_multiplier)
 
                     if (bars is None or len(bars) == 0):
-                        print(f"!!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                        logging.error(f"!!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                         continue
 
                     bars.reverse()
@@ -210,7 +241,11 @@ def download_stock_bars(
                     if (final_data_frame is None):
                         final_data_frame = df
                     else:
-                        final_data_frame = pd.concat([final_data_frame, df], axis=1)
+                        concatenated_data_frame =  concat_dataframes_with_check(final_data_frame, df)
+                        if (concatenated_data_frame is None):
+                            logging.error(f"!!!! Dataframes have different length or timestamps for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                        else:
+                            final_data_frame = concatenated_data_frame
 
                     waitTime = max(0.1, 10.0 - reqHistoricalDataDelay + 0.1)
                     print(f"waiting for {waitTime} seconds")
@@ -253,11 +288,6 @@ def download_stock_bars_for_tickers(
 
 def do_step():
 
-    fs_utils.create_folder_if_not_exists(cnts.data_folder)
-    fs_utils.create_folder_if_not_exists(cnts.data_archived_folder)
-    fs_utils.create_folder_if_not_exists(cnts.merged_data_folder)
-    fs_utils.create_folder_if_not_exists(cnts.merged_data_duplicates_folder)
-
     all_tickers = ib_tckrs.get_all_tickers_list()
     even_tickers = ib_tckrs.get_even_items(all_tickers)
     odd_tickers = ib_tckrs.get_odd_items(all_tickers)
@@ -279,7 +309,7 @@ def do_step():
             ib_cnts.hist_data_loader_paper_host))
 
     process2.start()    
-
+    
     process1.join()
     process2.join()
 
@@ -295,4 +325,14 @@ def do_step():
     """
             
 if __name__ == "__main__":
+    
+    fs_utils.create_folder_if_not_exists(cnts.logs_folder)
+
+    fs_utils.create_folder_if_not_exists(cnts.data_folder)
+    fs_utils.create_folder_if_not_exists(cnts.data_archived_folder)
+    fs_utils.create_folder_if_not_exists(cnts.merged_data_folder)
+    fs_utils.create_folder_if_not_exists(cnts.merged_data_duplicates_folder)
+    
+    logging.basicConfig(filename=cnts.error_log_file, filemode="a", level=logging.ERROR, force=True, format='%(asctime)s| %(message)s')
+
     do_step()

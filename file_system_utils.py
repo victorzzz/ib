@@ -5,7 +5,7 @@ import datetime
 def is_file_exists(file_path:str) -> bool:
     return os.path.isfile(file_path)
 
-def get_file_creation_datetime(file_path:str) -> datetime:
+def get_file_creation_datetime(file_path:str) -> datetime.datetime:
     # Get file metadata
     file_time = os.path.getmtime(file_path)
     

@@ -162,3 +162,4 @@ cython_debug/
 /.vscode
 /IB_DATA
 SECRETS.py
+Logs/error_log.txt
