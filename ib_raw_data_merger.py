@@ -10,6 +10,16 @@ from typing import Optional
 import ib_tickers as ib_tckrs
 import file_system_utils as fsu
 import df_date_time_utils as df_dt_utils
+import logging
+
+def save_last_merged_timestamp(ticker_symbol:str, contract:int, minute_multiplier:float, last_merged_timestamp:int):
+    last_merged_timestamps_file = f"{cnts.last_merged_timestamps_folder}/{ticker_symbol}--last-merged-timestamps.csv"
+    last_merged_timestamps_data_frame:pd.DataFrame = pd.DataFrame()
+
+    if exists(last_merged_timestamps_file):
+        last_merged_timestamps_data_frame = pd.read_csv(last_merged_timestamps_file)
+
+    
 
 def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str]):
     processed_ticker_symbols = [ticker[0] for ticker in tickers]
@@ -25,7 +35,8 @@ def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str
             contract_id:int = contarct[1]
 
             for minute_multiplier in cnts.minute_multipliers:
-                filtered_raw_files:List[str] = [file for file in raw_files if file.startswith(f"{cnts.data_folder}\\{ticker_symbvol}-{contract_id}--ib--{minute_multiplier:.0f}--minute--")]
+                filtered_raw_files:List[str] = [file for file in raw_files 
+                                if file.startswith(f"{cnts.data_folder}\\{ticker_symbvol}-{contract_id}--ib--{minute_multiplier:.0f}--minute--")]
 
                 if len(filtered_raw_files) == 0:
                     print(f"No files for '{ticker_symbvol}-{contract_id}--ib--{minute_multiplier:.0f}--minute--' ...")
@@ -37,57 +48,37 @@ def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str
                 if exists(merged_file_name):
                     merged_data_frame = pd.read_csv(merged_file_name)
 
-                    merged_data_frame['timestamp_for_index'] = merged_data_frame['timestamp']
-                    merged_data_frame = merged_data_frame.set_index('timestamp_for_index')
-
                 for raw_file in filtered_raw_files:
                     
                     raw_data_frame:pd.DataFrame = pd.read_csv(raw_file)
-
-                    raw_data_frame['timestamp_for_index'] = raw_data_frame['timestamp']
-                    raw_data_frame = raw_data_frame.set_index('timestamp_for_index')
+                    raw_data_frame.sort_values(by='timestamp', inplace=True, ascending=False)
 
                     df_dt_utils.add_normalized_time_columns(raw_data_frame)
 
                     raw_data_frame = raw_data_frame.copy() # performance optimization
 
-                    merged_data_frame = pd.concat([merged_data_frame, raw_data_frame], axis=0)
+                    merged_data_frame = pd.concat([raw_data_frame, merged_data_frame], axis=0)
                     
                     duplicated_array = merged_data_frame.duplicated(subset=['timestamp'])
-                    duplicates_data_frame:pd.DataFrame = pd.DataFrame(duplicated_array)
 
                     if(duplicated_array.sum() > 0):
+                        logging.error(f"MERGER !!!! Found {duplicated_array.sum()} duplicates in {raw_file} ...")
 
-                        print(f"Found {duplicated_array.sum()} duplicates in {raw_file} ...")
-                        print("raw_data_frame: ")
-                        print(raw_data_frame)
-                        
-                        print("merged_data_frame: ")
-                        print(merged_data_frame)
+                        duplicates_data_frame:pd.DataFrame = pd.DataFrame(duplicated_array)
+                        duplicates_file_name:str = f"{cnts.merged_data_duplicates_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged-DUP.csv"
+                        duplicates_data_frame.to_csv(duplicates_file_name, index=False)
 
-                        print("duplicates_data_frame: ")
-                        print(duplicates_data_frame)
-                
-                merged_data_frame.sort_values(by='timestamp', inplace=True)
-
-                merged_data_frame_before_dropping_duplicates = merged_data_frame.copy()
-
+                merged_data_frame.sort_values(by='timestamp', inplace=True, ascending=False)
                 merged_data_frame.drop_duplicates(subset=['timestamp'], inplace=True)
 
                 print(f"Saving {merged_file_name} ...")
                 merged_data_frame.to_csv(merged_file_name, index=False)
 
-                duplicates_file_name:str = f"{cnts.merged_data_duplicates_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged-DUP.csv"
-
-                print(f"Saving {merged_file_name}-with-duplicates.csv ...")
-                merged_data_frame_before_dropping_duplicates.to_csv(f"{merged_file_name}-with-duplicates.csv", index=False)
-
-                print(f"Saving {duplicates_file_name} ...")
-                merged_data_frame_before_dropping_duplicates.to_csv(duplicates_file_name, index=False)
-
                 print(f"Archiving {', '.join(filtered_raw_files)} ...")
-                # for raw_file in filtered_raw_files:
-                    # fsu.move_file_to_folder(raw_file, cnts.data_archived_folder)
+                for raw_file in filtered_raw_files:
+                    fsu.move_file_to_folder(raw_file, cnts.data_archived_folder)
+
+                
 
 def do_step():
     processes = []
@@ -113,4 +104,8 @@ def do_step():
 # ----------------------------
 
 if __name__ == "__main__":
+    
+    fsu.create_required_folders()
+    logging.basicConfig(filename=cnts.error_log_file, filemode="a", level=logging.ERROR, force=True, format='%(asctime)s| %(message)s')
+
     do_step()

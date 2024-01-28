@@ -13,6 +13,8 @@ data_archived_folder = "IB_Data_Archived"
 merged_data_folder = "IB_MergedData"
 merged_data_duplicates_folder = "IB_MergedData_Duplicates"
 
+last_merged_timestamps_folder = "IB_LastMergedTimestamps"
+
 stock_events_folder = "IB_StockEvents"
 financials_folder = "IB_Financials"
 dividends_folder = "IB_Dividends"

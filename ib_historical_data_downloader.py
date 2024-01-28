@@ -228,7 +228,7 @@ def download_stock_bars(
                         minute_multiplier)
 
                     if (bars is None or len(bars) == 0):
-                        logging.error(f"!!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                        logging.error(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                         continue
 
                     bars.reverse()
@@ -243,7 +243,7 @@ def download_stock_bars(
                     else:
                         concatenated_data_frame =  concat_dataframes_with_check(final_data_frame, df)
                         if (concatenated_data_frame is None):
-                            logging.error(f"!!!! Dataframes have different length or timestamps for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                            logging.error(f"DOWNLOADER !!!! Dataframes have different length or timestamps for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                         else:
                             final_data_frame = concatenated_data_frame
 
@@ -326,13 +326,7 @@ def do_step():
             
 if __name__ == "__main__":
     
-    fs_utils.create_folder_if_not_exists(cnts.logs_folder)
-
-    fs_utils.create_folder_if_not_exists(cnts.data_folder)
-    fs_utils.create_folder_if_not_exists(cnts.data_archived_folder)
-    fs_utils.create_folder_if_not_exists(cnts.merged_data_folder)
-    fs_utils.create_folder_if_not_exists(cnts.merged_data_duplicates_folder)
-    
+    fs_utils.create_required_folders()
     logging.basicConfig(filename=cnts.error_log_file, filemode="a", level=logging.ERROR, force=True, format='%(asctime)s| %(message)s')
 
     do_step()

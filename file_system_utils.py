@@ -2,6 +2,8 @@ import os
 import shutil
 import datetime
 
+import constants as cnts
+
 def is_file_exists(file_path:str) -> bool:
     return os.path.isfile(file_path)
 
@@ -50,3 +52,12 @@ def move_file_to_folder(file_path:str, destination_folder:str):
 def create_folder_if_not_exists(folder_path:str):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
+
+def create_required_folders():
+    create_folder_if_not_exists(cnts.logs_folder)
+
+    create_folder_if_not_exists(cnts.data_folder)
+    create_folder_if_not_exists(cnts.data_archived_folder)
+    create_folder_if_not_exists(cnts.merged_data_folder)
+    create_folder_if_not_exists(cnts.merged_data_duplicates_folder)
+    create_folder_if_not_exists(cnts.last_merged_timestamps_folder)
