@@ -5,13 +5,11 @@ import pytz
 from typing import List
 from typing import Generator
 
-logs_folder = "Logs"
-error_log_file = "Logs/error_log.txt"
-
 data_folder = "IB_Data"
 data_archived_folder = "IB_Data_Archived"
 merged_data_folder = "IB_MergedData"
 merged_data_duplicates_folder = "IB_MergedData_Duplicates"
+error_investigation_folder = "IB_ErrorInvestigation"
 
 last_merged_timestamps_folder = "IB_LastMergedTimestamps"
 

@@ -161,5 +161,12 @@ cython_debug/
 
 /.vscode
 /IB_DATA
+/IB_DATA_Copy
+/IB_DATA_Archived
+/IB_LastMergedTimestamps
+/IB_MergedData
+/IB_MergedData_Duplicates
+/IB_ErrorInvestigation
 SECRETS.py
 Logs/error_log.txt
+Logs/log.txt

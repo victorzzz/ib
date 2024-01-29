@@ -11,6 +11,7 @@ import ib_tickers as ib_tckrs
 import file_system_utils as fsu
 import df_date_time_utils as df_dt_utils
 import logging
+import ib_logging as ib_log
 
 def save_last_merged_timestamp(ticker_symbol:str, contract:int, minute_multiplier:float, last_merged_timestamp:int):
     last_merged_timestamps_file = f"{cnts.last_merged_timestamps_folder}/{ticker_symbol}--last-merged-timestamps.csv"
@@ -22,8 +23,10 @@ def save_last_merged_timestamp(ticker_symbol:str, contract:int, minute_multiplie
     
 
 def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str]):
+    ib_log.configure_logging()
+
     processed_ticker_symbols = [ticker[0] for ticker in tickers]
-    print(f"Starting rocessing '{', '.join(processed_ticker_symbols)}' ...")
+    logging.info(f"Starting rocessing '{', '.join(processed_ticker_symbols)}' ...")
 
     for ticker in tickers:
 
@@ -71,10 +74,10 @@ def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str
                 merged_data_frame.sort_values(by='timestamp', inplace=True, ascending=False)
                 merged_data_frame.drop_duplicates(subset=['timestamp'], inplace=True)
 
-                print(f"Saving {merged_file_name} ...")
+                logging.info(f"Saving {merged_file_name} ...")
                 merged_data_frame.to_csv(merged_file_name, index=False)
 
-                print(f"Archiving {', '.join(filtered_raw_files)} ...")
+                logging.info(f"Archiving {', '.join(filtered_raw_files)} ...")
                 for raw_file in filtered_raw_files:
                     fsu.move_file_to_folder(raw_file, cnts.data_archived_folder)
 
@@ -88,16 +91,16 @@ def do_step():
     for tikers_batch in ib_tckrs.get_all_tickets_batches(cnts.complex_processing_batch_size):
         processed_ticker_symbols = [ticker[0] for ticker in tikers_batch]
                
-        print("-------------------------------------")
-        print(f"Group '{', '.join(processed_ticker_symbols)}' ...")
-        print("-------------------------------------")
+        logging.info("-------------------------------------")
+        logging.info(f"Group '{', '.join(processed_ticker_symbols)}' ...")
+        logging.info("-------------------------------------")
 
         process = multiprocessing.Process(target=merge_csv_files, args=(tikers_batch, raw_files,))
         processes.append(process)
         process.start()
 
         # Wait for all processes to finish
-        print(f"Waiting for '{', '.join(processed_ticker_symbols)}' ...")
+        logging.info(f"Waiting for '{', '.join(processed_ticker_symbols)}' ...")
         for process in processes:
             process.join()
 
@@ -105,7 +108,10 @@ def do_step():
 
 if __name__ == "__main__":
     
+    ib_log.configure_logging()
+
+    logging.info(f"Starting {__file__} ...")
+
     fsu.create_required_folders()
-    logging.basicConfig(filename=cnts.error_log_file, filemode="a", level=logging.ERROR, force=True, format='%(asctime)s| %(message)s')
 
     do_step()

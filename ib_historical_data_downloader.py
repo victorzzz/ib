@@ -18,10 +18,11 @@ import ib_tickers as ib_tckrs
 import date_time_utils as dt_utils
 import file_system_utils as fs_utils
 import logging
+import ib_logging as ib_log
 
 #from_date:dt.date = dt.datetime.now().date()
 
-from_date:dt.date = dt.date(2024, 1, 16)
+from_date:dt.date = dt.date(2024, 1, 28)
 
 fb_from_date:dt.date = dt.date(2022, 6, 8)
 meta_to_day:dt.date = dt.date(2022, 6, 9)
@@ -36,7 +37,7 @@ def get_contract_for_contract_id(ib_client:IB, contract_id:int) -> Contract:
     contract = Contract(conId=contract_id)
     ib_client.qualifyContracts(contract)
     qualifyContractEndTime = time.time()
-    print(f"qualifyContract delay {qualifyContractEndTime - qualifyContractStartTime}")
+    logging.info(f"qualifyContract delay {qualifyContractEndTime - qualifyContractStartTime}")
 
     return contract
 
@@ -64,12 +65,12 @@ def get_bars_for_contract(
             )
 
         except Exception as ex:
-            print(f"Downloading error {ex} for {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s). {date_to}")
+            logging.critical(f"Downloading error {ex} for {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s). {date_to}")
 
         finally:
             reqHistoricalDataEndTime = time.time()
             reqHistoricalDataDelay = reqHistoricalDataEndTime - reqHistoricalDataStartTime
-            print(f"reqHistoricalData {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s).{date_to} delay {reqHistoricalDataDelay}")
+            logging.info(f"reqHistoricalData {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s).{date_to} delay {reqHistoricalDataDelay}")
 
         return (bars, reqHistoricalDataDelay)
 
@@ -126,15 +127,14 @@ def get_oldest_date_from_saved_data(file_name:str) -> Optional[dt.date]:
 def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame) -> Optional[pd.DataFrame]:
 
     if (df1 is None):
+        logging.warning(f"DOWNLOADER !!!! df1 is None")
         return df2
 
     if (df2 is None):
+        logging.warning(f"DOWNLOADER !!!! df2 is None")
         return df1
-
-    if (len(df1) != len(df2)):
-        print(f"Dataframes have different length {len(df1)} != {len(df2)}")
-        return None
     
+    """
     df1_first_timestamp = df1['timestamp'].iloc[0].item()
     df2_first_timestamp = df2['timestamp'].iloc[0].item()
 
@@ -148,6 +148,31 @@ def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame) -> Optional
     df2.drop(columns=['timestamp'], inplace=True)
 
     return pd.concat([df1, df2], axis=1)
+    """
+    
+    result_df = pd.merge_ordered(df1, df2, on='timestamp', how='outer')
+
+    nan_count_before = result_df.isna().sum()
+
+    if nan_count_before > 0:
+        logging.warning(f"DOWNLOADER !!!! NaN found after merging {nan_count_before}")
+
+        columns_to_interpolate = [str(column) for column in result_df.columns if ((column != 'timestamp') and not str(column).startswith('TRADES_'))]
+        for column in columns_to_interpolate:
+            nan_count_column = result_df[column].isna().sum()
+            if nan_count_column > 0:
+                logging.warning(f"DOWNLOADER !!!! NaN found after merging {nan_count_column} for {column}. Filling with ffill ...")
+                result_df[column].fillna(inplace=True, method='ffill', )
+
+        trades_columns = [str(column) for column in result_df.columns if str(column).startswith('TRADES_')]
+        for column in trades_columns:
+            nan_count_column = result_df[column].isna().sum()
+            if nan_count_column > 0:
+                logging.warning(f"DOWNLOADER !!!! NaN found after merging {nan_count_column} for {column}. Filling with 0 ...")
+                result_df[column].fillna(inplace=True, value=0)
+
+    return result_df
+
 
 def download_stock_bars(
         date:dt.date, 
@@ -187,7 +212,7 @@ def download_stock_bars(
         if (exchange != "TSX"):
             continue
 
-        print(f"Processing {ticker} {ticker_con_id} {minute_multiplier:.0f} minute(s). Date range: {date} .. {limit_date}")
+        logging.info(f"Processing {ticker} {ticker_con_id} {minute_multiplier:.0f} minute(s). Date range: {date} .. {limit_date}")
 
         contract:Contract = get_contract_for_contract_id(ib_client, ticker_con_id)
 
@@ -201,10 +226,10 @@ def download_stock_bars(
 
             file_name = f"{cnts.data_folder}/{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}.csv"
             if exists(file_name):
-                print(f"File {file_name} exists")
+                logging.info(f"File {file_name} exists")
                 oldest_date_in_data_from_file = get_oldest_date_from_saved_data(file_name)
                 if (oldest_date_in_data_from_file is None):
-                    print(f"No data in existing file {file_name}")                
+                    logging.warning(f"No data in existing file {file_name}")                
                     processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
                 else:
                     processing_date = oldest_date_in_data_from_file - dt.timedelta(days=1)
@@ -243,18 +268,20 @@ def download_stock_bars(
                     else:
                         concatenated_data_frame =  concat_dataframes_with_check(final_data_frame, df)
                         if (concatenated_data_frame is None):
-                            logging.error(f"DOWNLOADER !!!! Dataframes have different length or timestamps for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                            logging.error(f"DOWNLOADER !!!! Dataframe is non after merging {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                            investigation_file_name = f"{cnts.error_investigation_folder}/{data_type}--{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}.csv"
+                            df.to_csv(file_name, index=False)
                         else:
                             final_data_frame = concatenated_data_frame
 
                     waitTime = max(0.1, 10.0 - reqHistoricalDataDelay + 0.1)
-                    print(f"waiting for {waitTime} seconds")
+                    logging.debug(f"waiting for {waitTime} seconds")
                     time.sleep(waitTime)
 
                 if (final_data_frame is None):
-                    print(f"***** Empty data for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                    logging.warning(f"***** Empty data for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                 else:
-                    print(f"Saving file {file_name}. {len(final_data_frame)}") 
+                    logging.info(f"Saving file {file_name}. {len(final_data_frame)}") 
                     final_data_frame.to_csv(file_name, index=False)
 
                 if (len(oldest_dates) > 0):
@@ -269,7 +296,9 @@ def download_stock_bars_for_tickers(
         client_id:int,
         host:str) :
     
-    print(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers}")
+    ib_log.configure_logging()
+
+    logging.info(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers}")
 
     ib_client:IB = IB()
     ib_client.connect(
@@ -326,7 +355,10 @@ def do_step():
             
 if __name__ == "__main__":
     
+    ib_log.configure_logging()
+
+    logging.info(f"Starting {__file__} ...")
+
     fs_utils.create_required_folders()
-    logging.basicConfig(filename=cnts.error_log_file, filemode="a", level=logging.ERROR, force=True, format='%(asctime)s| %(message)s')
 
     do_step()
