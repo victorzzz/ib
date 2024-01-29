@@ -83,7 +83,7 @@ def get_bars_for_contract(
             attempt += 1
 
             if (attempt > max_request_attempts):
-                logging.critical(f"Dpwnloading max atemps {attempt}")
+                logging.critical(f"Downloading max attemps {attempt}")
                 return (bars, reqHistoricalDataDelay)
 
             logging.warning(f"DOWNLOADER !!!! NO data for {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s). {date_to}. RETRYING attempt {attempt}")
@@ -172,7 +172,7 @@ def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame) -> Optional
     nan_before = result_df.isna().any()
 
     if nan_before.any():
-        logging.warning(f"DOWNLOADER !!!! NaN found after merging {nan_before}")
+        logging.warning(f"DOWNLOADER !!!! NaN found after merging")
 
         columns_to_interpolate = [str(column) for column in result_df.columns if ((column != 'timestamp') and not str(column).startswith('TRADES_'))]
         for column in columns_to_interpolate:
