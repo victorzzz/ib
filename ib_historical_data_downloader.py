@@ -28,8 +28,10 @@ fb_from_date:dt.date = dt.date(2022, 6, 8)
 meta_to_day:dt.date = dt.date(2022, 6, 9)
 
 ten_years_days:int = 366 * 10
-
 minute_to_days_for_iteration = 10
+
+max_request_attempts:int = 20
+failed_request_delay:float = 10.0
 
 def get_contract_for_contract_id(ib_client:IB, contract_id:int) -> Contract:
 
@@ -49,30 +51,45 @@ def get_bars_for_contract(
         date_to:dt.date,
         minute_multiplier:float) -> Tuple[Optional[List[BarData]], float]:
     
-        bars:Optional[List[BarData]] = None
+        attempt:int = 1
 
-        reqHistoricalDataStartTime = time.time()
-        
-        try:
+        while True:
+            bars:Optional[List[BarData]] = None
 
-            bars = ib_client.reqHistoricalData(
-                contract = contract,
-                endDateTime = date_to,
-                durationStr = f"{duration_days} D",
-                barSizeSetting = cnts.minute_multipliers[minute_multiplier],
-                whatToShow=data_type,
-                useRTH = True
-            )
+            reqHistoricalDataStartTime = time.time()
+            
+            try:
 
-        except Exception as ex:
-            logging.critical(f"Downloading error {ex} for {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s). {date_to}")
+                bars = ib_client.reqHistoricalData(
+                    contract = contract,
+                    endDateTime = date_to,
+                    durationStr = f"{duration_days} D",
+                    barSizeSetting = cnts.minute_multipliers[minute_multiplier],
+                    whatToShow=data_type,
+                    useRTH = True
+                )
 
-        finally:
-            reqHistoricalDataEndTime = time.time()
-            reqHistoricalDataDelay = reqHistoricalDataEndTime - reqHistoricalDataStartTime
-            logging.info(f"reqHistoricalData {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s).{date_to} delay {reqHistoricalDataDelay}")
+            except Exception as ex:
+                logging.critical(f"Downloading error {ex} for {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s). {date_to}")
 
-        return (bars, reqHistoricalDataDelay)
+            finally:
+                reqHistoricalDataEndTime = time.time()
+                reqHistoricalDataDelay = reqHistoricalDataEndTime - reqHistoricalDataStartTime
+                logging.info(f"reqHistoricalData {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s).{date_to} delay {reqHistoricalDataDelay}")
+
+            if (bars is not None):
+                return (bars, reqHistoricalDataDelay)
+            
+            attempt += 1
+
+            if (attempt > max_request_attempts):
+                logging.critical(f"Dpwnloading max atemps {attempt}")
+                return (bars, reqHistoricalDataDelay)
+
+            logging.warning(f"DOWNLOADER !!!! NO data for {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s). {date_to}. RETRYING attempt {attempt}")
+            logging.debug(f"waiting for {failed_request_delay} seconds before retrying")
+            time.sleep(failed_request_delay)
+
 
 def bars_to_dataframe(data_type:str, bars:List[BarData]) -> pd.DataFrame:
 
@@ -152,27 +169,26 @@ def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame) -> Optional
     
     result_df = pd.merge_ordered(df1, df2, on='timestamp', how='outer')
 
-    nan_count_before = result_df.isna().sum()
+    nan_before = result_df.isna().any()
 
-    if nan_count_before > 0:
-        logging.warning(f"DOWNLOADER !!!! NaN found after merging {nan_count_before}")
+    if nan_before.any():
+        logging.warning(f"DOWNLOADER !!!! NaN found after merging {nan_before}")
 
         columns_to_interpolate = [str(column) for column in result_df.columns if ((column != 'timestamp') and not str(column).startswith('TRADES_'))]
         for column in columns_to_interpolate:
-            nan_count_column = result_df[column].isna().sum()
-            if nan_count_column > 0:
-                logging.warning(f"DOWNLOADER !!!! NaN found after merging {nan_count_column} for {column}. Filling with ffill ...")
+            nan_column = result_df[column].isna().any()
+            if nan_column:
+                logging.warning(f"DOWNLOADER !!!! NaN found after merging for {column}. Filling with ffill ...")
                 result_df[column].fillna(inplace=True, method='ffill', )
 
         trades_columns = [str(column) for column in result_df.columns if str(column).startswith('TRADES_')]
         for column in trades_columns:
-            nan_count_column = result_df[column].isna().sum()
-            if nan_count_column > 0:
-                logging.warning(f"DOWNLOADER !!!! NaN found after merging {nan_count_column} for {column}. Filling with 0 ...")
+            nan_column = result_df[column].isna().any()
+            if nan_column > 0:
+                logging.warning(f"DOWNLOADER !!!! NaN found after merging for {column}. Filling with 0 ...")
                 result_df[column].fillna(inplace=True, value=0)
 
     return result_df
-
 
 def download_stock_bars(
         date:dt.date, 
@@ -254,7 +270,7 @@ def download_stock_bars(
 
                     if (bars is None or len(bars) == 0):
                         logging.error(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
-                        continue
+                        raise Exception(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
 
                     bars.reverse()
 
@@ -274,7 +290,7 @@ def download_stock_bars(
                         else:
                             final_data_frame = concatenated_data_frame
 
-                    waitTime = max(0.1, 10.0 - reqHistoricalDataDelay + 0.1)
+                    waitTime = max(0.1, 10.0 - reqHistoricalDataDelay)
                     logging.debug(f"waiting for {waitTime} seconds")
                     time.sleep(waitTime)
 
@@ -313,7 +329,6 @@ def download_stock_bars_for_tickers(
 
         for multiplier in cnts.minute_multipliers:
             download_stock_bars(from_date, ib_client, ticker_info, multiplier)
-
 
 def do_step():
 

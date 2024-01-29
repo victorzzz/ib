@@ -18,7 +18,7 @@ def configure_logging():
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
 
-    formatter = logging.Formatter('%(asctime)s| %(processName)-12s| %(name)s| %(levelname)-8s| %(message)s')
+    formatter = logging.Formatter('%(asctime)s| %(processName)-12s| %(name)-18s| %(levelname)-8s| %(message)s')
 
     all_logs_file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
@@ -29,3 +29,9 @@ def configure_logging():
     root.addHandler(console_handler)
     
     root.setLevel(logging.DEBUG)
+
+    ib_insync_client_logger = logging.getLogger('ib_insync.client')
+    ib_insync_client_logger.setLevel(logging.WARNING)
+
+    ib_insync_wrapper_logger = logging.getLogger('ib_insync.wrapper')
+    ib_insync_wrapper_logger.setLevel(logging.WARNING)
