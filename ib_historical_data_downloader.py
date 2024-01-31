@@ -133,7 +133,7 @@ def get_oldest_date_from_saved_data(file_name:str) -> Optional[dt.date]:
     if (len(df) == 0):
         return None
 
-    epoch_time = df['timestamp'].values[-1]
+    epoch_time = df['timestamp'].min()
     if epoch_time is None:
         return None
 

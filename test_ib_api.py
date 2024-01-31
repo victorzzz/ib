@@ -8,6 +8,7 @@ from typing import List
 
 from ib_insync import *
 import pandas as pd
+import date_time_utils as dt_utils
 
 import ib_tickers as ib_tckrs
 import ib_constants as ib_cnts
@@ -28,9 +29,74 @@ print(" ")
 print(contract)
 
 # date_to = dt.datetime.now() - dt.timedelta(days=4)
-date_to = dt.datetime(2020, 12, 8)
+date_to = dt.datetime(2024, 1, 30)
 
-final_data_frame:pd.DataFrame = None
+final_data_frame:Optional[pd.DataFrame] = None
+
+histValatility:Optional[pd.DataFrame] = None
+
+histVolatilityBars_1_min = ib_client.reqHistoricalData(
+        contract = contract,
+        endDateTime = date_to,
+        durationStr = f"10 D",
+        barSizeSetting = "1 min",
+        whatToShow='HISTORICAL_VOLATILITY',
+        useRTH = True
+    )
+
+time.sleep(3)
+
+histVolatilityBars_2_min = ib_client.reqHistoricalData(
+        contract = contract,
+        endDateTime = date_to,
+        durationStr = f"20 D",
+        barSizeSetting = "2 mins",
+        whatToShow='HISTORICAL_VOLATILITY',
+        useRTH = True
+    )
+
+time.sleep(3)
+
+histVolatilityBars_3_min = ib_client.reqHistoricalData(
+        contract = contract,
+        endDateTime = date_to,
+        durationStr = f"30 D",
+        barSizeSetting = "3 mins",
+        whatToShow='HISTORICAL_VOLATILITY',
+        useRTH = True
+    )
+
+time.sleep(3)
+
+histVolatilityBars_5_min = ib_client.reqHistoricalData(
+        contract = contract,
+        endDateTime = date_to,
+        durationStr = f"50 D",
+        barSizeSetting = "5 mins",
+        whatToShow='HISTORICAL_VOLATILITY',
+        useRTH = True
+    )
+
+time.sleep(3)
+
+histVolatilityBars_1_hour = ib_client.reqHistoricalData(
+        contract = contract,
+        endDateTime = date_to,
+        durationStr = f"300 D",
+        barSizeSetting = "1 hour",
+        whatToShow='HISTORICAL_VOLATILITY',
+        useRTH = True
+    )
+
+headTimeStamps:List[dt.datetime] = []
+
+for data_type in ib_cnts.hist_data_types:
+    print(f"Get hostorical data head {data_type} {contract.conId}")
+
+    headTimeStamp = ib_client.reqHeadTimeStamp(contract = contract, whatToShow=data_type, useRTH = True)
+    headTimeStamps.append(headTimeStamp)
+
+maxHeadTimeStamp:dt.datetime = max(headTimeStamps)
 
 for data_type in ib_cnts.hist_data_types:
 
@@ -50,7 +116,7 @@ for data_type in ib_cnts.hist_data_types:
     if (data_type == "TRADES"):
         bars_to_save = [
             {
-                "timestamp": int(dt.datetime.timestamp(bar.date)),
+                "timestamp": dt_utils.bar_date_to_epoch_time(bar.date),
                 "TRADES_open": bar.open,
                 "TRADES_high": bar.high,
                 "TRADES_low": bar.low,
