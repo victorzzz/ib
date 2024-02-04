@@ -151,22 +151,6 @@ def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame) -> Optional
         logging.warning(f"DOWNLOADER !!!! df2 is None")
         return df1
     
-    """
-    df1_first_timestamp = df1['timestamp'].iloc[0].item()
-    df2_first_timestamp = df2['timestamp'].iloc[0].item()
-
-    df1_last_timestamp = df1['timestamp'].iloc[-1].item()
-    df2_last_timestamp = df2['timestamp'].iloc[-1].item()
-
-    if (df1_first_timestamp != df2_first_timestamp or df1_last_timestamp != df2_last_timestamp):
-        print(f"Dataframes have different timestamps {df1_first_timestamp} != {df2_first_timestamp} or {df1_last_timestamp} != {df2_last_timestamp}")
-        return None
-
-    df2.drop(columns=['timestamp'], inplace=True)
-
-    return pd.concat([df1, df2], axis=1)
-    """
-    
     result_df = pd.merge_ordered(df1, df2, on='timestamp', how='outer')
 
     nan_before = result_df.isna().any()
@@ -189,6 +173,24 @@ def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame) -> Optional
                 result_df[column].fillna(inplace=True, value=0)
 
     return result_df
+
+nearest_data_head_cache:Dict[str, dt.datetime] = {}
+
+def get_nearest_data_head(ib_client:IB, contract:Contract) -> dt.datetime:
+    key = f"{contract.conId}"
+    if key in nearest_data_head_cache:
+        return nearest_data_head_cache[key]
+
+    headTimeStamps:List[dt.datetime] = []
+
+    for data_type in ib_cnts.hist_data_types:
+        headTimeStamp = ib_client.reqHeadTimeStamp(contract = contract, whatToShow=data_type, useRTH = True)
+        headTimeStamps.append(headTimeStamp)
+
+    maxHeadTimeStamp:dt.datetime = max(headTimeStamps)
+    nearest_data_head_cache[key] = maxHeadTimeStamp
+
+    return maxHeadTimeStamp
 
 def download_stock_bars(
         date:dt.date, 
@@ -232,9 +234,18 @@ def download_stock_bars(
 
         contract:Contract = get_contract_for_contract_id(ib_client, ticker_con_id)
 
+        nearest_data_head = get_nearest_data_head(ib_client, contract)
+        logging.info(f"IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
+        
+        nearest_data_head = nearest_data_head.date() + dt.timedelta(days=1)
+        logging.info(f"Nearest data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
+
+        limit_date_for_contract = max(limit_date, nearest_data_head)
+        logging.info(f"Limit date for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {limit_date_for_contract}")
+
         processing_date = date
 
-        while processing_date > limit_date:
+        while processing_date > limit_date_for_contract:
             date_to = processing_date
             date_to_str = date_to.strftime('%Y-%m-%d')
 
@@ -256,7 +267,7 @@ def download_stock_bars(
                 oldest_dates:List[dt.date] = []
 
                 for data_type in ib_cnts.hist_data_types:
-                    
+
                     bars:Optional[List[BarData]]
                     reqHistoricalDataDelay:float
                     
