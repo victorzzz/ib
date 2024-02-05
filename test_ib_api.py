@@ -44,7 +44,7 @@ histVolatilityBars_1_min = ib_client.reqHistoricalData(
         useRTH = True
     )
 
-time.sleep(3)
+ib_client.sleep(3)
 
 histVolatilityBars_2_min = ib_client.reqHistoricalData(
         contract = contract,
@@ -55,7 +55,7 @@ histVolatilityBars_2_min = ib_client.reqHistoricalData(
         useRTH = True
     )
 
-time.sleep(3)
+ib_client.sleep(3)
 
 histVolatilityBars_3_min = ib_client.reqHistoricalData(
         contract = contract,
@@ -66,7 +66,7 @@ histVolatilityBars_3_min = ib_client.reqHistoricalData(
         useRTH = True
     )
 
-time.sleep(3)
+ib_client.sleep(3)
 
 histVolatilityBars_5_min = ib_client.reqHistoricalData(
         contract = contract,
@@ -77,7 +77,7 @@ histVolatilityBars_5_min = ib_client.reqHistoricalData(
         useRTH = True
     )
 
-time.sleep(3)
+ib_client.sleep(3)
 
 histVolatilityBars_1_hour = ib_client.reqHistoricalData(
         contract = contract,
@@ -88,7 +88,7 @@ histVolatilityBars_1_hour = ib_client.reqHistoricalData(
         useRTH = True
     )
 
-time.sleep(3)
+ib_client.sleep(3)
 
 histVolatilityBars_1_day = ib_client.reqHistoricalData(
         contract = contract,
@@ -98,6 +98,8 @@ histVolatilityBars_1_day = ib_client.reqHistoricalData(
         whatToShow='HISTORICAL_VOLATILITY',
         useRTH = True
     )
+
+ib_client.sleep(3)
 
 print(histVolatilityBars_1_day)
 

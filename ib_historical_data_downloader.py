@@ -88,7 +88,7 @@ def get_bars_for_contract(
 
             logging.warning(f"DOWNLOADER !!!! NO data for {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s). {date_to}. RETRYING attempt {attempt}")
             logging.debug(f"waiting for {failed_request_delay} seconds before retrying")
-            time.sleep(failed_request_delay)
+            ib_client.sleep(failed_request_delay)
 
 
 def bars_to_dataframe(data_type:str, bars:List[BarData]) -> pd.DataFrame:
@@ -303,7 +303,7 @@ def download_stock_bars(
 
                     waitTime = max(0.1, 10.0 - reqHistoricalDataDelay)
                     logging.debug(f"waiting for {waitTime} seconds")
-                    time.sleep(waitTime)
+                    ib_client.sleep(waitTime)
 
                 if (final_data_frame is None):
                     logging.warning(f"***** Empty data for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
