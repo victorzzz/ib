@@ -1,19 +1,22 @@
 import datetime as dt
 import logging
+from typing import Optional
 
 logs_folder = "Logs"
 
-def configure_logging():
+def configure_logging(logger_name:Optional[str] = None):
     # Configure logging
     # logging.basicConfig(filename=cnts.error_log_file, filemode="a", level=logging.ERROR, force=True, format='%(asctime)s| %(message)s')
 
-    timeNow = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    timeNow = dt.datetime.now().strftime("%Y-%m-%d_%H-%M")
+
+    log_file_name:str = f"{timeNow}.log" if logger_name is None else f"{logger_name}-{timeNow}.log" 
 
     root = logging.getLogger()
-    all_logs_file_handler = logging.FileHandler(f"{logs_folder}/debug_and_above-{timeNow}.log", 'a')
+    all_logs_file_handler = logging.FileHandler(f"{logs_folder}/debug_and_above-{log_file_name}", 'a')
     all_logs_file_handler.setLevel(logging.DEBUG)
 
-    warning_logs_file_handler = logging.FileHandler(f"{logs_folder}/warning_and_above-{timeNow}.log", 'a')
+    warning_logs_file_handler = logging.FileHandler(f"{logs_folder}/warning_and_above-{log_file_name}", 'a')
     warning_logs_file_handler.setLevel(logging.WARNING)
 
     console_handler = logging.StreamHandler()

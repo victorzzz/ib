@@ -141,14 +141,14 @@ def get_oldest_date_from_saved_data(file_name:str) -> Optional[dt.date]:
 
     return oldest_date
 
-def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame) -> Optional[pd.DataFrame]:
+def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame, logContext:str) -> Optional[pd.DataFrame]:
 
     if (df1 is None):
-        logging.warning(f"DOWNLOADER !!!! df1 is None")
+        logging.warning(f"Concat {logContext} !! df1 is None")
         return df2
 
     if (df2 is None):
-        logging.warning(f"DOWNLOADER !!!! df2 is None")
+        logging.warning(f"Concat {logContext} !! df2 is None")
         return df1
     
     result_df = pd.merge_ordered(df1, df2, on='timestamp', how='outer')
@@ -156,20 +156,20 @@ def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame) -> Optional
     nan_before = result_df.isna().any()
 
     if nan_before.any():
-        logging.warning(f"DOWNLOADER !!!! NaN found after merging")
+        logging.warning(f"Concat {logContext} !! NaN found after merging")
 
         columns_to_interpolate = [str(column) for column in result_df.columns if ((column != 'timestamp') and not str(column).startswith('TRADES_'))]
         for column in columns_to_interpolate:
             nan_column = result_df[column].isna().any()
             if nan_column:
-                logging.warning(f"DOWNLOADER !!!! NaN found after merging for {column}. Filling with ffill ...")
+                logging.warning(f"Concat {logContext} !! NaN found after merging for {column}. Filling with ffill ...")
                 result_df[column].fillna(inplace=True, method='ffill', )
 
         trades_columns = [str(column) for column in result_df.columns if str(column).startswith('TRADES_')]
         for column in trades_columns:
             nan_column = result_df[column].isna().any()
             if nan_column > 0:
-                logging.warning(f"DOWNLOADER !!!! NaN found after merging for {column}. Filling with 0 ...")
+                logging.warning(f"Concat {logContext} !! NaN found after merging for {column}. Filling with 0 ...")
                 result_df[column].fillna(inplace=True, value=0)
 
     return result_df
@@ -293,7 +293,7 @@ def download_stock_bars(
                     if (final_data_frame is None):
                         final_data_frame = df
                     else:
-                        concatenated_data_frame =  concat_dataframes_with_check(final_data_frame, df)
+                        concatenated_data_frame =  concat_dataframes_with_check(final_data_frame, df, f"{data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                         if (concatenated_data_frame is None):
                             logging.error(f"DOWNLOADER !!!! Dataframe is non after merging {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                             investigation_file_name = f"{cnts.error_investigation_folder}/{data_type}--{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}.csv"
@@ -323,7 +323,7 @@ def download_stock_bars_for_tickers(
         client_id:int,
         host:str) :
     
-    ib_log.configure_logging()
+    ib_log.configure_logging("ib_historical_data_downloader")
 
     logging.info(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers}")
 
@@ -381,7 +381,7 @@ def do_step():
             
 if __name__ == "__main__":
     
-    ib_log.configure_logging()
+    ib_log.configure_logging("ib_historical_data_downloader")
 
     logging.info(f"Starting {__file__} ...")
 

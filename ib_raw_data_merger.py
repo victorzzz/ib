@@ -23,7 +23,7 @@ def save_last_merged_timestamp(ticker_symbol:str, contract:int, minute_multiplie
     
 
 def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str]):
-    ib_log.configure_logging()
+    ib_log.configure_logging("ib_raw_data_merger")
 
     processed_ticker_symbols = [ticker[0] for ticker in tickers]
     logging.info(f"Starting rocessing '{', '.join(processed_ticker_symbols)}' ...")
@@ -108,7 +108,7 @@ def do_step():
 
 if __name__ == "__main__":
     
-    ib_log.configure_logging()
+    ib_log.configure_logging("ib_raw_data_merger")
 
     logging.info(f"Starting {__file__} ...")
 

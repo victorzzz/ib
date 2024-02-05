@@ -88,6 +88,20 @@ histVolatilityBars_1_hour = ib_client.reqHistoricalData(
         useRTH = True
     )
 
+time.sleep(3)
+
+histVolatilityBars_1_day = ib_client.reqHistoricalData(
+        contract = contract,
+        endDateTime = date_to,
+        durationStr = f"300 D",
+        barSizeSetting = "1 day",
+        whatToShow='HISTORICAL_VOLATILITY',
+        useRTH = True
+    )
+
+print(histVolatilityBars_1_day)
+
+"""
 headTimeStamps:List[dt.datetime] = []
 
 for data_type in ib_cnts.hist_data_types:
@@ -154,3 +168,4 @@ for data_type in ib_cnts.hist_data_types:
     final_data_frame.to_csv(f"test_data/FINAL_after_{data_type}_{date_to.strftime('%Y-%m-%d')}.csv")
     print(final_data_frame)
     print("-")
+"""
