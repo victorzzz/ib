@@ -7,7 +7,7 @@ from os.path import exists
 import time
 import datetime as dt
 
-from ib_insync import IB, Contract, BarData
+from ib_insync import IB, Contract, BarData, ContractDetails
 
 import multiprocessing
 import pandas as pd
@@ -34,13 +34,25 @@ minute_to_days_for_iteration = 10
 max_request_attempts:int = 20
 failed_request_delay:float = 10.0
 
-def get_contract_for_contract_id(ib_client:IB, contract_id:int) -> Contract:
+def get_contract_for_symbol_and_exchange(ib_client:IB, symbol:str, exchange:str) -> Contract:
 
-    qualifyContractStartTime = time.time()    
-    contract = Contract(conId=contract_id)
-    ib_client.qualifyContracts(contract)
-    qualifyContractEndTime = time.time()
-    logging.info(f"qualifyContract delay {qualifyContractEndTime - qualifyContractStartTime}")
+    reqContractDetailsStartTime = time.time()    
+    contract = Contract(symbol=symbol, exchange=exchange)
+    contract_details_list:List[ContractDetails] = ib_client.reqContractDetails(contract)
+    reqContractDetailsEndTime = time.time()
+
+    logging.info(f"reqContractDetails latency {reqContractDetailsEndTime - reqContractDetailsStartTime}")
+
+    if (len(contract_details_list) == 0):
+        raise Exception(f"Contract details not found for {symbol} {exchange}")
+    
+    if (len(contract_details_list) > 1):
+        raise Exception(f"Multiple contract details found for {symbol} {exchange}")
+
+    contract = contract_details_list[0].contract
+
+    if (contract is None):
+        raise Exception(f"Contract is None {symbol} {exchange}")
 
     return contract
 
@@ -197,7 +209,7 @@ def get_nearest_data_head(ib_client:IB, contract:Contract, data_types_to_downloa
 def download_stock_bars(
         date:dt.date, 
         ib_client:IB, 
-        ticker_info:Tuple[str, Dict[str,int]], 
+        ticker_info:Tuple[str, List[str]], 
         minute_multiplier:float,
         data_types_to_download:Tuple[str, ...], 
         save_as:Optional[str] = None, 
@@ -210,7 +222,7 @@ def download_stock_bars(
     limit_date = date - maximum_time_delta
 
     ticker:str = ticker_info[0]
-    ticker_con_ids:Dict[str,int] = ticker_info[1]
+    ticker_exchanges:List[str] = ticker_info[1]
 
     # read previously downloaded and merged data
     """
@@ -228,14 +240,15 @@ def download_stock_bars(
         limit_date = max(limit_date, last_date)
     """
 
-    for exchange, ticker_con_id in ticker_con_ids.items():
+    for exchange in ticker_exchanges:
 
-        if (exchange != "TSX"):
+        if (exchange != "TSE"):
             continue
 
-        logging.info(f"Processing {ticker} {ticker_con_id} {minute_multiplier:.0f} minute(s). Date range: {date} .. {limit_date}")
+        logging.info(f"Processing {ticker} {exchange} {minute_multiplier:.0f} minute(s). Date range: {date} .. {limit_date}")
 
-        contract:Contract = get_contract_for_contract_id(ib_client, ticker_con_id)
+        contract:Contract = get_contract_for_symbol_and_exchange(ib_client, ticker, exchange)
+        ticker_con_id = contract.conId
 
         nearest_data_head = get_nearest_data_head(ib_client, contract, data_types_to_download)
         logging.info(f"IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
@@ -323,7 +336,7 @@ def download_stock_bars(
                     processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
 
 def download_stock_bars_for_tickers(
-        tickers:List[Tuple[str, Dict[str, int]]],
+        tickers:List[Tuple[str, List[str]]],
         port:int,
         client_id:int,
         host:str) :
@@ -333,6 +346,7 @@ def download_stock_bars_for_tickers(
     logging.info(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers}")
 
     try:
+
         ib_client:IB = IB()
         ib_client.connect(
             readonly=True,
@@ -346,6 +360,7 @@ def download_stock_bars_for_tickers(
 
             for multiplier in cnts.minute_multipliers:
                 download_stock_bars(from_date, ib_client, ticker_info, multiplier, ib_cnts.hist_data_types_reduced)
+
     except Exception as ex:
         logging.exception(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers} {ex}")
     finally:
@@ -354,9 +369,9 @@ def download_stock_bars_for_tickers(
 
 def do_step():
 
-    all_tickers = ib_tckrs.get_all_tickers_list()
-    even_tickers = ib_tckrs.get_even_items(all_tickers)
-    odd_tickers = ib_tckrs.get_odd_items(all_tickers)
+    selected_tickers:List[Tuple[str, List[str]]] = ib_tckrs.get_selected_tickers_list()
+    even_tickers:List[Tuple[str, List[str]]] = ib_tckrs.get_even_items(selected_tickers)
+    odd_tickers:List[Tuple[str, List[str]]] = ib_tckrs.get_odd_items(selected_tickers)
 
     process1 = multiprocessing.Process(
         target=download_stock_bars_for_tickers,
