@@ -6,14 +6,21 @@ hist_data_loader_paper_port = 4002
 hist_data_loader_paper_client_id = 10000
 hist_data_loader_paper_host = "127.0.0.1"
 
-
+"""
 hist_data_types = (
     "MIDPOINT",
     "BID",
     "ASK",
     "OPTION_IMPLIED_VOLATILITY",
-    "TRADES")
+    "TRADES",)
+"""
 
+hist_data_types_reduced = (
+    "MIDPOINT",
+    "TRADES",)
+
+
+"""
 hist_data_bar_sizes = (
     "30 secs",
     "1 min",
@@ -32,3 +39,4 @@ hist_data_bar_sizes = (
     "1 day",
     "1 week",
     "1 month")
+"""

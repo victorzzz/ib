@@ -27,7 +27,8 @@ from_date:dt.date = dt.date(2024, 1, 28)
 fb_from_date:dt.date = dt.date(2022, 6, 8)
 meta_to_day:dt.date = dt.date(2022, 6, 9)
 
-ten_years_days:int = 366 * 10
+# ten_years_days:int = 366 * 10
+fifteen_years_days:int = 366 * 15
 minute_to_days_for_iteration = 10
 
 max_request_attempts:int = 20
@@ -90,7 +91,6 @@ def get_bars_for_contract(
             logging.debug(f"waiting for {failed_request_delay} seconds before retrying")
             ib_client.sleep(failed_request_delay)
 
-
 def bars_to_dataframe(data_type:str, bars:List[BarData]) -> pd.DataFrame:
 
     bars_to_save:Optional[List[Dict[str, float]]] = None
@@ -141,7 +141,7 @@ def get_oldest_date_from_saved_data(file_name:str) -> Optional[dt.date]:
 
     return oldest_date
 
-def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame, logContext:str) -> Optional[pd.DataFrame]:
+def concat_dataframes(df1:pd.DataFrame, df2:pd.DataFrame, logContext:str) -> Optional[pd.DataFrame]:
 
     if (df1 is None):
         logging.warning(f"Concat {logContext} !! df1 is None")
@@ -158,6 +158,7 @@ def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame, logContext:
     if nan_before.any():
         logging.warning(f"Concat {logContext} !! NaN found after merging")
 
+        """
         columns_to_interpolate = [str(column) for column in result_df.columns if ((column != 'timestamp') and not str(column).startswith('TRADES_'))]
         for column in columns_to_interpolate:
             nan_column = result_df[column].isna().any()
@@ -171,19 +172,20 @@ def concat_dataframes_with_check(df1:pd.DataFrame, df2:pd.DataFrame, logContext:
             if nan_column > 0:
                 logging.warning(f"Concat {logContext} !! NaN found after merging for {column}. Filling with 0 ...")
                 result_df[column].fillna(inplace=True, value=0)
+        """
 
     return result_df
 
 nearest_data_head_cache:Dict[str, dt.datetime] = {}
 
-def get_nearest_data_head(ib_client:IB, contract:Contract) -> dt.datetime:
+def get_nearest_data_head(ib_client:IB, contract:Contract, data_types_to_download:Tuple[str, ...]) -> dt.datetime:
     key = f"{contract.conId}"
     if key in nearest_data_head_cache:
         return nearest_data_head_cache[key]
 
     headTimeStamps:List[dt.datetime] = []
 
-    for data_type in ib_cnts.hist_data_types:
+    for data_type in data_types_to_download:
         headTimeStamp = ib_client.reqHeadTimeStamp(contract = contract, whatToShow=data_type, useRTH = True)
         headTimeStamps.append(headTimeStamp)
 
@@ -196,9 +198,10 @@ def download_stock_bars(
         date:dt.date, 
         ib_client:IB, 
         ticker_info:Tuple[str, Dict[str,int]], 
-        minute_multiplier:float, 
+        minute_multiplier:float,
+        data_types_to_download:Tuple[str, ...], 
         save_as:Optional[str] = None, 
-        max_days_history:int = ten_years_days):
+        max_days_history:int = fifteen_years_days):
     
     iteration_time_delta_days = int(minute_to_days_for_iteration * minute_multiplier)
     iteration_time_delta = dt.timedelta(days = iteration_time_delta_days)
@@ -234,7 +237,7 @@ def download_stock_bars(
 
         contract:Contract = get_contract_for_contract_id(ib_client, ticker_con_id)
 
-        nearest_data_head = get_nearest_data_head(ib_client, contract)
+        nearest_data_head = get_nearest_data_head(ib_client, contract, data_types_to_download)
         logging.info(f"IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
         
         nearest_data_head = nearest_data_head.date() + dt.timedelta(days=1)
@@ -266,7 +269,7 @@ def download_stock_bars(
 
                 oldest_dates:List[dt.date] = []
 
-                for data_type in ib_cnts.hist_data_types:
+                for data_type in data_types_to_download:
 
                     bars:Optional[List[BarData]]
                     reqHistoricalDataDelay:float
@@ -293,7 +296,9 @@ def download_stock_bars(
                     if (final_data_frame is None):
                         final_data_frame = df
                     else:
-                        concatenated_data_frame =  concat_dataframes_with_check(final_data_frame, df, f"{data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                        concatenated_data_frame =  concat_dataframes(
+                            final_data_frame, df, 
+                            f"{data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                         if (concatenated_data_frame is None):
                             logging.error(f"DOWNLOADER !!!! Dataframe is non after merging {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                             investigation_file_name = f"{cnts.error_investigation_folder}/{data_type}--{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}.csv"
@@ -327,19 +332,25 @@ def download_stock_bars_for_tickers(
 
     logging.info(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers}")
 
-    ib_client:IB = IB()
-    ib_client.connect(
-        readonly=True,
-        port=port,
-        clientId=client_id,
-        host=host)
+    try:
+        ib_client:IB = IB()
+        ib_client.connect(
+            readonly=True,
+            port=port,
+            clientId=client_id,
+            host=host)
 
-    for ticker_info in tickers:
-        if (ticker_info[0] == "META"):
-            continue
+        for ticker_info in tickers:
+            if (ticker_info[0] == "META"):
+                continue
 
-        for multiplier in cnts.minute_multipliers:
-            download_stock_bars(from_date, ib_client, ticker_info, multiplier)
+            for multiplier in cnts.minute_multipliers:
+                download_stock_bars(from_date, ib_client, ticker_info, multiplier, ib_cnts.hist_data_types_reduced)
+    except Exception as ex:
+        logging.exception(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers} {ex}")
+    finally:
+        logging.info(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers} disconnecting")
+        ib_client.disconnect()
 
 def do_step():
 

@@ -4,7 +4,7 @@ from typing import Optional
 
 logs_folder = "Logs"
 
-def configure_logging(logger_name:Optional[str] = None):
+def configure_logging(logger_name:Optional[str] = None, ib_sync_log_level:int = logging.WARNING):
     # Configure logging
     # logging.basicConfig(filename=cnts.error_log_file, filemode="a", level=logging.ERROR, force=True, format='%(asctime)s| %(message)s')
 
@@ -35,7 +35,7 @@ def configure_logging(logger_name:Optional[str] = None):
     root.setLevel(logging.DEBUG)
 
     ib_insync_client_logger = logging.getLogger('ib_insync.client')
-    ib_insync_client_logger.setLevel(logging.WARNING)
+    ib_insync_client_logger.setLevel(ib_sync_log_level)
 
     ib_insync_wrapper_logger = logging.getLogger('ib_insync.wrapper')
-    ib_insync_wrapper_logger.setLevel(logging.WARNING)
+    ib_insync_wrapper_logger.setLevel(ib_sync_log_level)

@@ -4,6 +4,7 @@ from typing import Tuple
 from typing import Generator
 import constants as cnts
 
+"""
 ticker_groups = {
     "bank_financial": 
         {
@@ -15,19 +16,127 @@ ticker_groups = {
             "SLF": { "NYSE": 9662691, "TSX": 10514248 }
         }
     }
-    
-"""
-    "usa_banks": ("C", "BAC", "JPM", ),
-    "tech_software": ("SHOP", "OTEX", "CDAY", "TRI" ),
-    "tech_data_processing": ("HUT", "BITF"),
-    "transportation": ("TFII", "WCN", "CP", "CNI"),
-    "oil_gas": ("TRP", "PBA", "ENB", "SU", "VET", "ERF", "CPG", "OVV", "TECK", "CVE", "CNQ"),
-    "usa": ("TSLA", "AAPL", "NVDA", "AMZN", "META", "MSFT", "AMD", "NFLX", "GOOG", "GOOGL"),
-    "gold_etf": ("GLD",),
-    "etf": ("TDV", "SPY", "DIA"),
-    "leveraged_etf" : ("TQQQ", "SQQQ", "QLD"),
-    "fixed_income": ("HYHG",)
-    """
+"""    
+ticker_groups = {
+    "bank_financial": 
+        {
+            "RY": [ "NYSE", "TSE"],
+            "TD": [ "NYSE", "TSE"],
+            "BNS": [ "NYSE", "TSE"], 
+            "BMO": [ "NYSE", "TSE"],
+            "MFC": [ "NYSE", "TSE"],
+            "SLF": [ "NYSE", "TSE"]
+        },
+
+    "usa_banks": 
+        {
+            "C" : ["NYSE"], 
+            "BAC": ["NYSE"], 
+            "JPM": ["NYSE"],
+            "GS" : ["NYSE"],
+            "MS" : ["NYSE"]
+        },
+
+    "tech_software": 
+        {
+            "SHOP" : ["NYSE", "TSE"],
+            "OTEX" : ["NYSE", "TSE"],
+            "CDAY" : ["NYSE", "TSE"],
+            "TRI" : ["NYSE", "TSE"]
+        },
+
+    "tech_data_processing": 
+        {
+            "HUT": ["NASDAQ", "TSE"], 
+            "BITF": ["NASDAQ", "TSE"]
+        },
+
+    "transportation": 
+        {
+            "TFII" : ["NYSE", "TSE"],
+            "WCN" : ["NYSE", "TSE"],
+            "CP" : ["NYSE", "TSE"],
+        },
+
+    "oil_gas": 
+        {
+            "TRP" : ["NYSE", "TSE"],
+            "ENB" : ["NYSE", "TSE"],
+            "SU" : ["NYSE", "TSE"],
+            "VET" : ["NYSE", "TSE"],
+            "ERF" : ["NYSE", "TSE"],
+            "OVV" : ["NYSE", "TSE"],
+            "CVE" : ["NYSE", "TSE"],
+            "CNQ" : ["NYSE", "TSE"],
+        },
+    "usa": 
+        {
+            "TSLA" : ["NASDAQ"], 
+            "AAPL" : ["NASDAQ"], 
+            "NVDA" : ["NASDAQ"], 
+            "AMZN" : ["NASDAQ"], 
+            "META" : ["NASDAQ"], 
+            "MSFT" : ["NASDAQ"], 
+            "AMD" : ["NASDAQ"], 
+            "NFLX" : ["NASDAQ"],
+            "INTC" : ["NASDAQ"],
+            "CSCO" : ["NASDAQ"],
+            "QCOM" : ["NASDAQ"],
+            "ADBE" : ["NASDAQ"],
+            "PYPL" : ["NASDAQ"],
+            "GOOG" : ["NASDAQ"], 
+            "GOOGL" : ["NASDAQ"],
+            "CRM" : ["NYSE"],
+            "V" : ["NYSE"],
+            "MA" : ["NYSE"]
+        },
+    "etf": 
+        {
+            "SPY" : ["NYSE"], 
+            "DIA" : ["NYSE"]
+        },
+        "canadian_etf": 
+        {
+            "ZSP" : ["TSE"],
+            "XIU" : ["TSE"], 
+            "XIC" : ["TSE"], 
+            "XUU" : ["TSE"], 
+            "XRE" : ["TSE"], 
+            "XBB" : ["TSE"], 
+            "XPF" : ["TSE"], 
+            "XIT" : ["TSE"], 
+            "XSP" : ["TSE"]
+        },
+
+    "leveraged_etf" : 
+        {
+            "TQQQ" : ["NASDAQ"], 
+            "SQQQ" : ["NASDAQ"], 
+            "QLD" : ["NYSE"]
+        },
+
+        "canadian_leveraged_etf" : 
+        {
+            "HQU" : ["TSE"],
+
+        },
+
+    "fixed_income": 
+        {
+            "HYHG" : ["NYSE"]
+        },
+
+    "canadian_fixed_income":
+        {
+            "XHY" : ["TSE"]
+        },
+
+    "foreign_exchange":
+        {
+
+        }    
+}
+
 
 def get_all_tickers_list() -> List[Tuple[str, Dict[str, int]]]:
     return list(get_all_tickers())

@@ -1,4 +1,4 @@
-import time
+
 import datetime as dt
 
 from typing import Tuple
@@ -6,7 +6,7 @@ from typing import Optional
 from typing import Dict
 from typing import List
 
-from ib_insync import *
+from ib_insync import IB, Contract
 import pandas as pd
 import date_time_utils as dt_utils
 
@@ -34,6 +34,17 @@ date_to = dt.datetime(2024, 1, 30)
 final_data_frame:Optional[pd.DataFrame] = None
 
 histValatility:Optional[pd.DataFrame] = None
+
+midpointBars_1_min = ib_client.reqHistoricalData(
+        contract = contract,
+        endDateTime = date_to,
+        durationStr = f"10 D",
+        barSizeSetting = "1 min",
+        whatToShow='TRADES',
+        useRTH = True
+    )
+
+ib_client.sleep(3)
 
 histVolatilityBars_1_min = ib_client.reqHistoricalData(
         contract = contract,
@@ -106,7 +117,7 @@ print(histVolatilityBars_1_day)
 """
 headTimeStamps:List[dt.datetime] = []
 
-for data_type in ib_cnts.hist_data_types:
+for data_type in ib_cnts.hist_data_types_reduced:
     print(f"Get hostorical data head {data_type} {contract.conId}")
 
     headTimeStamp = ib_client.reqHeadTimeStamp(contract = contract, whatToShow=data_type, useRTH = True)
@@ -114,7 +125,7 @@ for data_type in ib_cnts.hist_data_types:
 
 maxHeadTimeStamp:dt.datetime = max(headTimeStamps)
 
-for data_type in ib_cnts.hist_data_types:
+for data_type in ib_cnts.hist_data_types_reduced:
 
     print(f"Call {data_type} {contract.conId}--ib--1--minute--{date_to}")
 
