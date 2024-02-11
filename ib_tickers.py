@@ -26,15 +26,6 @@ selected_ticker_group_names:List[str] = [
     "tech_data_processing",
     "transportation",
     "oil_gas"    
-    """
-    ,
-    "etf",
-    "canadian_etf",
-    "leveraged_etf",
-    "canadian_leveraged_etf",
-    "fixed_income",
-    "canadian_fixed_income",
-    """
 ]
 
 ticker_groups:Dict[str, Dict[str, List[str]]] = {

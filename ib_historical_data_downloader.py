@@ -37,11 +37,13 @@ failed_request_delay:float = 10.0
 def get_contract_for_symbol_and_exchange(ib_client:IB, symbol:str, exchange:str) -> Contract:
 
     reqContractDetailsStartTime = time.time()    
-    contract = Contract(symbol=symbol, exchange=exchange)
+    contract = Contract(secType = "STK", symbol=symbol, exchange=exchange)
     contract_details_list:List[ContractDetails] = ib_client.reqContractDetails(contract)
     reqContractDetailsEndTime = time.time()
 
     logging.info(f"reqContractDetails latency {reqContractDetailsEndTime - reqContractDetailsStartTime}")
+
+    ib_client.sleep(3)
 
     if (len(contract_details_list) == 0):
         raise Exception(f"Contract details not found for {symbol} {exchange}")
@@ -54,7 +56,12 @@ def get_contract_for_symbol_and_exchange(ib_client:IB, symbol:str, exchange:str)
     if (contract is None):
         raise Exception(f"Contract is None {symbol} {exchange}")
 
-    return contract
+    contract_to_qualify:Contract = Contract(conId=contract.conId)
+    ib_client.qualifyContracts(contract_to_qualify)
+
+    ib_client.sleep(3)
+
+    return contract_to_qualify
 
 def get_bars_for_contract(
         ib_client:IB,
@@ -198,7 +205,8 @@ def get_nearest_data_head(ib_client:IB, contract:Contract, data_types_to_downloa
     headTimeStamps:List[dt.datetime] = []
 
     for data_type in data_types_to_download:
-        headTimeStamp = ib_client.reqHeadTimeStamp(contract = contract, whatToShow=data_type, useRTH = True)
+        headTimeStamp:dt.datetime = ib_client.reqHeadTimeStamp(contract = contract, whatToShow=data_type, useRTH = True)
+        ib_client.sleep(3)
         headTimeStamps.append(headTimeStamp)
 
     maxHeadTimeStamp:dt.datetime = max(headTimeStamps)

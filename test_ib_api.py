@@ -21,7 +21,8 @@ ib_client.connect(
     host=ib_cnts.hist_data_loader_live_host)
 
 # contract = Contract(conId=2008980)
-contract = Contract(conId=4458964)
+# contract = Contract(conId=4458964)
+contract = Contract(conId=4458978)
 
 ib_client.qualifyContracts(contract)
 
@@ -34,6 +35,9 @@ date_to = dt.datetime(2024, 1, 30)
 final_data_frame:Optional[pd.DataFrame] = None
 
 histValatility:Optional[pd.DataFrame] = None
+
+headTimeStamp:dt.datetime = ib_client.reqHeadTimeStamp(contract = contract, whatToShow="MIDPOINT", useRTH = True)
+ib_client.sleep(3)
 
 midpointBars_1_min = ib_client.reqHistoricalData(
         contract = contract,
