@@ -29,6 +29,39 @@ ib_client.qualifyContracts(contract)
 print(" ")
 print(contract)
 
+"""
+            reportType:
+                * 'ReportsFinSummary': Financial summary
+                * 'ReportsOwnership': Company's ownership
+                * 'ReportSnapshot': Company's financial overview
+                * 'ReportsFinStatements': Financial Statements
+                * 'RESC': Analyst Estimates
+                * 'CalendarReport': Company's calendar
+"""
+                
+reportSnapshot = ib_client.reqFundamentalData(contract, "ReportSnapshot")
+ib_client.sleep(3)
+
+reportsFinSummary = ib_client.reqFundamentalData(contract, "ReportsFinSummary")
+ib_client.sleep(3)
+
+reportsOwnership = ib_client.reqFundamentalData(contract, "ReportsOwnership")
+ib_client.sleep(3)
+
+reportsFinStatements = ib_client.reqFundamentalData(contract, "ReportsFinStatements")
+ib_client.sleep(3)
+
+resc = ib_client.reqFundamentalData(contract, "RESC")
+ib_client.sleep(3)
+
+calendarReport = ib_client.reqFundamentalData(contract, "CalendarReport")
+ib_client.sleep(3)
+
+######################################################################################
+
+news = ib_client.reqHistoricalNews(contract.conId, "FLY", "20210101 00:00:00", "20241102 00:00:00", 300)
+ib_client.sleep(3)
+
 # date_to = dt.datetime.now() - dt.timedelta(days=4)
 date_to = dt.datetime(2024, 1, 30)
 
