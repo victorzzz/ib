@@ -36,7 +36,10 @@ ticker_groups:Dict[str, Dict[str, List[str]]] = {
             "BNS": [ "NYSE", "TSE"], 
             "BMO": [ "NYSE", "TSE"],
             "MFC": [ "NYSE", "TSE"],
-            "SLF": [ "NYSE", "TSE"]
+            "SLF": [ "NYSE", "TSE"],
+            "CM": [ "NYSE", "TSE"],
+            "NA": [ "TSE"],
+            "ENB": [ "NYSE", "TSE"]
         },
 
     "usa_banks": 
@@ -79,6 +82,7 @@ ticker_groups:Dict[str, Dict[str, List[str]]] = {
             "OVV" : ["NYSE", "TSE"],
             "CVE" : ["NYSE", "TSE"],
             "CNQ" : ["NYSE", "TSE"],
+            "ARX" : ["TSE"]  # ++++++++++
         },
 
     "usa": 

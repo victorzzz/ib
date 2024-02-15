@@ -6,6 +6,7 @@ data_archived_folder = "IB_Data_Archived"
 merged_data_folder = "IB_MergedData"
 merged_data_duplicates_folder = "IB_MergedData_Duplicates"
 error_investigation_folder = "IB_ErrorInvestigation"
+tickers_cache_folder = "IB_TickersCache"
 
 last_merged_timestamps_folder = "IB_LastMergedTimestamps"
 

@@ -170,3 +170,4 @@ cython_debug/
 SECRETS.py
 Logs/error_log.txt
 Logs/log.txt
+IB_TickersCache/ib_tickers_cache.json

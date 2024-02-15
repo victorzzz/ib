@@ -13,16 +13,7 @@ import df_date_time_utils as df_dt_utils
 import logging
 import ib_logging as ib_log
 
-def save_last_merged_timestamp(ticker_symbol:str, contract:int, minute_multiplier:float, last_merged_timestamp:int):
-    last_merged_timestamps_file = f"{cnts.last_merged_timestamps_folder}/{ticker_symbol}--last-merged-timestamps.csv"
-    last_merged_timestamps_data_frame:pd.DataFrame = pd.DataFrame()
-
-    if exists(last_merged_timestamps_file):
-        last_merged_timestamps_data_frame = pd.read_csv(last_merged_timestamps_file)
-
-    
-
-def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str]):
+def merge_csv_files(tickers:List[Tuple[str, List[str]]], raw_files:List[str]):
     ib_log.configure_logging("ib_raw_data_merger")
 
     processed_ticker_symbols = [ticker[0] for ticker in tickers]
@@ -31,11 +22,10 @@ def merge_csv_files(tickers:List[Tuple[str, Dict[str, int]]], raw_files:List[str
     for ticker in tickers:
 
         ticker_symbvol:str = ticker[0]
-        ticker_contracts:Dict[str,int] = ticker[1]
+        ticker_exchanges:List[str] = ticker[1]
         
-        for contarct in ticker_contracts.items():
-            exchange:str = contarct[0]
-            contract_id:int = contarct[1]
+        for exchange in ticker_exchanges:
+
 
             for minute_multiplier in cnts.minute_multipliers:
                 filtered_raw_files:List[str] = [file for file in raw_files 
@@ -88,7 +78,7 @@ def do_step():
 
     raw_files:List[str] = list(fsu.iterate_files(cnts.data_folder))
 
-    for tikers_batch in ib_tckrs.get_all_tickets_batches(cnts.complex_processing_batch_size):
+    for tikers_batch in ib_tckrs.get_selected_tickers_batches(cnts.complex_processing_batch_size):
         processed_ticker_symbols = [ticker[0] for ticker in tikers_batch]
                
         logging.info("-------------------------------------")

@@ -19,6 +19,7 @@ import date_time_utils as dt_utils
 import file_system_utils as fs_utils
 import logging
 import ib_logging as ib_log
+import ib_tickers_cache as ib_tickers_cache
 
 #from_date:dt.date = dt.datetime.now().date()
 
@@ -34,29 +35,37 @@ minute_to_days_for_iteration = 10
 max_request_attempts:int = 20
 failed_request_delay:float = 10.0
 
-def get_contract_for_symbol_and_exchange(ib_client:IB, symbol:str, exchange:str) -> Contract:
+def get_contract_for_symbol_and_exchange(ib_client:IB, symbol:str, exchange:str, lock, shared_tickers_cache:dict[str, int]) -> Contract:
 
-    reqContractDetailsStartTime = time.time()    
-    contract = Contract(secType = "STK", symbol=symbol, exchange=exchange)
-    contract_details_list:List[ContractDetails] = ib_client.reqContractDetails(contract)
-    reqContractDetailsEndTime = time.time()
+    contract_id:Optional[int] = ib_tickers_cache.get_contact_id(symbol, exchange, lock, shared_tickers_cache)
 
-    logging.info(f"reqContractDetails latency {reqContractDetailsEndTime - reqContractDetailsStartTime}")
+    if (contract_id is None):
+        reqContractDetailsStartTime = time.time()    
+        contract = Contract(secType = "STK", symbol=symbol, exchange=exchange)
+        contract_details_list:List[ContractDetails] = ib_client.reqContractDetails(contract)
+        reqContractDetailsEndTime = time.time()
 
-    ib_client.sleep(3)
+        logging.info(f"reqContractDetails latency {reqContractDetailsEndTime - reqContractDetailsStartTime}")
 
-    if (len(contract_details_list) == 0):
-        raise Exception(f"Contract details not found for {symbol} {exchange}")
-    
-    if (len(contract_details_list) > 1):
-        raise Exception(f"Multiple contract details found for {symbol} {exchange}")
+        ib_client.sleep(3)
 
-    contract = contract_details_list[0].contract
+        if (len(contract_details_list) == 0):
+            raise Exception(f"Contract details not found for {symbol} {exchange}")
+        
+        if (len(contract_details_list) > 1):
+            raise Exception(f"Multiple contract details found for {symbol} {exchange}")
 
-    if (contract is None):
-        raise Exception(f"Contract is None {symbol} {exchange}")
+        contract = contract_details_list[0].contract
 
-    contract_to_qualify:Contract = Contract(conId=contract.conId)
+        if (contract is None):
+            raise Exception(f"Contract is None {symbol} {exchange}")
+
+        contract_id = contract.conId
+
+        logging.info(f"Adding contract id to cache for {symbol} {exchange} - {contract_id}")
+        ib_tickers_cache.add_contact_id(symbol, exchange, contract_id, lock, shared_tickers_cache)
+
+    contract_to_qualify:Contract = Contract(conId=contract_id)
     ib_client.qualifyContracts(contract_to_qualify)
 
     ib_client.sleep(3)
@@ -219,7 +228,9 @@ def download_stock_bars(
         ib_client:IB, 
         ticker_info:Tuple[str, List[str]], 
         minute_multiplier:float,
-        data_types_to_download:Tuple[str, ...], 
+        data_types_to_download:Tuple[str, ...],
+        lock, 
+        shared_tickers_cache:dict[str, int],
         save_as:Optional[str] = None, 
         max_days_history:int = fifteen_years_days):
     
@@ -255,7 +266,7 @@ def download_stock_bars(
 
         logging.info(f"Processing {ticker} {exchange} {minute_multiplier:.0f} minute(s). Date range: {date} .. {limit_date}")
 
-        contract:Contract = get_contract_for_symbol_and_exchange(ib_client, ticker, exchange)
+        contract:Contract = get_contract_for_symbol_and_exchange(ib_client, ticker, exchange, lock, shared_tickers_cache)
         ticker_con_id = contract.conId
 
         nearest_data_head = get_nearest_data_head(ib_client, contract, data_types_to_download)
@@ -347,7 +358,9 @@ def download_stock_bars_for_tickers(
         tickers:List[Tuple[str, List[str]]],
         port:int,
         client_id:int,
-        host:str) :
+        host:str,
+        lock,
+        shared_tickers_cache:dict[str, int]) :
     
     ib_log.configure_logging("ib_historical_data_downloader")
 
@@ -367,7 +380,14 @@ def download_stock_bars_for_tickers(
                 continue
 
             for multiplier in cnts.minute_multipliers:
-                download_stock_bars(from_date, ib_client, ticker_info, multiplier, ib_cnts.hist_data_types_reduced)
+                download_stock_bars(
+                    from_date,
+                    ib_client,
+                    ticker_info,
+                    multiplier,
+                    ib_cnts.hist_data_types_reduced,
+                    lock,
+                    shared_tickers_cache)
 
     except Exception as ex:
         logging.exception(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers} {ex}")
@@ -381,12 +401,19 @@ def do_step():
     even_tickers:List[Tuple[str, List[str]]] = ib_tckrs.get_even_items(selected_tickers)
     odd_tickers:List[Tuple[str, List[str]]] = ib_tckrs.get_odd_items(selected_tickers)
 
+    lock = multiprocessing.Lock()
+    manager = multiprocessing.Manager()
+
+    shared_dict = manager.dict()
+
     process1 = multiprocessing.Process(
         target=download_stock_bars_for_tickers,
         args=(even_tickers,
             ib_cnts.hist_data_loader_live_port,
             ib_cnts.hist_data_loader_live_client_id,
-            ib_cnts.hist_data_loader_live_host))
+            ib_cnts.hist_data_loader_live_host,
+            lock,
+            shared_dict))
 
     process1.start()
 
@@ -395,7 +422,9 @@ def do_step():
         args=(odd_tickers,
             ib_cnts.hist_data_loader_paper_port,
             ib_cnts.hist_data_loader_paper_client_id,
-            ib_cnts.hist_data_loader_paper_host))
+            ib_cnts.hist_data_loader_paper_host,
+            lock,
+            shared_dict))
 
     process2.start()    
     
