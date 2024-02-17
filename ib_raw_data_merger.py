@@ -3,9 +3,6 @@ import constants as cnts
 import pandas as pd
 from os.path import exists
 import numpy as np
-from typing import List
-from typing import Dict
-from typing import Tuple
 from typing import Optional
 import ib_tickers as ib_tckrs
 import file_system_utils as fsu
@@ -13,7 +10,7 @@ import df_date_time_utils as df_dt_utils
 import logging
 import ib_logging as ib_log
 
-def merge_csv_files(tickers:List[Tuple[str, List[str]]], raw_files:List[str]):
+def merge_csv_files(tickers:list[tuple[str, list[str]]], raw_files:list[str]):
     ib_log.configure_logging("ib_raw_data_merger")
 
     processed_ticker_symbols = [ticker[0] for ticker in tickers]
@@ -22,13 +19,13 @@ def merge_csv_files(tickers:List[Tuple[str, List[str]]], raw_files:List[str]):
     for ticker in tickers:
 
         ticker_symbvol:str = ticker[0]
-        ticker_exchanges:List[str] = ticker[1]
+        ticker_exchanges:list[str] = ticker[1]
         
         for exchange in ticker_exchanges:
 
 
             for minute_multiplier in cnts.minute_multipliers:
-                filtered_raw_files:List[str] = [file for file in raw_files 
+                filtered_raw_files:list[str] = [file for file in raw_files 
                                 if file.startswith(f"{cnts.data_folder}\\{ticker_symbvol}-{contract_id}--ib--{minute_multiplier:.0f}--minute--")]
 
                 if len(filtered_raw_files) == 0:
@@ -76,7 +73,7 @@ def merge_csv_files(tickers:List[Tuple[str, List[str]]], raw_files:List[str]):
 def do_step():
     processes = []
 
-    raw_files:List[str] = list(fsu.iterate_files(cnts.data_folder))
+    raw_files:list[str] = list(fsu.iterate_files(cnts.data_folder))
 
     for tikers_batch in ib_tckrs.get_selected_tickers_batches(cnts.complex_processing_batch_size):
         processed_ticker_symbols = [ticker[0] for ticker in tikers_batch]

@@ -1,9 +1,6 @@
 import datetime as dt
 
-from typing import Tuple
 from typing import Optional
-from typing import Dict
-from typing import List
 
 from ib_insync import IB, Contract
 import pandas as pd

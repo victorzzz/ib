@@ -1,6 +1,4 @@
-from typing import Tuple
-from typing import Dict
-from typing import List
+
 from typing import Optional
 
 from os.path import exists
@@ -42,7 +40,7 @@ def get_contract_for_symbol_and_exchange(ib_client:IB, symbol:str, exchange:str,
     if (contract_id is None):
         reqContractDetailsStartTime = time.time()    
         contract = Contract(secType = "STK", symbol=symbol, exchange=exchange)
-        contract_details_list:List[ContractDetails] = ib_client.reqContractDetails(contract)
+        contract_details_list:list[ContractDetails] = ib_client.reqContractDetails(contract)
         reqContractDetailsEndTime = time.time()
 
         logging.info(f"reqContractDetails latency {reqContractDetailsEndTime - reqContractDetailsStartTime}")
@@ -80,12 +78,12 @@ def get_bars_for_contract(
         data_type:str,
         duration_days:int,
         date_to:dt.date,
-        minute_multiplier:float) -> Tuple[Optional[List[BarData]], float]:
+        minute_multiplier:float) -> tuple[Optional[list[BarData]], float]:
     
         attempt:int = 1
 
         while True:
-            bars:Optional[List[BarData]] = None
+            bars:Optional[list[BarData]] = None
 
             reqHistoricalDataStartTime = time.time()
             
@@ -121,9 +119,9 @@ def get_bars_for_contract(
             logging.debug(f"waiting for {failed_request_delay} seconds before retrying")
             ib_client.sleep(failed_request_delay)
 
-def bars_to_dataframe(data_type:str, bars:List[BarData]) -> pd.DataFrame:
+def bars_to_dataframe(data_type:str, bars:list[BarData]) -> pd.DataFrame:
 
-    bars_to_save:Optional[List[Dict[str, float]]] = None
+    bars_to_save:Optional[list[dict[str, float]]] = None
 
     if (data_type == "TRADES"):
         bars_to_save = [
@@ -206,14 +204,14 @@ def concat_dataframes(df1:pd.DataFrame, df2:pd.DataFrame, logContext:str) -> Opt
 
     return result_df
 
-nearest_data_head_cache:Dict[str, dt.datetime] = {}
+nearest_data_head_cache:dict[str, dt.datetime] = {}
 
-def get_nearest_data_head(ib_client:IB, contract:Contract, data_types_to_download:Tuple[str, ...]) -> dt.datetime:
+def get_nearest_data_head(ib_client:IB, contract:Contract, data_types_to_download:tuple[str, ...]) -> dt.datetime:
     key = f"{contract.conId}"
     if key in nearest_data_head_cache:
         return nearest_data_head_cache[key]
 
-    headTimeStamps:List[dt.datetime] = []
+    headTimeStamps:list[dt.datetime] = []
 
     for data_type in data_types_to_download:
         headTimeStamp:dt.datetime = ib_client.reqHeadTimeStamp(contract = contract, whatToShow=data_type, useRTH = True)
@@ -228,9 +226,9 @@ def get_nearest_data_head(ib_client:IB, contract:Contract, data_types_to_downloa
 def download_stock_bars(
         date:dt.date, 
         ib_client:IB, 
-        ticker_info:Tuple[str, List[str]], 
+        ticker_info:tuple[str, list[str]], 
         minute_multiplier:float,
-        data_types_to_download:Tuple[str, ...],
+        data_types_to_download:tuple[str, ...],
         lock, 
         shared_tickers_cache:dict[str, int],
         save_as:Optional[str] = None, 
@@ -243,7 +241,7 @@ def download_stock_bars(
     limit_date = date - maximum_time_delta
 
     ticker:str = ticker_info[0]
-    ticker_exchanges:List[str] = ticker_info[1]
+    ticker_exchanges:list[str] = ticker_info[1]
 
     # read previously downloaded and merged data
     """
@@ -301,11 +299,11 @@ def download_stock_bars(
 
                 final_data_frame:Optional[pd.DataFrame] = None
 
-                oldest_dates:List[dt.date] = []
+                oldest_dates:list[dt.date] = []
 
                 for data_type in data_types_to_download:
 
-                    bars:Optional[List[BarData]]
+                    bars:Optional[list[BarData]]
                     reqHistoricalDataDelay:float
                     
                     bars, reqHistoricalDataDelay= get_bars_for_contract(
@@ -357,7 +355,7 @@ def download_stock_bars(
                     processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
 
 def download_stock_bars_for_tickers(
-        tickers:List[Tuple[str, List[str]]],
+        tickers:list[tuple[str, list[str]]],
         port:int,
         client_id:int,
         host:str,
@@ -399,9 +397,9 @@ def download_stock_bars_for_tickers(
 
 def do_step():
 
-    selected_tickers:List[Tuple[str, List[str]]] = ib_tckrs.get_selected_tickers_list()
-    even_tickers:List[Tuple[str, List[str]]] = ib_tckrs.get_even_items(selected_tickers)
-    odd_tickers:List[Tuple[str, List[str]]] = ib_tckrs.get_odd_items(selected_tickers)
+    selected_tickers:list[tuple[str, list[str]]] = ib_tckrs.get_selected_tickers_list()
+    even_tickers:list[tuple[str, list[str]]] = ib_tckrs.get_even_items(selected_tickers)
+    odd_tickers:list[tuple[str, list[str]]] = ib_tckrs.get_odd_items(selected_tickers)
 
     lock = multiprocessing.Lock()
     manager = multiprocessing.Manager()

@@ -1,6 +1,4 @@
-from typing import List
-from typing import Dict
-from typing import Tuple
+
 from typing import Generator
 import constants as cnts
 
@@ -18,7 +16,7 @@ ticker_groups = {
     }
 """    
 
-selected_ticker_group_names:List[str] = [
+selected_ticker_group_names:list[str] = [
     "bank_financial",
     "usa_banks",
     "tech_software",
@@ -28,7 +26,7 @@ selected_ticker_group_names:List[str] = [
     "oil_gas"    
 ]
 
-ticker_groups:Dict[str, Dict[str, List[str]]] = {
+ticker_groups:dict[str, dict[str, list[str]]] = {
     "bank_financial": 
         {
             "RY": [ "NYSE", "TSE"],
@@ -156,45 +154,45 @@ forex_tickers = [
     {"GBP": "CAD"}
 ]
 
-def get_selected_tickers() -> Generator[Tuple[str, List[str]], None, None]:
+def get_selected_tickers() -> Generator[tuple[str, list[str]], None, None]:
     g = [(key, ticker_groups[key]) for key in selected_ticker_group_names]
     for group, tickers in g:
        for ticker, exchanges in tickers.items():
            yield (ticker, exchanges)
 
-def get_selected_tickers_list() -> List[Tuple[str, List[str]]]:
+def get_selected_tickers_list() -> list[tuple[str, list[str]]]:
     return list(get_selected_tickers())
 
-def get_all_tickers_list() -> List[Tuple[str, List[str]]]:
+def get_all_tickers_list() -> list[tuple[str, list[str]]]:
     return list(get_all_tickers())
 
-def get_all_tickers() -> Generator[Tuple[str, List[str]], None, None]:
+def get_all_tickers() -> Generator[tuple[str, list[str]], None, None]:
     for values in ticker_groups.values():
         for key, value in values.items():
             yield (key, value)
 
-def get_test_tickers() -> Generator[Tuple[str, List[str]], None, None]:
+def get_test_tickers() -> Generator[tuple[str, list[str]], None, None]:
     l = get_all_tickers_list()
     yield l[0]
     yield l[1]
 
-def get_test_tickers_batches(batch_size:int) -> Generator[List[Tuple[str, List[str]]], None, None]:
+def get_test_tickers_batches(batch_size:int) -> Generator[list[tuple[str, list[str]]], None, None]:
     return batch_generator(get_test_tickers(), batch_size)
 
-def get_all_tickers_batches_list(batch_size:int) -> List[List[Tuple[str, List[str]]]]:
+def get_all_tickers_batches_list(batch_size:int) -> list[list[tuple[str, list[str]]]]:
     return list(get_all_tickers_batches(batch_size))
 
-def get_all_tickers_batches(batch_size:int) -> Generator[List[Tuple[str, List[str]]], None, None]:
+def get_all_tickers_batches(batch_size:int) -> Generator[list[tuple[str, list[str]]], None, None]:
     return batch_generator(get_all_tickers(), batch_size)
 
-def get_selected_tickers_batches_list(batch_size:int) -> List[List[Tuple[str, List[str]]]]:
+def get_selected_tickers_batches_list(batch_size:int) -> list[list[tuple[str, list[str]]]]:
     return list(get_selected_tickers_batches(batch_size))
 
-def get_selected_tickers_batches(batch_size:int) -> Generator[List[Tuple[str, List[str]]], None, None]:
+def get_selected_tickers_batches(batch_size:int) -> Generator[list[tuple[str, list[str]]], None, None]:
     return batch_generator(get_selected_tickers(), batch_size)
 
-def batch_generator(sequence:Generator[Tuple[str, List[str]], None, None], batch_size:int) \
-    -> Generator[List[Tuple[str, List[str]]], None, None]:
+def batch_generator(sequence:Generator[tuple[str, list[str]], None, None], batch_size:int) \
+    -> Generator[list[tuple[str, list[str]]], None, None]:
     batch = []
     for item in sequence:
         batch.append(item)
@@ -204,8 +202,8 @@ def batch_generator(sequence:Generator[Tuple[str, List[str]], None, None], batch
     if batch:
         yield batch
 
-def get_even_items(list:List[Tuple[str, List[str]]]) -> List[Tuple[str, List[str]]] :
+def get_even_items(list:list[tuple[str, list[str]]]) -> list[tuple[str, list[str]]] :
     return list[::2]
 
-def get_odd_items(list:List[Tuple[str, List[str]]]) -> List[Tuple[str, List[str]]] :
+def get_odd_items(list:list[tuple[str, list[str]]]) -> list[tuple[str, list[str]]] :
     return list[1::2]

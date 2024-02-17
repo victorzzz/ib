@@ -1,10 +1,7 @@
 
 import datetime as dt
 
-from typing import Tuple
 from typing import Optional
-from typing import Dict
-from typing import List
 
 from ib_insync import IB, Contract
 import pandas as pd
@@ -172,7 +169,7 @@ ib_client.sleep(3)
 print(histVolatilityBars_1_day)
 
 """
-headTimeStamps:List[dt.datetime] = []
+headTimeStamps:list[dt.datetime] = []
 
 for data_type in ib_cnts.hist_data_types_reduced:
     print(f"Get hostorical data head {data_type} {contract.conId}")
@@ -195,7 +192,7 @@ for data_type in ib_cnts.hist_data_types_reduced:
         useRTH = True
     )
 
-    bars_to_save:Optional[List[Dict[str, float]]] = None
+    bars_to_save:Optional[list[dict[str, float]]] = None
 
     if (data_type == "TRADES"):
         bars_to_save = [

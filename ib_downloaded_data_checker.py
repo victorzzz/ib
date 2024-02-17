@@ -3,9 +3,6 @@ import constants as cnts
 import pandas as pd
 from os.path import exists
 import numpy as np
-from typing import List
-from typing import Dict
-from typing import Tuple
 from typing import Optional
 import ib_tickers as ib_tckrs
 import file_system_utils as fsu
@@ -20,7 +17,7 @@ colmns_to_check = ["timestamp",
                    "OPTION_IMPLIED_VOLATILITY_open", "OPTION_IMPLIED_VOLATILITY_high", "OPTION_IMPLIED_VOLATILITY_low", "OPTION_IMPLIED_VOLATILITY_close",
                    "TRADES_open", "TRADES_high", "TRADES_low", "TRADES_close", "TRADES_volume", "TRADES_average", "TRADES_barCount"]
 
-def check_csv_files(raw_files:List[str]) -> bool:
+def check_csv_files(raw_files:list[str]) -> bool:
     logging.info(f"Starting checking  ...")
 
     result:bool = True
@@ -49,7 +46,7 @@ def check_csv_files(raw_files:List[str]) -> bool:
     return result
 
 def do_step() -> bool:
-    raw_files:List[str] = list(fsu.iterate_files(cnts.data_folder))
+    raw_files:list[str] = list(fsu.iterate_files(cnts.data_folder))
 
     return check_csv_files(raw_files)
 
