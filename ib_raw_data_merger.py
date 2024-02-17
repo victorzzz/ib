@@ -9,8 +9,14 @@ import file_system_utils as fsu
 import df_date_time_utils as df_dt_utils
 import logging
 import ib_logging as ib_log
+import ib_tickers_cache as ib_tickers_cache
 
-def merge_csv_files(tickers:list[tuple[str, list[str]]], raw_files:list[str]):
+def merge_csv_files(
+        tickers:list[tuple[str, list[str]]],
+        raw_files:list[str],
+        lock, 
+        shared_tickers_cache:dict[str, int]):
+    
     ib_log.configure_logging("ib_raw_data_merger")
 
     processed_ticker_symbols = [ticker[0] for ticker in tickers]
@@ -23,6 +29,7 @@ def merge_csv_files(tickers:list[tuple[str, list[str]]], raw_files:list[str]):
         
         for exchange in ticker_exchanges:
 
+            contract_id:Optional[int] = ib_tickers_cache.get_contact_id(ticker_symbvol, exchange, lock, shared_tickers_cache)
 
             for minute_multiplier in cnts.minute_multipliers:
                 filtered_raw_files:list[str] = [file for file in raw_files 
@@ -68,12 +75,15 @@ def merge_csv_files(tickers:list[tuple[str, list[str]]], raw_files:list[str]):
                 for raw_file in filtered_raw_files:
                     fsu.move_file_to_folder(raw_file, cnts.data_archived_folder)
 
-                
 
 def do_step():
     processes = []
 
     raw_files:list[str] = list(fsu.iterate_files(cnts.data_folder))
+
+    lock = multiprocessing.Lock()
+    manager = multiprocessing.Manager()
+    shared_dict = manager.dict()
 
     for tikers_batch in ib_tckrs.get_selected_tickers_batches(cnts.complex_processing_batch_size):
         processed_ticker_symbols = [ticker[0] for ticker in tikers_batch]
@@ -82,7 +92,10 @@ def do_step():
         logging.info(f"Group '{', '.join(processed_ticker_symbols)}' ...")
         logging.info("-------------------------------------")
 
-        process = multiprocessing.Process(target=merge_csv_files, args=(tikers_batch, raw_files,))
+        process = multiprocessing.Process(
+            target=merge_csv_files, 
+            args=(tikers_batch, raw_files, lock, shared_dict))
+        
         processes.append(process)
         process.start()
 
