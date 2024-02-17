@@ -67,6 +67,8 @@ def get_contract_for_symbol_and_exchange(ib_client:IB, symbol:str, exchange:str,
 
     contract_to_qualify:Contract = Contract(conId=contract_id)
     ib_client.qualifyContracts(contract_to_qualify)
+    logging.info(f"Contract qualified {contract_to_qualify.symbol}-{contract_to_qualify.conId} {contract_to_qualify.exchange}")
+    logging.info(f"Qualified contract {contract_to_qualify}")
 
     ib_client.sleep(3)
 
@@ -261,8 +263,8 @@ def download_stock_bars(
 
     for exchange in ticker_exchanges:
 
-        if (exchange != "TSE"):
-            continue
+        # if (exchange != "TSE"):
+        #     continue
 
         logging.info(f"Processing {ticker} {exchange} {minute_multiplier:.0f} minute(s). Date range: {date} .. {limit_date}")
 

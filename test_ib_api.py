@@ -38,23 +38,43 @@ print(contract)
                 * 'RESC': Analyst Estimates
                 * 'CalendarReport': Company's calendar
 """
-                
+
+result_file_prefix = "test_data/test_ib_api"
+
 reportSnapshot = ib_client.reqFundamentalData(contract, "ReportSnapshot")
+with open(f"{result_file_prefix}_{contract.symbol}_{contract.primaryExchange}_ReportSnapshot.xml", "w") as file:
+    file.write(reportSnapshot)
+
 ib_client.sleep(3)
 
 reportsFinSummary = ib_client.reqFundamentalData(contract, "ReportsFinSummary")
+with open(f"{result_file_prefix}_{contract.symbol}_{contract.primaryExchange}_ReportsFinSummary.xml", "w") as file:
+    file.write(reportsFinSummary)
+
 ib_client.sleep(3)
 
 reportsOwnership = ib_client.reqFundamentalData(contract, "ReportsOwnership")
+with open(f"{result_file_prefix}_{contract.symbol}_{contract.primaryExchange}_ReportsOwnership.xml", "w") as file:
+    file.write(reportsOwnership)
+
 ib_client.sleep(3)
 
 reportsFinStatements = ib_client.reqFundamentalData(contract, "ReportsFinStatements")
+with open(f"{result_file_prefix}_{contract.symbol}_{contract.primaryExchange}_ReportsFinStatements.xml", "w") as file:
+    file.write(reportsFinStatements)
+
 ib_client.sleep(3)
 
 resc = ib_client.reqFundamentalData(contract, "RESC")
+with open(f"{result_file_prefix}_{contract.symbol}_{contract.primaryExchange}_RESC.xml", "w") as file:
+    file.write(resc)
+
 ib_client.sleep(3)
 
 calendarReport = ib_client.reqFundamentalData(contract, "CalendarReport")
+with open(f"{result_file_prefix}_{contract.symbol}_{contract.primaryExchange}_CalendarReport.xml", "w") as file:
+    file.write(calendarReport)
+
 ib_client.sleep(3)
 
 ######################################################################################

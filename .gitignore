@@ -167,7 +167,7 @@ cython_debug/
 /IB_MergedData
 /IB_MergedData_Duplicates
 /IB_ErrorInvestigation
+/test_data
 SECRETS.py
-Logs/error_log.txt
-Logs/log.txt
-IB_TickersCache/ib_tickers_cache.json
+/Logs
+/IB_TickersCache
