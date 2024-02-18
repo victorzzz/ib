@@ -20,7 +20,7 @@ def read_cached_data_if_needed(shared_tickers_cache:dict[str, int]) -> None:
         if fsu.is_file_exists(tickers_cache_file):
             with open(tickers_cache_file, "r") as f:
                 shared_tickers_cache.update(json.load(f))
-                f.close()
+
             logging.debug(f"Loaded tickers_cache: {shared_tickers_cache}")
         else:
             logging.debug(f"NO CAHE FILE YET. tickers_cache_file: {tickers_cache_file}")
@@ -66,7 +66,5 @@ def add_contact_id(symbol:str, exchange:str, contact_id:int, lock, shared_ticker
 
         with open(tickers_cache_file, "w") as f:
             f.write(json_str)
-            f.flush()
-            f.close()
 
         logging.debug(f"DONE. Writing cached data to file for {symbol} {exchange} with contact_id {contact_id}")

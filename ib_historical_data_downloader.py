@@ -403,7 +403,6 @@ def do_step():
 
     lock = multiprocessing.Lock()
     manager = multiprocessing.Manager()
-
     shared_dict = manager.dict()
 
     process1 = multiprocessing.Process(

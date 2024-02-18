@@ -31,6 +31,10 @@ def merge_csv_files(
 
             contract_id:Optional[int] = ib_tickers_cache.get_contact_id(ticker_symbvol, exchange, lock, shared_tickers_cache)
 
+            if contract_id is None:
+                logging.warning(f"Contract ID not found for '{ticker_symbvol}' '{exchange}' ...")
+                continue
+
             for minute_multiplier in cnts.minute_multipliers:
                 filtered_raw_files:list[str] = [file for file in raw_files 
                                 if file.startswith(f"{cnts.data_folder}\\{ticker_symbvol}-{contract_id}--ib--{minute_multiplier:.0f}--minute--")]
@@ -49,10 +53,6 @@ def merge_csv_files(
                     
                     raw_data_frame:pd.DataFrame = pd.read_csv(raw_file)
                     raw_data_frame.sort_values(by='timestamp', inplace=True, ascending=False)
-
-                    df_dt_utils.add_normalized_time_columns(raw_data_frame)
-
-                    raw_data_frame = raw_data_frame.copy() # performance optimization
 
                     merged_data_frame = pd.concat([raw_data_frame, merged_data_frame], axis=0)
                     
