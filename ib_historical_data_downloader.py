@@ -18,6 +18,7 @@ import file_system_utils as fs_utils
 import logging
 import ib_logging as ib_log
 import ib_tickers_cache as ib_tickers_cache
+import csv_tool as csvt
 
 #from_date:dt.date = dt.datetime.now().date()
 
@@ -186,22 +187,6 @@ def concat_dataframes(df1:pd.DataFrame, df2:pd.DataFrame, logContext:str) -> Opt
     if nan_before.any():
         logging.warning(f"Concat {logContext} !! NaN found after merging")
 
-        """
-        columns_to_interpolate = [str(column) for column in result_df.columns if ((column != 'timestamp') and not str(column).startswith('TRADES_'))]
-        for column in columns_to_interpolate:
-            nan_column = result_df[column].isna().any()
-            if nan_column:
-                logging.warning(f"Concat {logContext} !! NaN found after merging for {column}. Filling with ffill ...")
-                result_df[column].fillna(inplace=True, method='ffill', )
-
-        trades_columns = [str(column) for column in result_df.columns if str(column).startswith('TRADES_')]
-        for column in trades_columns:
-            nan_column = result_df[column].isna().any()
-            if nan_column > 0:
-                logging.warning(f"Concat {logContext} !! NaN found after merging for {column}. Filling with 0 ...")
-                result_df[column].fillna(inplace=True, value=0)
-        """
-
     return result_df
 
 nearest_data_head_cache:dict[str, dt.datetime] = {}
@@ -223,6 +208,19 @@ def get_nearest_data_head(ib_client:IB, contract:Contract, data_types_to_downloa
 
     return maxHeadTimeStamp
 
+def get_last_merged_datetime(ticker:str, exchange:str, minute_multiplier:float) -> Optional[dt.datetime]:
+    file_name = f"{cnts.merged_data_folder}/{ticker}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged.csv"
+    if not exists(file_name):
+        return None
+    
+    df = csvt.get_dataframe_first_row_only(file_name)
+    if (len(df) == 0):
+        return None
+    
+    timestamp = df['timestamp'][0]
+
+    return dt_utils.nyse_timestamp_to_date_time(int(timestamp))
+
 def download_stock_bars(
         date:dt.date, 
         ib_client:IB, 
@@ -243,26 +241,7 @@ def download_stock_bars(
     ticker:str = ticker_info[0]
     ticker_exchanges:list[str] = ticker_info[1]
 
-    # read previously downloaded and merged data
-    """
-    merged_data_file_name = f"{cnts.merged_data_folder}/{ticker}--price-candle--{minute_multiplier}--minute.csv"
-
-    if exists(merged_data_file_name):
-
-        merged_df = pd.read_csv(merged_data_file_name)
-
-        last_record = merged_df.tail(1)
-        las_time_stamp = last_record['timestamp'].values[0]
-
-        last_date = cnts.nyse_msec_timestamp_to_date_time(las_time_stamp).date()
-
-        limit_date = max(limit_date, last_date)
-    """
-
     for exchange in ticker_exchanges:
-
-        # if (exchange != "TSE"):
-        #     continue
 
         logging.info(f"Processing {ticker} {exchange} {minute_multiplier:.0f} minute(s). Date range: {date} .. {limit_date}")
 
@@ -276,6 +255,14 @@ def download_stock_bars(
         logging.info(f"Nearest data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
 
         limit_date_for_contract = max(limit_date, nearest_data_head)
+
+        last_merged_datetime = get_last_merged_datetime(ticker, exchange, minute_multiplier)
+        if (last_merged_datetime is None):
+            logging.info(f"No merged data for {ticker} {exchange} {minute_multiplier:.0f} minute(s)")
+        else:
+            logging.info(f"Last merged datetime found for {ticker} {exchange} {minute_multiplier:.0f} minute(s): {last_merged_datetime}")
+            limit_date_for_contract = max(limit_date_for_contract, last_merged_datetime.date() + dt.timedelta(days=1))
+
         logging.info(f"Limit date for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {limit_date_for_contract}")
 
         processing_date = date
@@ -318,9 +305,7 @@ def download_stock_bars(
                         logging.error(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                         raise Exception(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
 
-                    bars.reverse()
-
-                    oldest_date = dt_utils.bar_date_to_date(bars[-1].date)
+                    oldest_date = dt_utils.bar_date_to_date(bars[0].date)
                     oldest_dates.append(oldest_date)
                     
                     df:pd.DataFrame = bars_to_dataframe(data_type, bars)
@@ -334,7 +319,7 @@ def download_stock_bars(
                         if (concatenated_data_frame is None):
                             logging.error(f"DOWNLOADER !!!! Dataframe is non after merging {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                             investigation_file_name = f"{cnts.error_investigation_folder}/{data_type}--{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}.csv"
-                            df.to_csv(file_name, index=False)
+                            df.to_csv(investigation_file_name, index=False)
                         else:
                             final_data_frame = concatenated_data_frame
 
