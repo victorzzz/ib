@@ -248,6 +248,20 @@ def download_stock_bars(
         contract:Contract = get_contract_for_symbol_and_exchange(ib_client, ticker, exchange, lock, shared_tickers_cache)
         ticker_con_id = contract.conId
 
+        processing_date = date
+
+        last_merged_datetime = get_last_merged_datetime(ticker, ticker_con_id, exchange, minute_multiplier)
+        if (last_merged_datetime is None):
+            logging.info(f"No merged data for {ticker} {exchange} {minute_multiplier:.0f} minute(s)")
+        else:
+            logging.info(f"Last merged datetime found for {ticker} {exchange} {minute_multiplier:.0f} minute(s): {last_merged_datetime}")
+
+            if (processing_date <= last_merged_datetime.date()):
+                logging.info(f"Skipping {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{processing_date}' <= '{last_merged_datetime}'")
+                continue
+
+            limit_date = max(limit_date, last_merged_datetime.date())
+
         nearest_data_head = get_nearest_data_head(ib_client, contract, data_types_to_download)
         logging.info(f"IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
         
@@ -256,16 +270,7 @@ def download_stock_bars(
 
         limit_date_for_contract = max(limit_date, nearest_data_head)
 
-        last_merged_datetime = get_last_merged_datetime(ticker, ticker_con_id, exchange, minute_multiplier)
-        if (last_merged_datetime is None):
-            logging.info(f"No merged data for {ticker} {exchange} {minute_multiplier:.0f} minute(s)")
-        else:
-            logging.info(f"Last merged datetime found for {ticker} {exchange} {minute_multiplier:.0f} minute(s): {last_merged_datetime}")
-            limit_date_for_contract = max(limit_date_for_contract, last_merged_datetime.date() + dt.timedelta(days=1))
-
         logging.info(f"Limit date for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {limit_date_for_contract}")
-
-        processing_date = date
 
         while processing_date > limit_date_for_contract:
             date_to = processing_date

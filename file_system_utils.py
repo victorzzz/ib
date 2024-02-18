@@ -47,8 +47,16 @@ def move_file_to_folder(file_path:str, destination_folder:str):
     if not os.path.exists(destination_folder):
         os.makedirs(destination_folder)
 
-    # Move the file
-    shutil.move(file_path, destination_folder)
+    # Get the file name
+    file_name = os.path.basename(file_path)
+
+    # Get the destination file path
+    destination_file_path = os.path.join(destination_folder, file_name)
+
+    if not os.path.isfile(destination_file_path):
+
+        # Move the file
+        shutil.move(file_path, destination_folder)
 
 def create_folder_if_not_exists(folder_path:str):
     if not os.path.exists(folder_path):
