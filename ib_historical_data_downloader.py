@@ -22,7 +22,7 @@ import csv_tool as csvt
 
 #from_date:dt.date = dt.datetime.now().date()
 
-from_date:dt.date = dt.date(2024, 1, 28)
+from_date:dt.date = dt.date(2024, 2, 17)
 
 fb_from_date:dt.date = dt.date(2022, 6, 8)
 meta_to_day:dt.date = dt.date(2022, 6, 9)
@@ -208,8 +208,8 @@ def get_nearest_data_head(ib_client:IB, contract:Contract, data_types_to_downloa
 
     return maxHeadTimeStamp
 
-def get_last_merged_datetime(ticker:str, exchange:str, minute_multiplier:float) -> Optional[dt.datetime]:
-    file_name = f"{cnts.merged_data_folder}/{ticker}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged.csv"
+def get_last_merged_datetime(ticker:str, contract_id:int, exchange:str, minute_multiplier:float) -> Optional[dt.datetime]:
+    file_name = f"{cnts.merged_data_folder}/{ticker}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged.csv"
     if not exists(file_name):
         return None
     
@@ -256,7 +256,7 @@ def download_stock_bars(
 
         limit_date_for_contract = max(limit_date, nearest_data_head)
 
-        last_merged_datetime = get_last_merged_datetime(ticker, exchange, minute_multiplier)
+        last_merged_datetime = get_last_merged_datetime(ticker, ticker_con_id, exchange, minute_multiplier)
         if (last_merged_datetime is None):
             logging.info(f"No merged data for {ticker} {exchange} {minute_multiplier:.0f} minute(s)")
         else:
