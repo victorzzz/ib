@@ -56,6 +56,22 @@ def nyse_timestamp_to_week(epoch_time:int) -> int:
 
     return week_number
 
+def nyse_timestamp_to_normalized_day_year_with_round_5(epoch_time:int) -> float:
+
+    day_of_year = nyse_timestamp_to_day_of_year(epoch_time) - 1
+    
+    normalized_day_of_year = day_of_year / 365.0
+
+    return round(normalized_day_of_year, 5)
+
+def nyse_timestamp_to_day_of_year(epoch_time:int) -> int:
+
+    dt:datetime = nyse_timestamp_to_date_time(epoch_time)
+
+    day_of_year = dt.timetuple().tm_yday
+
+    return day_of_year
+
 
 def nyse_timestamp_to_normalized_day_of_week_with_round_2(epoch_time:int) -> float:
 

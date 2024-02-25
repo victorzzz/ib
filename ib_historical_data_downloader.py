@@ -22,7 +22,7 @@ import csv_tool as csvt
 
 #from_date:dt.date = dt.datetime.now().date()
 
-from_date:dt.date = dt.date(2024, 2, 17)
+from_date:dt.date = dt.date(2024, 2, 16)
 
 fb_from_date:dt.date = dt.date(2022, 6, 8)
 meta_to_day:dt.date = dt.date(2022, 6, 9)

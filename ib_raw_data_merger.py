@@ -99,10 +99,10 @@ def do_step():
         processes.append(process)
         process.start()
 
-        # Wait for all processes to finish
-        logging.info(f"Waiting for '{', '.join(processed_ticker_symbols)}' ...")
-        for process in processes:
-            process.join()
+    # Wait for all processes to finish
+    logging.info(f"Waiting for '{', '.join(processed_ticker_symbols)}' ...")
+    for process in processes:
+        process.join()
 
 # ----------------------------
 

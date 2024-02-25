@@ -17,9 +17,9 @@ ib_client.connect(
     clientId=ib_cnts.hist_data_loader_live_client_id,
     host=ib_cnts.hist_data_loader_live_host)
 
-# contract = Contract(conId=2008980)
+contract = Contract(conId=2008980)
 # contract = Contract(conId=4458964)
-contract = Contract(conId=4458978)
+# contract = Contract(conId=4458978)
 
 ib_client.qualifyContracts(contract)
 
@@ -36,6 +36,7 @@ print(contract)
                 * 'CalendarReport': Company's calendar
 """
 
+"""
 result_file_prefix = "test_data/test_ib_api"
 
 reportSnapshot = ib_client.reqFundamentalData(contract, "ReportSnapshot")
@@ -79,8 +80,6 @@ ib_client.sleep(3)
 news = ib_client.reqHistoricalNews(contract.conId, "FLY", "20210101 00:00:00", "20241102 00:00:00", 300)
 ib_client.sleep(3)
 
-# date_to = dt.datetime.now() - dt.timedelta(days=4)
-date_to = dt.datetime(2024, 1, 30)
 
 final_data_frame:Optional[pd.DataFrame] = None
 
@@ -88,6 +87,10 @@ histValatility:Optional[pd.DataFrame] = None
 
 headTimeStamp:dt.datetime = ib_client.reqHeadTimeStamp(contract = contract, whatToShow="MIDPOINT", useRTH = True)
 ib_client.sleep(3)
+"""
+
+# date_to = dt.datetime.now() - dt.timedelta(days=4)
+date_to = dt.datetime(2024, 2, 19)
 
 midpointBars_1_min = ib_client.reqHistoricalData(
         contract = contract,
