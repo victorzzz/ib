@@ -17,6 +17,8 @@ hist_data_types = (
 
 hist_data_types_reduced = (
     "MIDPOINT",
+    "BID",
+    "ASK",
     "TRADES",)
 
 

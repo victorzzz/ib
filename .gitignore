@@ -163,8 +163,10 @@ cython_debug/
 /IB_DATA
 /IB_DATA_Copy
 /IB_DATA_Archived
+/IB_DATA_Archived___old
 /IB_LastMergedTimestamps
 /IB_MergedData
+/IB_MergedData___old
 /IB_MergedData_Duplicates
 /IB_ErrorInvestigation
 /test_data
