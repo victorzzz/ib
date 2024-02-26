@@ -61,6 +61,7 @@ def create_required_folders():
     create_folder_if_not_exists(cnts.data_archived_folder)
     create_folder_if_not_exists(cnts.merged_data_folder)
     create_folder_if_not_exists(cnts.merged_data_duplicates_folder)
+    create_folder_if_not_exists(cnts.data_sets_folder)
     create_folder_if_not_exists(cnts.last_merged_timestamps_folder)
     create_folder_if_not_exists(cnts.error_investigation_folder)
     create_folder_if_not_exists(cnts.tickers_cache_folder)

@@ -4,6 +4,7 @@ from typing import List
 data_folder = "IB_Data"
 data_archived_folder = "IB_Data_Archived"
 merged_data_folder = "IB_MergedData"
+merged_data_folder_old = "IB_MergedData___old"
 merged_data_duplicates_folder = "IB_MergedData_Duplicates"
 error_investigation_folder = "IB_ErrorInvestigation"
 tickers_cache_folder = "IB_TickersCache"
@@ -46,16 +47,6 @@ minute_multipliers = {
     #60.0: "1 hour"
     }
 
-ema_spans = (7, 14, 28, 56, 112, 224)
-rsi_spans = (7, 14, 28)
-
-volume_profile_depths = (28, 56, 112, 224)
-
-long_term_prediction_time_frames = {
-    (10, "minute"): ( 42 * 3, 42 * 5, 42 * 7)#,
-    #(30, "minute"): ( 14 * 3, 14 * 5)
-}
-
 long_term_buy_thresholds = (0.021, 0.035, 0.049)
 
 loss_levels = np.array([0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0, 1.125, 1.25, 1.375, 1.5, 1.625, 1.75, 1.875, 2.0])
@@ -65,6 +56,6 @@ loss_level_for_training = 0.625
 gain_level_for_training = 1.125
 
 
-complex_processing_batch_size = 2
+complex_processing_batch_size = 12
 
 float_nan = float("nan")
