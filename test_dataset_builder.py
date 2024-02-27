@@ -5,10 +5,16 @@ import ib_tickers as ib_tckrs
 import file_system_utils as fsu
 import df_date_time_utils as df_dt_utils
 import constants as cnts
+import logging
+import ib_logging as ib_log
 
 import ib_tickers as ib_tckrs
 
 if __name__ == "__main__":
+
+    ib_log.configure_logging("test_dataset_builder")
+
+    logging.info(f"Starting {__file__} ...")
 
     fsu.create_required_folders()
 

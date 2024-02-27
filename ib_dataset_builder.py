@@ -64,34 +64,55 @@ def create_datasets(
         lock, 
         shared_tickers_cache:dict[str, int]):
     
+    logging.info(f"Processing tickers: {tickers}")
+
     for ticker in tickers:
         ticker_symbvol:str = ticker[0]
         ticker_exchanges:list[str] = ticker[1]
         
         for exchange in ticker_exchanges:
+
+            logging.info(f"Loading merged dataframes '{ticker_symbvol}' - '{exchange}' ...")
+
             dfs = load_merged_dataframes(ticker_symbvol, exchange, lock, shared_tickers_cache)
 
             enriched_dfs = {}
 
             for minute_multiplier, df in dfs.items():
+
+                logging.info(f"Processing '{ticker_symbvol}' - '{exchange}' - {minute_multiplier} ...")
+                logging.info(f"Adding normalized time columns ...")
+
                 replace_nan_values(df)
                 
+                logging.info(f"Adding normalized time columns ...")
+
                 df = df_dt_utils.add_normalized_time_columns(df)
+
+                logging.info(f"Reversing dataframe ...")
 
                 df = reverse_dataframe(df)
 
+                logging.info(f"Adding technical indicators ...")
+
                 df = df_tech_utils.add_technical_indicators(df)
+
+                logging.info(f"Adding volume profile ...")
+
                 df = df_tech_utils.add_volume_profile(df)
                 
+                logging.info(f"Adding minute multiplier to column names ...")
+
                 df = add_minute_multiplier_to_column_names(df, minute_multiplier)
 
                 enriched_dfs[minute_multiplier] = df
 
+                logging.info(f"Saving dataset ...")
+                
                 result_file_name = f"{cnts.data_sets_folder}/{ticker_symbvol}-{exchange}--ib--{minute_multiplier:.0f}--minute--dataset.csv"
                 df.to_csv(result_file_name, index=False)
 
             dfs.clear()
-
 
 
 def do_step():
