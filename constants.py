@@ -4,7 +4,7 @@ from typing import List
 data_folder = "IB_Data"
 data_archived_folder = "IB_Data_Archived"
 merged_data_folder = "IB_MergedData"
-merged_data_folder_old = "IB_MergedData___old"
+# merged_data_folder_old = "IB_MergedData___old"
 merged_data_duplicates_folder = "IB_MergedData_Duplicates"
 error_investigation_folder = "IB_ErrorInvestigation"
 tickers_cache_folder = "IB_TickersCache"
