@@ -81,7 +81,8 @@ def create_datasets(
             for minute_multiplier, df in dfs.items():
 
                 logging.info(f"Processing '{ticker_symbvol}' - '{exchange}' - {minute_multiplier} ...")
-                logging.info(f"Adding normalized time columns ...")
+
+                logging.info(f"Replasing nan values ...")
 
                 replace_nan_values(df)
                 

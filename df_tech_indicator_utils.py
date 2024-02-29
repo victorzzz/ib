@@ -18,22 +18,23 @@ depth_to_bins_koeff = 4
 
 def add_technical_indicators(df:pd.DataFrame) -> pd.DataFrame:
 
-    logging.info(f"np collected ...")
-
-    for period in (7, 14, 21, 28):
+    for period in (7, 14, 21):
         df[f'MFI_MIDPOINT_{period}'] = ta.mfi(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], df['TRADES_volume'], length=period)
         df[f'MFI_TRADES_average_{period}'] = ta.mfi(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], df['TRADES_volume'], length=period)
         df['MFI_BID_low_ASK_high_MIDPOINT'] = ta.mfi(df['ASK_high'], df['BID_low'], df['MIDPOINT_close'], df['TRADES_volume'], window=period)
 
     logging.info(f"Money flow index added to dataframe ...")    
 
-    for period in (10, 20, 40):
-        for constant in (0.007, 0.015, 0.03):
-            df[f'CCI_MIDPOINT_{period}_{int(constant*1000)}'] = ta.cci(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], length=period, c=constant)
-            df[f'CCI_TRADES_average_{period}_{int(constant*1000)}'] = ta.cci(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], length=period, c=constant)
-            df[f'CCI_BID_low_ASK_high_MIDPOINT_{period}_{int(constant*1000)}'] = ta.cci(df['ASK_high'], df['BID_low'], df['MIDPOINT_close'], length=period, c=constant)
+    for period in (7, 14, 21):
+            df[f'CCI_MIDPOINT_{period}'] = ta.cci(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], length=period)
+            df[f'CCI_TRADES_average_{period}'] = ta.cci(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], length=period)
+            df[f'CCI_BID_low_ASK_high_MIDPOINT_{period}'] = ta.cci(df['ASK_high'], df['BID_low'], df['MIDPOINT_close'], length=period)
     
     logging.info(f"Commodity channel index added to dataframe ...")
+
+    df = df.copy()
+
+    logging.info(f"Dataframe copied 1 ...")
 
     df['ADI_MIDPOINT'] = ta.ad(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], df['TRADES_volume'])
     df['ADI_TRADES_average'] = ta.ad(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], df['TRADES_volume'])
@@ -45,11 +46,15 @@ def add_technical_indicators(df:pd.DataFrame) -> pd.DataFrame:
 
     logging.info(f"On balance volume added to dataframe ...")
 
-    for period in (10, 20, 30, 40):
+    for period in (10, 20, 30):
         df[f'CMF_MIDPOINT_{period}'] = ta.cmf(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], df['TRADES_volume'], length=period)
         df[f'CMF_TRADES_average_{period}'] = ta.cmf(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], df['TRADES_volume'], length=period)
 
     logging.info(f"Chaikin money flow added to dataframe ...")
+
+    df = df.copy()
+
+    logging.info(f"Dataframe copied 2 ...")
 
     for period in (6, 13, 26):
         df[f'FI_MIDPOINT_{period}'] = ta.efi(df['MIDPOINT_close'], df['TRADES_volume'], length=period)
@@ -67,57 +72,72 @@ def add_technical_indicators(df:pd.DataFrame) -> pd.DataFrame:
 
     logging.info(f"Negative volume index added to dataframe ...")
 
-    for period in (7, 14, 21, 28):
+    for period in (7, 14, 21):
         df[f'EOM_MIDPOINT_{period}'] = ta.eom(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], df['TRADES_volume'], length=period)
         df[f'EOM_TRADES_{period}'] = ta.eom(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], df['TRADES_volume'], length=period)
 
     logging.info(f"Ease of movement added to dataframe ...")
 
-    for period in (7, 14, 21, 28):
+    df = df.copy()
+
+    logging.info(f"Dataframe copied 3 ...")
+
+    for period in (7, 14, 21):
         df[f'ATR_MIDPOINT_{period}'] = ta.atr(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], length=period)
         df[f'ATR_TRADES_average_{period}'] = ta.atr(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], length=period)
         df[f'ATR_BID_low_ASK_high_MIDPOINT_close_{period}'] = ta.atr(df['ASK_high'], df['BID_low'], df['MIDPOINT_close'], length=period)
 
     logging.info(f"Average true range added to dataframe ...")
 
-    for period in (7, 14, 21, 28):
+    for period in (7, 14, 21):
         df[f'RSI_MIDPOINT_{period}'] = ta.rsi(df['MIDPOINT_close'], length=period)
         df[f'RSI_TRADES_average_{period}'] = ta.rsi(df['TRADES_average'], length=period)
 
     logging.info(f"Relative strength index added to dataframe ...")
 
-    for period in (10, 20, 30, 40):
+    for period in (10, 20, 30):
         df[[f'BBL_MIDPOINT_{period}', f'BBM_MIDPOINT_{period}', f'BBU_MIDPOINT_{period}', f'BBB_MIDPOINT_{period}', f'BBP_MIDPOINT_{period}']] = ta.bbands(df['MIDPOINT_close'], length=period)
         df[[f'BBL_TRADES_average_{period}', f'BBM_TRADES_average_{period}', f'BBU_TRADES_average_{period}', f'BBB_TRADES_average_{period}', f'BBP_MIDPOINT_{period}']] = ta.bbands(df['TRADES_average'], length=period)
 
     logging.info(f"Bollinger bands added to dataframe ...")
 
-    for period, s in ((7,2), (10,2), (14,3), (21,4), (28,6)):
-        df[f'STOCH_k_MIDPOINT_{period}_{s}', f'STOCH_d_MIDPOINT_{period}_{s}'] = ta.stoch(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], k=period, d=s, smooth_k=s)
-        df[f'STOCH_k_TRADES_average_{period}_{s}', f'STOCH_d_TRADES_average_{period}_{s}'] = ta.stoch(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], k=period, d=s, smooth_k=s)
-        df[f'STOCH_k_BID_low_ASK_high_TRADES_average_{period}_{s}', f'STOCH_d_BID_low_ASK_high_TRADES_average_{period}_{s}'] = ta.stoch(df['ASK_high'], df['BID_low'], df['TRADES_average'], k=period, d=s, smooth_k=s)
+    for period, s in ((10,2), (14,3), (21,4)):
+        df[[f'STOCH_k_MIDPOINT_{period}_{s}', f'STOCH_d_MIDPOINT_{period}_{s}']] = ta.stoch(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], k=period, d=s, smooth_k=s)
+        df[[f'STOCH_k_TRADES_average_{period}_{s}', f'STOCH_d_TRADES_average_{period}_{s}']] = ta.stoch(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], k=period, d=s, smooth_k=s)
+        df[[f'STOCH_k_BID_low_ASK_high_TRADES_average_{period}_{s}', f'STOCH_d_BID_low_ASK_high_TRADES_average_{period}_{s}']] = ta.stoch(df['ASK_high'], df['BID_low'], df['TRADES_average'], k=period, d=s, smooth_k=s)
 
     logging.info(f"Stochastic oscillator added to dataframe ...")
 
-    for step in (0.01, 0.02, 0.03):
-        for max_step in (0.1, 0.2, 0.3):
-            df[f'PSAR_MIDPOINT_{step}_{max_step}'] = ta.psar(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], af=step, max_af=max_step)['PSAR']
-            df[f'PSAR_TRADES_average_{step}_{max_step}'] = ta.psar(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], af=step, max_af=max_step)['PSAR']
-            df[f'PSAR_BID_low_ASK_high_TRADES_average_{step}_{max_step}'] = ta.psar(df['ASK_high'], df['BID_low'], df['TRADES_average'], af=step, max_af=max_step)['PSAR']
+    df = df.copy()
+
+    logging.info(f"Dataframe copied 4 ...")
+
+    """
+    df[[
+        f'PSARl_MIDPOINT', 
+        f'PSARs_MIDPOINT',
+        f'PSARaf_MIDPOINT',
+        f'PSARr_MIDPOINT']] = ta.psar(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'])
 
     logging.info(f"Parabolic SAR added to dataframe ...")
+    """
 
-    for slow, fast, signal in ((20, 9, 7), (26, 12, 9), (39, 18, 13),  (52, 24, 18)):
-            df[
+    for slow, fast, signal in ((20, 9, 7), (26, 12, 9), (39, 18, 13)):
+            df[[
             f'MACD_MIDPOINT_{slow}_{fast}_{signal}',
             f'MACD_signal_MIDPOINT_{slow}_{fast}_{signal}',
-            f'MACD_histogram_MIDPOINT_{slow}_{fast}_{signal}'] = ta.macd(df['MIDPOINT_close'], slow=slow, fast=fast, signal=signal)
-            df[
+            f'MACD_histogram_MIDPOINT_{slow}_{fast}_{signal}']] = ta.macd(df['MIDPOINT_close'], slow=slow, fast=fast, signal=signal)
+
+            df[[
             f'MACD_MIDPOINT_{slow}_{fast}_{signal}',
             f'MACD_signal_MIDPOINT_{slow}_{fast}_{signal}',
-            f'MACD_histogram_MIDPOINT_{slow}_{fast}_{signal}'] = ta.macd(df['TRADES_average'], slow=slow, fast=fast, signal=signal)
+            f'MACD_histogram_MIDPOINT_{slow}_{fast}_{signal}']] = ta.macd(df['TRADES_average'], slow=slow, fast=fast, signal=signal)
 
     logging.info(f"Moving average convergence divergence added to dataframe ...")
+
+    df = df.copy()
+
+    logging.info(f"Dataframe copied 5 ...")
 
     return df
 
