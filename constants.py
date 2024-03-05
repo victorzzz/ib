@@ -43,8 +43,10 @@ minute_multipliers = {
     3.0: "3 mins", 
     # 5.0: "5 mins", 
     10.0: "10 mins", 
-    30.0: "30 mins" #,
-    #60.0: "1 hour"
+    30.0: "30 mins",
+    #60.0: "1 hour",
+    120.0: "2 hours",
+    390.0: "1 day",
     }
 
 long_term_buy_thresholds = (0.021, 0.035, 0.049)

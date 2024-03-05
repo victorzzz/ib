@@ -13,8 +13,8 @@ import pandas_ta as ta
 
 import logging
 
-volume_profile_depths = (56, 112, 224,)
-depth_to_bins_koeff = 4
+volume_profile_depths = (112, 224,)
+depth_to_bins_koeff = 8
 
 def add_technical_indicators(df:pd.DataFrame) -> pd.DataFrame:
 
@@ -142,6 +142,10 @@ def add_technical_indicators(df:pd.DataFrame) -> pd.DataFrame:
     return df
 
 def add_volume_profile(df:pd.DataFrame) -> pd.DataFrame:
+
+    print(df)
+    print(df.index)
+
     vwap = df['TRADES_average'].to_numpy(copy=True)
     volume = df['TRADES_volume'].to_numpy(copy=True)
 
@@ -149,12 +153,14 @@ def add_volume_profile(df:pd.DataFrame) -> pd.DataFrame:
 
     for depth in volume_profile_depths:
 
+        logging.info(f"Processing volume profile for depth {depth} ...")
+
         num_bins = int(depth / depth_to_bins_koeff)
         df[f'vp_{depth}_width'] = 0
 
         for bin in range(num_bins):
-            df[f'vp_{depth}_{bin}_price'] = 0
-            df[f'vp_{depth}_{bin}_volume'] = 0
+            df[f'vp_{depth}_{bin}_price'] = 0.0
+            df[f'vp_{depth}_{bin}_volume'] = 0.0
 
         df = df.copy()
 
@@ -162,6 +168,9 @@ def add_volume_profile(df:pd.DataFrame) -> pd.DataFrame:
           
           vwap_for_volume_profile = vwap[index - depth:index]
           volume_for_volume_profile = volume[index - depth:index]
+
+          # if np.isnan(vwap_for_volume_profile).any() or np.isnan(volume_for_volume_profile).any():
+            # logging.error(f"Nan values found for index {index}. Depth: {depth}. Total records: {total_records}. ")
 
           hist, bins = np.histogram(vwap_for_volume_profile, bins=num_bins, weights=volume_for_volume_profile)
 
@@ -175,13 +184,13 @@ def add_volume_profile(df:pd.DataFrame) -> pd.DataFrame:
           sorted_hist = hist[sorted_indices]
           sorted_bins_start = bins[:-1][sorted_indices]
           
-          df.loc[index, f'vp_{depth}_width'] = f'{bins[1] - bins[0]:.6e}'
+          df.loc[index, f'vp_{depth}_width'] = bins[1] - bins[0]
 
           for histogram_index, item in enumerate(zip(sorted_bins_start, sorted_hist)):
               bin_start, histogram_volume = item
 
-              df.loc[index, f'vp_{depth}_{histogram_index}_price'] = f'{bin_start:.6e}'
-              df.loc[index, f'vp_{depth}_{histogram_index}_volume'] = '0.0' if histogram_volume == 0.0 else f'{histogram_volume:.6e}'
+              df.loc[index, f'vp_{depth}_{histogram_index}_price'] = bin_start
+              df.loc[index, f'vp_{depth}_{histogram_index}_volume'] = histogram_volume
 
     return df
 

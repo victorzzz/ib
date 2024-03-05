@@ -1,5 +1,6 @@
 
 from typing import Optional
+import math
 
 from os.path import exists
 import time
@@ -91,11 +92,18 @@ def get_bars_for_contract(
             reqHistoricalDataStartTime = time.time()
             
             try:
+                
+                furation_param = f"{duration_days} D"
+                if duration_days > 30:
+                        if duration_days < 360:
+                            furation_param = f"{math.ceil(duration_days/30.0)} M"
+                        else:
+                            furation_param = f"{math.ceil(duration_days/360.0)} Y"
 
                 bars = ib_client.reqHistoricalData(
                     contract = contract,
                     endDateTime = date_to,
-                    durationStr = f"{duration_days} D",
+                    durationStr = furation_param,
                     barSizeSetting = cnts.minute_multipliers[minute_multiplier],
                     whatToShow=data_type,
                     useRTH = True

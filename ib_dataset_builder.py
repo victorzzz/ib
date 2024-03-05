@@ -42,6 +42,7 @@ def replace_nan_values(df:pd.DataFrame):
     for column in df.columns:
         if column in midpoint_fields or column in bid_fields or column in ask_fields or column in trades_price_fields:
             df[column].fillna(method='bfill', inplace=True)
+            df[column].fillna(method='ffill', inplace=True)
         elif column in trades_volume_fields:
             df[column].fillna(0.0, inplace=True)
 
