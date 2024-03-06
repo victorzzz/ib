@@ -169,9 +169,6 @@ def add_volume_profile(df:pd.DataFrame) -> pd.DataFrame:
           vwap_for_volume_profile = vwap[index - depth:index]
           volume_for_volume_profile = volume[index - depth:index]
 
-          # if np.isnan(vwap_for_volume_profile).any() or np.isnan(volume_for_volume_profile).any():
-            # logging.error(f"Nan values found for index {index}. Depth: {depth}. Total records: {total_records}. ")
-
           hist, bins = np.histogram(vwap_for_volume_profile, bins=num_bins, weights=volume_for_volume_profile)
 
           sum_hist = np.sum(hist)
