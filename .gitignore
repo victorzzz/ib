@@ -170,6 +170,7 @@ cython_debug/
 /IB_MergedData___old
 /IB_MergedData_Duplicates
 /IB_ErrorInvestigation
+/ib_data_sets
 /test_data
 SECRETS.py
 /Logs

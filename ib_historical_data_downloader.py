@@ -19,7 +19,8 @@ import file_system_utils as fs_utils
 import logging
 import ib_logging as ib_log
 import ib_tickers_cache as ib_tickers_cache
-import csv_tool as csvt
+
+import df_loader_saver as df_ls
 
 #from_date:dt.date = dt.datetime.now().date()
 
@@ -288,8 +289,8 @@ def download_stock_bars(
 
             tiker_to_save = ticker if (save_as is None) else save_as
 
-            file_name = f"{cnts.data_folder}/{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}.csv"
-            if exists(file_name):
+            file_name = f"{cnts.data_folder}/{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}"
+            if df_ls.is_df_exists(file_name):
                 logging.info(f"File {file_name} exists")
                 oldest_date_in_data_from_file = get_oldest_date_from_saved_data(file_name)
                 if (oldest_date_in_data_from_file is None):
@@ -333,8 +334,11 @@ def download_stock_bars(
                             f"{data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                         if (concatenated_data_frame is None):
                             logging.error(f"DOWNLOADER !!!! Dataframe is non after merging {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
-                            investigation_file_name = f"{cnts.error_investigation_folder}/{data_type}--{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}.csv"
-                            df.to_csv(investigation_file_name, index=False)
+                            
+                            investigation_file_name = f"{cnts.error_investigation_folder}/{data_type}--{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}"
+                            df_ls.save_df(df, investigation_file_name, "csv")
+
+                            # df.to_csv(investigation_file_name, index=False)
                         else:
                             final_data_frame = concatenated_data_frame
 
@@ -345,8 +349,10 @@ def download_stock_bars(
                 if (final_data_frame is None):
                     logging.warning(f"***** Empty data for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
                 else:
-                    logging.info(f"Saving file {file_name}. {len(final_data_frame)}") 
-                    final_data_frame.to_csv(file_name, index=False)
+                    logging.info(f"Saving file {file_name}. {len(final_data_frame)}")
+
+                    df_ls.save_df(final_data_frame, file_name)
+                    # final_data_frame.to_csv(file_name, index=False)
 
                 if (len(oldest_dates) > 0):
                     min_oldest_date = min(oldest_dates)

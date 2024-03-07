@@ -29,8 +29,8 @@ selected_ticker_group_names:list[str] = [
 ticker_groups:dict[str, dict[str, list[str]]] = {
     "bank_financial": 
         {
-            "RY": [ "NYSE", "TSE"],
-            "TD": [ "NYSE", "TSE"],
+            "RY": [ "TSE", "NYSE"],
+            "TD": [ "TSE", "NYSE"],
             "BNS": [ "NYSE", "TSE"], 
             "BMO": [ "NYSE", "TSE"],
             "MFC": [ "NYSE", "TSE"],

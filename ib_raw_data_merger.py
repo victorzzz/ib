@@ -10,6 +10,7 @@ import df_date_time_utils as df_dt_utils
 import logging
 import ib_logging as ib_log
 import ib_tickers_cache as ib_tickers_cache
+import df_loader_saver as df_ls
 
 def merge_csv_files(
         tickers:list[tuple[str, list[str]]],
@@ -43,10 +44,10 @@ def merge_csv_files(
                     logging.warning(f"No files for '{ticker_symbvol}-{contract_id}--ib--{minute_multiplier:.0f}--minute--' ...")
                     continue
 
-                merged_file_name = f"{cnts.merged_data_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged.csv"
+                merged_file_name = f"{cnts.merged_data_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged"
 
                 merged_data_frame:pd.DataFrame = pd.DataFrame()
-                if exists(merged_file_name):
+                if df_ls.is_df_exists(merged_file_name):
                     merged_data_frame = pd.read_csv(merged_file_name)
 
                 for raw_file in filtered_raw_files:
@@ -69,7 +70,9 @@ def merge_csv_files(
                 merged_data_frame.drop_duplicates(subset=['timestamp'], inplace=True)
 
                 logging.info(f"Saving {merged_file_name} ...")
-                merged_data_frame.to_csv(merged_file_name, index=False)
+                
+                df_ls.save_df(merged_data_frame, merged_file_name)
+                # merged_data_frame.to_csv(merged_file_name, index=False)
 
                 logging.info(f"Archiving {', '.join(filtered_raw_files)} ...")
                 for raw_file in filtered_raw_files:

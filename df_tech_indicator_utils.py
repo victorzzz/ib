@@ -14,7 +14,7 @@ import pandas_ta as ta
 import logging
 
 volume_profile_depths = (112, 224,)
-depth_to_bins_koeff = 8
+depth_to_bins_koeff = 4
 
 def add_technical_indicators(df:pd.DataFrame) -> pd.DataFrame:
 
@@ -141,53 +141,60 @@ def add_technical_indicators(df:pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def add_volume_profile(df:pd.DataFrame) -> pd.DataFrame:
+def calculate_volume_profile(vwap:np.ndarray, volume:np.ndarray, depth:int, num_bins:int) -> np.ndarray:
 
-    print(df)
-    print(df.index)
+    total_records = vwap.shape[0]
+    result = np.zeros((total_records, num_bins + 2))
+
+    for index in range(depth, total_records):
+        
+        r_index = index - depth
+
+        vwap_for_volume_profile = vwap[r_index:index]
+        volume_for_volume_profile = volume[r_index:index]
+
+        hist, bins = np.histogram(vwap_for_volume_profile, bins=num_bins, weights=volume_for_volume_profile, density=True)
+        
+        result[index, 0] = bins[0]
+        result[index, 1] = bins[1] - bins[0]
+        result[index, 2:] = hist
+
+    np.nan_to_num(result, copy=False)
+
+    return result
+
+def add_volume_profile(df:pd.DataFrame) -> pd.DataFrame:
 
     vwap = df['TRADES_average'].to_numpy(copy=True)
     volume = df['TRADES_volume'].to_numpy(copy=True)
-
-    total_records = df.shape[0]
 
     for depth in volume_profile_depths:
 
         logging.info(f"Processing volume profile for depth {depth} ...")
 
         num_bins = int(depth / depth_to_bins_koeff)
-        df[f'vp_{depth}_width'] = 0
+        volume_fields = [f'vp_{depth}_{histogram_index}_volume' for histogram_index in range(num_bins)] 
 
-        for bin in range(num_bins):
-            df[f'vp_{depth}_{bin}_price'] = 0.0
-            df[f'vp_{depth}_{bin}_volume'] = 0.0
+        """
+        df[f'vp_{depth}_min_price'] = 0.0
+        df[f'vp_{depth}_width'] = 0.0
+
+        df[volume_fields] = 0.0
+        """
+
+        vp = calculate_volume_profile(vwap, volume, depth, num_bins)
+
+        df[f'vp_{depth}_min_price'] = vp[:, 0]
+        df[f'vp_{depth}_width'] = vp[:, 1]
+        df[volume_fields] = vp[:, 2:]
 
         df = df.copy()
 
-        for index in range(depth, total_records):
-          
-          vwap_for_volume_profile = vwap[index - depth:index]
-          volume_for_volume_profile = volume[index - depth:index]
-
-          hist, bins = np.histogram(vwap_for_volume_profile, bins=num_bins, weights=volume_for_volume_profile)
-
-          sum_hist = np.sum(hist)
-          if (sum_hist != 0):
-            hist = hist / sum_hist
-          else:
-              logging.warning(f"Sum of hist is 0 for index {index}. Depth: {depth}. Total records: {total_records}. ")
-
-          sorted_indices = np.argsort(hist)[::-1]
-          sorted_hist = hist[sorted_indices]
-          sorted_bins_start = bins[:-1][sorted_indices]
-          
-          df.loc[index, f'vp_{depth}_width'] = bins[1] - bins[0]
-
-          for histogram_index, item in enumerate(zip(sorted_bins_start, sorted_hist)):
-              bin_start, histogram_volume = item
-
-              df.loc[index, f'vp_{depth}_{histogram_index}_price'] = bin_start
-              df.loc[index, f'vp_{depth}_{histogram_index}_volume'] = histogram_volume
-
     return df
 
+# wvap = np.array([1, 2, 3, 1, 2, 3, 4, 5, 6, 1, 1, 2, 3, 4, 1, 1, 1, 2, 3, 4])
+wvol = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+wvap = np.array([10, 20, 30, 40, 200, 3, 4, 5, 6, 10, 10, 2, 3, 4, 10, 10, 1, 2, 3, 40])
+# wvol = np.zeros(wvap.shape[0])
+
+print(calculate_volume_profile(wvap, wvol, 10, 5))
