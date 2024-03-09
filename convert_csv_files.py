@@ -29,8 +29,8 @@ fs_utils.create_required_folders()
 
 df_ls.convert_files_in_folder("test_data", "csv", "parquet")
 
-# df_ls.convert_files_in_folder(cnts.data_folder, "csv", "parquet")
-# df_ls.convert_files_in_folder(cnts.data_archived_folder, "csv", "parquet")
-# df_ls.convert_files_in_folder(cnts.merged_data_folder, "csv", "parquet")
-# df_ls.convert_files_in_folder(cnts.data_sets_folder, "csv", "parquet")
+df_ls.convert_files_in_folder(cnts.data_folder, "csv", "parquet")
+df_ls.convert_files_in_folder(cnts.data_archived_folder, "csv", "parquet")
+df_ls.convert_files_in_folder(cnts.merged_data_folder, "csv", "parquet")
+df_ls.convert_files_in_folder(cnts.data_sets_folder, "csv", "parquet")
 
