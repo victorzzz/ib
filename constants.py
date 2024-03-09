@@ -9,8 +9,6 @@ merged_data_duplicates_folder = "IB_MergedData_Duplicates"
 error_investigation_folder = "IB_ErrorInvestigation"
 tickers_cache_folder = "IB_TickersCache"
 
-last_merged_timestamps_folder = "IB_LastMergedTimestamps"
-
 stock_events_folder = "IB_StockEvents"
 financials_folder = "IB_Financials"
 dividends_folder = "IB_Dividends"
