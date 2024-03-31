@@ -90,9 +90,20 @@ ib_client.sleep(3)
 """
 
 # date_to = dt.datetime.now() - dt.timedelta(days=4)
-date_to = dt.datetime(2024, 2, 19)
+date_to = dt.datetime(2020, 12, 8)
 
 midpointBars_1_min = ib_client.reqHistoricalData(
+        contract = contract,
+        endDateTime = date_to,
+        durationStr = f"10 D",
+        barSizeSetting = "1 min",
+        whatToShow='MIDPOINT',
+        useRTH = True
+    )
+
+ib_client.sleep(3)
+
+tradesBars_1_min = ib_client.reqHistoricalData(
         contract = contract,
         endDateTime = date_to,
         durationStr = f"10 D",
@@ -103,6 +114,36 @@ midpointBars_1_min = ib_client.reqHistoricalData(
 
 ib_client.sleep(3)
 
+bidBars_1_min = ib_client.reqHistoricalData(
+        contract = contract,
+        endDateTime = date_to,
+        durationStr = f"10 D",
+        barSizeSetting = "1 min",
+        whatToShow='BID',
+        useRTH = True
+    )
+
+ib_client.sleep(3)
+
+askBars_1_min = ib_client.reqHistoricalData(
+        contract = contract,
+        endDateTime = date_to,
+        durationStr = f"10 D",
+        barSizeSetting = "1 min",
+        whatToShow='ASK',
+        useRTH = True
+    )
+
+ib_client.sleep(3)
+
+print(f"midpointBars_1_min - {len(midpointBars_1_min)}")
+print(f"tradesBars_1_min - {len(tradesBars_1_min)}")
+print(f"bidBars_1_min - {len(bidBars_1_min)}")
+print(f"askBars_1_min - {len(askBars_1_min)}")
+
+print("!")
+
+"""
 histVolatilityBars_1_min = ib_client.reqHistoricalData(
         contract = contract,
         endDateTime = date_to,
@@ -170,6 +211,8 @@ histVolatilityBars_1_day = ib_client.reqHistoricalData(
 ib_client.sleep(3)
 
 print(histVolatilityBars_1_day)
+"""
+
 
 """
 headTimeStamps:list[dt.datetime] = []

@@ -9,6 +9,7 @@ import file_system_utils as fsu
 import df_date_time_utils as df_dt_utils
 import logging
 import ib_logging as ib_log 
+import df_loader_saver as df_ls
 
 colmns_to_check = ["timestamp",
                    "MIDPOINT_open", "MIDPOINT_high", "MIDPOINT_low", "MIDPOINT_close",
@@ -24,7 +25,7 @@ def check_csv_files(raw_files:list[str]) -> bool:
 
     for file in raw_files:
 
-        df:pd.DataFrame = pd.read_csv(file)
+        df:pd.DataFrame = df_ls.load_df(file)
 
         if df.empty:
             logging.error(f"File '{file}' is empty")

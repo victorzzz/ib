@@ -165,12 +165,12 @@ def bars_to_dataframe(data_type:str, bars:list[BarData]) -> pd.DataFrame:
 
 def get_oldest_date_from_saved_data(file_name:str) -> Optional[dt.date]:
 
-    if not exists(file_name):
+    if df_ls.is_df_exists(file_name):
         return None
 
-    df = pd.read_csv(file_name)
+    df = df_ls.load_df(file_name, columns=["timestamp"])
 
-    if (len(df) == 0):
+    if df.empty or ('timestamp' not in df.columns):
         return None
 
     epoch_time = df['timestamp'].min()
@@ -219,18 +219,113 @@ def get_nearest_data_head(ib_client:IB, contract:Contract, data_types_to_downloa
 
     return maxHeadTimeStamp
 
-def get_last_merged_datetime(ticker:str, contract_id:int, exchange:str, minute_multiplier:float) -> Optional[dt.datetime]:
-    file_name = f"{cnts.merged_data_folder}/{ticker}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged.csv"
-    if not exists(file_name):
+# returns (min(timestamp), max(timestamp))
+def get_min_max_merged_datetime(ticker:str, contract_id:int, exchange:str, minute_multiplier:float) -> Optional[tuple[dt.datetime, dt.datetime]]:
+    file_name = f"{cnts.merged_data_folder}/{ticker}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged"
+    if not df_ls.is_df_exists(file_name):
         return None
     
-    df = csvt.get_dataframe_first_row_only(file_name)
-    if (len(df) == 0):
+    df = df_ls.load_df(file_name, columns=["timestamp"])
+    if df.empty or ('timestamp' not in df.columns):
         return None
-    
-    timestamp = df['timestamp'][0]
 
-    return dt_utils.nyse_timestamp_to_date_time(int(timestamp))
+    min_timestamp = df['timestamp'].min()
+    max_timestamp = df['timestamp'].max()
+
+    return dt_utils.nyse_timestamp_to_date_time(int(min_timestamp)), dt_utils.nyse_timestamp_to_date_time(int(max_timestamp))
+
+def download_stock_bars_for_ticker_in_date_range(
+        in_date_from:dt.date, # exclusive
+        in_date_to:dt.date, # inclusive
+        iteration_time_delta:dt.timedelta,
+        iteration_time_delta_days:int, 
+        ib_client:IB, 
+        ticker:str,
+        ticker_con_id:int,
+        contract:Contract, 
+        minute_multiplier:float, 
+        data_types_to_download:tuple[str, ...], 
+        save_as:Optional[str] = None):
+    
+    processing_date = in_date_to
+
+    while processing_date > in_date_from:
+        date_to = processing_date
+        date_to_str = date_to.strftime('%Y-%m-%d')
+
+        tiker_to_save = ticker if (save_as is None) else save_as
+
+        file_name = f"{cnts.data_folder}/{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}"
+        if df_ls.is_df_exists(file_name):
+            logging.info(f"File {file_name} exists")
+            oldest_date_in_data_from_file = get_oldest_date_from_saved_data(file_name)
+            if (oldest_date_in_data_from_file is None):
+                logging.warning(f"No data in existing file {file_name}")                
+                processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
+            else:
+                processing_date = oldest_date_in_data_from_file - dt.timedelta(days=1)
+        else:
+
+            final_data_frame:Optional[pd.DataFrame] = None
+
+            oldest_dates:list[dt.date] = []
+
+            for data_type in data_types_to_download:
+
+                bars:Optional[list[BarData]]
+                reqHistoricalDataDelay:float
+                
+                bars, reqHistoricalDataDelay= get_bars_for_contract(
+                    ib_client,
+                    contract,
+                    data_type,
+                    iteration_time_delta_days,
+                    date_to,
+                    minute_multiplier)
+
+                if (bars is None or len(bars) == 0):
+                    logging.error(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                    raise Exception(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+
+                oldest_date = dt_utils.bar_date_to_date(bars[0].date)
+                oldest_dates.append(oldest_date)
+                
+                df:pd.DataFrame = bars_to_dataframe(data_type, bars)
+
+                if (final_data_frame is None):
+                    final_data_frame = df
+                else:
+                    concatenated_data_frame =  concat_dataframes(
+                        final_data_frame, df, 
+                        f"{data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                    if (concatenated_data_frame is None):
+                        logging.error(f"DOWNLOADER !!!! Dataframe is non after merging {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                        
+                        investigation_file_name = f"{cnts.error_investigation_folder}/{data_type}--{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}"
+                        df_ls.save_df(df, investigation_file_name, "csv")
+
+                        # df.to_csv(investigation_file_name, index=False)
+                    else:
+                        final_data_frame = concatenated_data_frame
+
+                waitTime = max(0.1, 10.0 - reqHistoricalDataDelay)
+                logging.debug(f"waiting for {waitTime} seconds")
+                ib_client.sleep(waitTime)
+
+            if (final_data_frame is None):
+                logging.warning(f"***** Empty data for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+            else:
+                logging.info(f"Saving file {file_name}. {len(final_data_frame)}")
+
+                df_ls.save_df(final_data_frame, file_name)
+                # final_data_frame.to_csv(file_name, index=False)
+
+            if (len(oldest_dates) > 0):
+                min_oldest_date = min(oldest_dates)
+                processing_date = min_oldest_date - dt.timedelta(days=1)
+            else:
+                processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
+
 
 def download_stock_bars(
         date:dt.date, 
@@ -247,31 +342,40 @@ def download_stock_bars(
     iteration_time_delta = dt.timedelta(days = iteration_time_delta_days)
 
     maximum_time_delta = dt.timedelta(days = max_days_history) + dt.timedelta(days = minute_multiplier)
-    limit_date = date - maximum_time_delta
+    LIMIT_DATE = date - maximum_time_delta
 
     ticker:str = ticker_info[0]
     ticker_exchanges:list[str] = ticker_info[1]
 
     for exchange in ticker_exchanges:
 
-        logging.info(f"Processing {ticker} {exchange} {minute_multiplier:.0f} minute(s). Date range: {date} .. {limit_date}")
+        logging.info(f"Processing {ticker} {exchange} {minute_multiplier:.0f} minute(s). Date range: {date} .. {LIMIT_DATE}")
 
         contract:Contract = get_contract_for_symbol_and_exchange(ib_client, ticker, exchange, lock, shared_tickers_cache)
         ticker_con_id = contract.conId
 
         processing_date = date
 
-        last_merged_datetime = get_last_merged_datetime(ticker, ticker_con_id, exchange, minute_multiplier)
-        if (last_merged_datetime is None):
+        get_min_max_merged_datetime_result = get_min_max_merged_datetime(ticker, ticker_con_id, exchange, minute_multiplier)
+        if (get_min_max_merged_datetime_result is None):
             logging.info(f"No merged data for {ticker} {exchange} {minute_multiplier:.0f} minute(s)")
         else:
-            logging.info(f"Last merged datetime found for {ticker} {exchange} {minute_multiplier:.0f} minute(s): {last_merged_datetime}")
+            logging.info(f"Last merged datetime found for {ticker} {exchange} {minute_multiplier:.0f} minute(s): {get_min_max_merged_datetime_result[1]}")
 
-            if (processing_date <= last_merged_datetime.date()):
-                logging.info(f"Skipping {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{processing_date}' <= '{last_merged_datetime}'")
+            min_merged_date = get_min_max_merged_datetime_result[0].date()
+            max_merged_date = get_min_max_merged_datetime_result[1].date()
+
+            if (min_merged_date - LIMIT_DATE < dt.timedelta(days=5)) and (processing_date <= max_merged_date):
+                logging.info(f"Skipping {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{min_merged_date}' - '{LIMIT_DATE}' < 5 days and '{processing_date}' <= '{max_merged_date}'")
                 continue
 
-            limit_date = max(limit_date, last_merged_datetime.date())
+            if (processing_date <= max_merged_date):
+                logging.info(f"Skipping {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{processing_date}' <= '{max_merged_date}'")
+                continue
+
+            effective_limit_date = max(LIMIT_DATE, max_merged_date)
+            logging.info(f"Effective limit date for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {effective_limit_date}")
+
 
         nearest_data_head = get_nearest_data_head(ib_client, contract, data_types_to_download)
         logging.info(f"IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
@@ -279,86 +383,10 @@ def download_stock_bars(
         nearest_data_head = nearest_data_head.date() + dt.timedelta(days=1)
         logging.info(f"Nearest data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
 
-        limit_date_for_contract = max(limit_date, nearest_data_head)
+        limit_date_for_contract = max(effective_limit_date, nearest_data_head)
 
         logging.info(f"Limit date for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {limit_date_for_contract}")
 
-        while processing_date > limit_date_for_contract:
-            date_to = processing_date
-            date_to_str = date_to.strftime('%Y-%m-%d')
-
-            tiker_to_save = ticker if (save_as is None) else save_as
-
-            file_name = f"{cnts.data_folder}/{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}"
-            if df_ls.is_df_exists(file_name):
-                logging.info(f"File {file_name} exists")
-                oldest_date_in_data_from_file = get_oldest_date_from_saved_data(file_name)
-                if (oldest_date_in_data_from_file is None):
-                    logging.warning(f"No data in existing file {file_name}")                
-                    processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
-                else:
-                    processing_date = oldest_date_in_data_from_file - dt.timedelta(days=1)
-            else:
-
-                final_data_frame:Optional[pd.DataFrame] = None
-
-                oldest_dates:list[dt.date] = []
-
-                for data_type in data_types_to_download:
-
-                    bars:Optional[list[BarData]]
-                    reqHistoricalDataDelay:float
-                    
-                    bars, reqHistoricalDataDelay= get_bars_for_contract(
-                        ib_client,
-                        contract,
-                        data_type,
-                        iteration_time_delta_days,
-                        date_to,
-                        minute_multiplier)
-
-                    if (bars is None or len(bars) == 0):
-                        logging.error(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
-                        raise Exception(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
-
-                    oldest_date = dt_utils.bar_date_to_date(bars[0].date)
-                    oldest_dates.append(oldest_date)
-                    
-                    df:pd.DataFrame = bars_to_dataframe(data_type, bars)
-
-                    if (final_data_frame is None):
-                        final_data_frame = df
-                    else:
-                        concatenated_data_frame =  concat_dataframes(
-                            final_data_frame, df, 
-                            f"{data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
-                        if (concatenated_data_frame is None):
-                            logging.error(f"DOWNLOADER !!!! Dataframe is non after merging {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
-                            
-                            investigation_file_name = f"{cnts.error_investigation_folder}/{data_type}--{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}"
-                            df_ls.save_df(df, investigation_file_name, "csv")
-
-                            # df.to_csv(investigation_file_name, index=False)
-                        else:
-                            final_data_frame = concatenated_data_frame
-
-                    waitTime = max(0.1, 10.0 - reqHistoricalDataDelay)
-                    logging.debug(f"waiting for {waitTime} seconds")
-                    ib_client.sleep(waitTime)
-
-                if (final_data_frame is None):
-                    logging.warning(f"***** Empty data for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
-                else:
-                    logging.info(f"Saving file {file_name}. {len(final_data_frame)}")
-
-                    df_ls.save_df(final_data_frame, file_name)
-                    # final_data_frame.to_csv(file_name, index=False)
-
-                if (len(oldest_dates) > 0):
-                    min_oldest_date = min(oldest_dates)
-                    processing_date = min_oldest_date - dt.timedelta(days=1)
-                else:
-                    processing_date = processing_date - iteration_time_delta - dt.timedelta(days=1)
 
 def download_stock_bars_for_tickers(
         tickers:list[tuple[str, list[str]]],

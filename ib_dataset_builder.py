@@ -31,9 +31,9 @@ def load_merged_dataframes(
     contract_id:Optional[int] = ib_tickers_cache.get_contact_id(ticker_symbvol, exchange, lock, shared_tickers_cache)
 
     for minute_multiplier in cnts.minute_multipliers:
-        merged_file_name = f"{cnts.merged_data_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged.csv"
-        if fsu.is_file_exists(merged_file_name):
-            merged_dataframes[int(minute_multiplier)] = pd.read_csv(merged_file_name)
+        merged_file_name = f"{cnts.merged_data_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged"
+        if df_ls.is_df_exists(merged_file_name):
+            merged_dataframes[int(minute_multiplier)] = df_ls.load_df(merged_file_name)
         else:
             logging.error(f"File '{merged_file_name}' does not exist")
 

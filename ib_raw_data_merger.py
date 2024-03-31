@@ -1,7 +1,6 @@
 import multiprocessing
 import constants as cnts
 import pandas as pd
-from os.path import exists
 import numpy as np
 from typing import Optional
 import ib_tickers as ib_tckrs
@@ -48,7 +47,7 @@ def merge_csv_files(
 
                 merged_data_frame:pd.DataFrame = pd.DataFrame()
                 if df_ls.is_df_exists(merged_file_name):
-                    merged_data_frame = pd.read_csv(merged_file_name)
+                    merged_data_frame = df_ls.load_df(merged_file_name)
 
                 for raw_file in filtered_raw_files:
                     

@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pandas as pd
+import pyarrow.parquet as pq
 import os
 import logging
 
@@ -12,13 +13,32 @@ def is_df_exists(file_pathwithout_extension:str, format:str = "parquet") -> bool
     else:
         raise ValueError("Invalid format")
 
-def load_df(file_pathwithout_extension:str, format:str = "parquet", nrows:Optional[int] = None) -> pd.DataFrame:
+def load_df_first_timestamp(file_pathwithout_extension:str, format:str = "parquet") -> Optional[int]:
+    df:pd.DataFrame = load_df(file_pathwithout_extension, format, first_row_only=True, columns=["timestamp"])
+    if df.empty or ("timestamp" not in df.columns):
+        return None
+    
+    return df["timestamp"].iloc[0]
+
+def load_df(file_pathwithout_extension:str, format:str = "parquet", first_row_only:bool = False, columns:Optional[list[str]] = None) -> pd.DataFrame:
     if format == "csv":
-        return pd.read_csv(file_pathwithout_extension + ".csv", nrows=nrows)
+        if first_row_only:
+            return pd.read_csv(file_pathwithout_extension + ".csv", nrows=1, usecols=columns)
+        else:
+            return pd.read_csv(file_pathwithout_extension + ".csv", usecols=columns)
     elif format == "parquet":
-        return pd.read_parquet(file_pathwithout_extension + ".parquet", engine="pyarrow", nrows=nrows)
+        if first_row_only:
+            return load_parquet_first_group(file_pathwithout_extension, columns=columns)
+        else:
+            return pd.read_parquet(file_pathwithout_extension + ".parquet", engine="pyarrow", columns=columns)
+            
     else:
         raise ValueError("Invalid format")
+
+def load_parquet_first_group(file_pathwithout_extension:str, columns:Optional[list[str]]) -> pd.DataFrame:
+    parquet_file = pq.ParquetFile(file_pathwithout_extension + ".parquet")
+    first_row_group = parquet_file.read_row_group(0, use_threads=True, columns=columns)
+    return first_row_group.to_pandas()
 
 def save_df(df:pd.DataFrame, file_pathwithout_extension:str, format:str = "parquet") -> None:
     if format == "csv":
