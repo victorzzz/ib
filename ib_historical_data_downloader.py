@@ -1,8 +1,6 @@
 
 from typing import Optional
 import math
-
-from os.path import exists
 import time
 import datetime as dt
 
@@ -24,7 +22,7 @@ import df_loader_saver as df_ls
 
 #from_date:dt.date = dt.datetime.now().date()
 
-from_date:dt.date = dt.date(2024, 2, 16)
+from_date:dt.date = dt.date(2024, 3, 28)
 
 fb_from_date:dt.date = dt.date(2022, 6, 8)
 meta_to_day:dt.date = dt.date(2022, 6, 9)
@@ -369,8 +367,8 @@ def download_stock_bars(
             limit_date_for_contract = max(LIMIT_DATE, nearest_data_head)
             
             download_stock_bars_for_ticker_in_date_range(
-                processing_date, 
                 limit_date_for_contract, 
+                processing_date,
                 iteration_time_delta,
                 iteration_time_delta_days,
                 ib_client, 
@@ -388,7 +386,7 @@ def download_stock_bars(
             max_merged_date = get_min_max_merged_datetime_result[1].date()
 
             if min_merged_date - LIMIT_DATE > dt.timedelta(days=5):
-                logging.info(f"Downloading older then merged data {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{min_merged_date}' - '{LIMIT_DATE}' > 5 days and '{processing_date}' <= '{max_merged_date}'")
+                logging.info(f"Downloading older then merged data {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{min_merged_date}' - '{LIMIT_DATE}' > 5 days")
                 
                 nearest_data_head = get_nearest_data_head(ib_client, contract, data_types_to_download)
                 logging.info(f"IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
@@ -399,8 +397,8 @@ def download_stock_bars(
                 limit_date_for_contract = max(LIMIT_DATE, nearest_data_head) 
                 
                 download_stock_bars_for_ticker_in_date_range(
-                    min_merged_date, 
                     limit_date_for_contract,
+                    min_merged_date, 
                     iteration_time_delta,
                     iteration_time_delta_days,
                     ib_client, 
@@ -418,8 +416,8 @@ def download_stock_bars(
                 logging.info(f"Downloading newer then merged data {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{processing_date}' > '{max_merged_date}'")                   
                 
                 download_stock_bars_for_ticker_in_date_range(
-                    processing_date, 
-                    max_merged_date, 
+                    max_merged_date,
+                    processing_date,  
                     iteration_time_delta,
                     iteration_time_delta_days,
                     ib_client, 

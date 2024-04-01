@@ -51,7 +51,7 @@ def merge_csv_files(
 
                 for raw_file in filtered_raw_files:
                     
-                    raw_data_frame:pd.DataFrame = pd.read_csv(raw_file)
+                    raw_data_frame:pd.DataFrame = df_ls.load_df(raw_file, format=None)
                     raw_data_frame.sort_values(by='timestamp', inplace=True, ascending=False)
 
                     merged_data_frame = pd.concat([raw_data_frame, merged_data_frame], axis=0)
@@ -102,10 +102,11 @@ def do_step():
         process.start()
 
     # Wait for all processes to finish
-    logging.info(f"Waiting for '{', '.join(processed_ticker_symbols)}' ...")
+    logging.info("Waiting for all processes to finish ...")
     for process in processes:
         process.join()
 
+    logging.info("All processes finished ...")
 # ----------------------------
 
 if __name__ == "__main__":

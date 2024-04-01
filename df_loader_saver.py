@@ -20,17 +20,30 @@ def load_df_first_timestamp(file_pathwithout_extension:str, format:str = "parque
     
     return df["timestamp"].iloc[0]
 
-def load_df(file_pathwithout_extension:str, format:str = "parquet", first_row_only:bool = False, columns:Optional[list[str]] = None) -> pd.DataFrame:
+def load_df(file_path:str, format:Optional[str] = "parquet", first_row_only:bool = False, columns:Optional[list[str]] = None) -> pd.DataFrame:
     if format == "csv":
         if first_row_only:
-            return pd.read_csv(file_pathwithout_extension + ".csv", nrows=1, usecols=columns)
+            return pd.read_csv(file_path + ".csv", nrows=1, usecols=columns)
         else:
-            return pd.read_csv(file_pathwithout_extension + ".csv", usecols=columns)
+            return pd.read_csv(file_path + ".csv", usecols=columns)
+    
     elif format == "parquet":
         if first_row_only:
-            return load_parquet_first_group(file_pathwithout_extension, columns=columns)
+            return load_parquet_first_group(file_path, columns=columns)
         else:
-            return pd.read_parquet(file_pathwithout_extension + ".parquet", engine="pyarrow", columns=columns)
+            return pd.read_parquet(file_path + ".parquet", engine="pyarrow", columns=columns)            
+    
+    elif format is None:
+        filename, extension = os.path.splitext(file_path)
+        
+        if extension == ".csv":
+            return load_df(filename, "csv", first_row_only=first_row_only, columns=columns)
+        
+        elif extension == ".parquet":
+            return load_df(filename, "parquet", first_row_only=first_row_only, columns=columns)
+        
+        else:
+            raise ValueError("Invalid extension")
             
     else:
         raise ValueError("Invalid format")

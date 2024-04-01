@@ -3,12 +3,15 @@ import ib_constants as ib_cnts
 import ib_tickers as ib_tckrs
 
 import multiprocessing
+from typing import Sequence
 
 if __name__ == "__main__":
 
-    tickers = ib_tckrs.get_all_tickers_list()
+    # tickers = ib_tckrs.get_all_tickers_list()
 
-    tickers_to_test = tickers[1:2]
+    #tickers_to_test = tickers[1:2]
+    
+    tickers_to_test: list[tuple[str, list[str]]] = [("OTEX", ["NYSE", "TSE"],),]
 
     lock = multiprocessing.Lock()
     manager = multiprocessing.Manager()

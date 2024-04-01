@@ -31,11 +31,11 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
         {
             "RY": [ "TSE", "NYSE"],
             "TD": [ "TSE", "NYSE"],
-            "BNS": [ "NYSE", "TSE"], 
-            "BMO": [ "NYSE", "TSE"],
-            "MFC": [ "NYSE", "TSE"],
+            "BNS": [ "NYSE", "TSE"], # +++++
+            "BMO": [ "NYSE", "TSE"], # +++++
+            "MFC": [ "NYSE", "TSE"], # +++++
             "SLF": [ "NYSE", "TSE"],
-            "CM": [ "NYSE", "TSE"],
+            "CM": [ "NYSE", "TSE"], # +++++
             "NA": [ "TSE"],
             "ENB": [ "NYSE", "TSE"]
         },
@@ -74,7 +74,7 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
         {
             "TRP" : ["NYSE", "TSE"],
             "ENB" : ["NYSE", "TSE"],
-            "SU" : ["NYSE", "TSE"],
+            "SU" : ["NYSE", "TSE"], # ++++++
             "VET" : ["NYSE", "TSE"],
             "ERF" : ["NYSE", "TSE"],
             "OVV" : ["NYSE", "TSE"],
