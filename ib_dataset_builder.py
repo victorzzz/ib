@@ -57,7 +57,7 @@ def reverse_dataframe(df:pd.DataFrame) -> pd.DataFrame:
 
 def add_minute_multiplier_to_column_names(df:pd.DataFrame, minute_multiplier:int) -> pd.DataFrame:
     result:pd.DataFrame = df.add_prefix(f"{minute_multiplier}m_")
-    result.set_index(f"{minute_multiplier}m_timestamp", inplace=True)
+    # result.set_index(f"{minute_multiplier}m_timestamp", inplace=True)
 
     return result
 
@@ -82,40 +82,39 @@ def create_datasets(
 
             for minute_multiplier, df in dfs.items():
 
+                if minute_multiplier != 1:
+                    continue
+
+                # df = df.tail(50000)
+
                 logging.info(f"Processing '{ticker_symbvol}' - '{exchange}' - {minute_multiplier} ...")
 
-                logging.info(f"Replasing nan values ...")
-
-                replace_nan_values(df)
-                
                 logging.info(f"Adding normalized time columns ...")
-
                 df = df_dt_utils.add_normalized_time_columns(df)
 
-                logging.info(f"Reversing dataframe ...")
+                logging.info("Deleting non-trading hours records")
+                df = df[(df['normalized_trading_time'] >= 0) & (df['normalized_trading_time'] <= 1)]
 
+                logging.info(f"Replacing nan values ...")
+                replace_nan_values(df)
+
+                logging.info(f"Reversing dataframe ...")
                 df = reverse_dataframe(df)
 
                 logging.info(f"Adding technical indicators ...")
-
                 df = df_tech_utils.add_technical_indicators(df)
 
                 logging.info(f"Adding volume profile ...")
-
                 df = df_tech_utils.add_volume_profile(df)
                 
                 logging.info(f"Adding minute multiplier to column names ...")
-
                 df = add_minute_multiplier_to_column_names(df, minute_multiplier)
 
                 enriched_dfs[minute_multiplier] = df
 
                 logging.info(f"Saving dataset ...")
-                
                 result_file_name = f"{cnts.data_sets_folder}/{ticker_symbvol}-{exchange}--ib--{minute_multiplier:.0f}--minute--dataset"
-                
                 df_ls.save_df(df, result_file_name)
-                # df.to_csv(result_file_name, index=False)
 
             dfs.clear()
 
@@ -142,9 +141,11 @@ def do_step():
         process.start()
 
     # Wait for all processes to finish
+    logging.info("Waiting for all processes to finish ...")
     for process in processes:
         process.join()
 
+    logging.info("All processes finished ...")
 # ----------------------------
 
 if __name__ == "__main__":

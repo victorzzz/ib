@@ -1,14 +1,6 @@
 import pandas as pd
 import numpy as np
 
-"""
-import ta
-import ta.trend
-import ta.momentum
-import ta.volatility
-import ta.volume
-"""
-
 import pandas_ta as ta
 
 import logging
@@ -193,8 +185,8 @@ def add_volume_profile(df:pd.DataFrame) -> pd.DataFrame:
     return df
 
 # wvap = np.array([1, 2, 3, 1, 2, 3, 4, 5, 6, 1, 1, 2, 3, 4, 1, 1, 1, 2, 3, 4])
-wvol = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
-wvap = np.array([10, 20, 30, 40, 200, 3, 4, 5, 6, 10, 10, 2, 3, 4, 10, 10, 1, 2, 3, 40])
+# wvol = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+# wvap = np.array([10, 20, 30, 40, 200, 3, 4, 5, 6, 10, 10, 2, 3, 4, 10, 10, 1, 2, 3, 40])
 # wvol = np.zeros(wvap.shape[0])
 
-print(calculate_volume_profile(wvap, wvol, 10, 5))
+# print(calculate_volume_profile(wvap, wvol, 10, 5))
