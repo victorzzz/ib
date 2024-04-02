@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     fsu.create_required_folders()
 
-    selected_tickets_batches_list: list[list[tuple[str, list[str]]]] = list(ib_tckrs.get_selected_tickers_batches(2))
+    selected_tickets_batches_list: list[list[tuple[str, list[str]]]] = list(ib_tckrs.get_selected_tickers_batches(1))
 
     lock = multiprocessing.Lock()
     manager = multiprocessing.Manager()

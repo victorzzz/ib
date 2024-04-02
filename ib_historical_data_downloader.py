@@ -354,17 +354,17 @@ def download_stock_bars(
 
         processing_date = date
 
+        nearest_data_head = get_nearest_data_head(ib_client, contract, data_types_to_download)
+        logging.info(f"No merged data: IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
+    
+        nearest_data_head = nearest_data_head.date() + dt.timedelta(days=1)
+        logging.info(f"No merged data: Nearest data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
+        
+        limit_date_for_contract = max(LIMIT_DATE, nearest_data_head)
+
         get_min_max_merged_datetime_result = get_min_max_merged_datetime(ticker, ticker_con_id, exchange, minute_multiplier)
         if (get_min_max_merged_datetime_result is None):
             logging.info(f"No merged data for {ticker} {exchange} {minute_multiplier:.0f} minute(s)")
-            
-            nearest_data_head = get_nearest_data_head(ib_client, contract, data_types_to_download)
-            logging.info(f"No merged data: IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
-        
-            nearest_data_head = nearest_data_head.date() + dt.timedelta(days=1)
-            logging.info(f"No merged data: Nearest data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
-            
-            limit_date_for_contract = max(LIMIT_DATE, nearest_data_head)
             
             download_stock_bars_for_ticker_in_date_range(
                 limit_date_for_contract, 
@@ -385,16 +385,8 @@ def download_stock_bars(
             min_merged_date = get_min_max_merged_datetime_result[0].date()
             max_merged_date = get_min_max_merged_datetime_result[1].date()
 
-            if min_merged_date - LIMIT_DATE > dt.timedelta(days=5):
-                logging.info(f"Downloading older then merged data {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{min_merged_date}' - '{LIMIT_DATE}' > 5 days")
-                
-                nearest_data_head = get_nearest_data_head(ib_client, contract, data_types_to_download)
-                logging.info(f"IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
-            
-                nearest_data_head = nearest_data_head.date() + dt.timedelta(days=1)
-                logging.info(f"Nearest data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
-                
-                limit_date_for_contract = max(LIMIT_DATE, nearest_data_head) 
+            if min_merged_date - limit_date_for_contract > dt.timedelta(days=5):
+                logging.info(f"Downloading older then merged data {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{min_merged_date}' - '{limit_date_for_contract}' > 5 days")
                 
                 download_stock_bars_for_ticker_in_date_range(
                     limit_date_for_contract,
@@ -410,7 +402,7 @@ def download_stock_bars(
                     save_as)
                 
             else:
-                logging.info(f"Skipping downloading older then merged data {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{min_merged_date}' - '{LIMIT_DATE}' <= 5 days and '{processing_date}' <= '{max_merged_date}'")
+                logging.info(f"Skipping downloading older then merged data {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{min_merged_date}' - '{limit_date_for_contract}' <= 5 days")
 
             if (processing_date > max_merged_date):
                 logging.info(f"Downloading newer then merged data {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: '{processing_date}' > '{max_merged_date}'")                   

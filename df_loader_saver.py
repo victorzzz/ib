@@ -13,6 +13,15 @@ def is_df_exists(file_pathwithout_extension:str, format:str = "parquet") -> bool
     else:
         raise ValueError("Invalid format")
 
+def adjust_types32(df:pd.DataFrame) -> pd.DataFrame:
+    for column in df.columns:
+        if df[column].dtype == "int64":
+            df[column] = df[column].astype("int32")
+        elif df[column].dtype == "float64":
+            df[column] = df[column].astype("float32")
+
+    return df
+
 def load_df_first_timestamp(file_pathwithout_extension:str, format:str = "parquet") -> Optional[int]:
     df:pd.DataFrame = load_df(file_pathwithout_extension, format, first_row_only=True, columns=["timestamp"])
     if df.empty or ("timestamp" not in df.columns):
@@ -20,7 +29,14 @@ def load_df_first_timestamp(file_pathwithout_extension:str, format:str = "parque
     
     return df["timestamp"].iloc[0]
 
-def load_df(file_path:str, format:Optional[str] = "parquet", first_row_only:bool = False, columns:Optional[list[str]] = None) -> pd.DataFrame:
+def load_df(file_path:str, format:Optional[str] = "parquet", first_row_only:bool = False, columns:Optional[list[str]] = None, adjust_types:bool = True) -> pd.DataFrame:
+    result = load_df_internal(file_path, format, first_row_only, columns)
+    if adjust_types:
+        result = adjust_types32(result)
+    
+    return result
+
+def load_df_internal(file_path:str, format:Optional[str] = "parquet", first_row_only:bool = False, columns:Optional[list[str]] = None, adjust_types:bool = True) -> pd.DataFrame:
     if format == "csv":
         if first_row_only:
             return pd.read_csv(file_path + ".csv", nrows=1, usecols=columns)
@@ -53,7 +69,13 @@ def load_parquet_first_group(file_pathwithout_extension:str, columns:Optional[li
     first_row_group = parquet_file.read_row_group(0, use_threads=True, columns=columns)
     return first_row_group.to_pandas()
 
-def save_df(df:pd.DataFrame, file_pathwithout_extension:str, format:str = "parquet") -> None:
+def save_df(df:pd.DataFrame, file_pathwithout_extension:str, format:str = "parquet", adjust_types:bool = True) -> None:
+    if adjust_types:
+        df = adjust_types32(df)
+    
+    save_df_internal(df, file_pathwithout_extension, format)
+
+def save_df_internal(df:pd.DataFrame, file_pathwithout_extension:str, format:str = "parquet") -> None:
     if format == "csv":
         df.to_csv(file_pathwithout_extension + ".csv", index=False)
     elif format == "parquet":
