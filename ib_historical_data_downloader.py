@@ -1,5 +1,7 @@
 
 from typing import Optional
+from typing import Union
+import numpy as np
 import math
 import time
 import datetime as dt
@@ -114,7 +116,7 @@ def get_bars_for_contract(
             finally:
                 reqHistoricalDataEndTime = time.time()
                 reqHistoricalDataDelay = reqHistoricalDataEndTime - reqHistoricalDataStartTime
-                logging.info(f"reqHistoricalData {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s).{date_to} delay {reqHistoricalDataDelay}")
+                logging.info(f"reqHistoricalData {data_type} {contract.symbol}-{contract.conId} {contract.exchange} {minute_multiplier:.0f} minute(s).{date_to} ! {reqHistoricalDataDelay:.2f} sec")
 
             if (bars is not None):
                 return (bars, reqHistoricalDataDelay)
@@ -131,29 +133,29 @@ def get_bars_for_contract(
 
 def bars_to_dataframe(data_type:str, bars:list[BarData]) -> pd.DataFrame:
 
-    bars_to_save:Optional[list[dict[str, float]]] = None
+    bars_to_save:Optional[list[dict[str, Union[np.float32, np.int32]]]] = None
 
     if (data_type == "TRADES"):
         bars_to_save = [
             {
-                "timestamp": dt_utils.bar_date_to_epoch_time(bar.date),
-                "TRADES_open": bar.open,
-                "TRADES_high": bar.high,
-                "TRADES_low": bar.low,
-                "TRADES_close": bar.close,
-                "TRADES_volume": bar.volume,
-                "TRADES_average": bar.average,
-                "TRADES_barCount": bar.barCount
+                "timestamp": np.int32(dt_utils.bar_date_to_epoch_time(bar.date)),
+                "TRADES_open": np.float32(bar.open),
+                "TRADES_high": np.float32(bar.high),
+                "TRADES_low": np.float32(bar.low),
+                "TRADES_close": np.float32(bar.close),
+                "TRADES_volume": np.float32(bar.volume),
+                "TRADES_average": np.float32(bar.average),
+                "TRADES_barCount": np.int32(bar.barCount)
             } 
             for bar in bars]
     else:
         bars_to_save = [
             {
-                "timestamp": dt_utils.bar_date_to_epoch_time(bar.date),
-                f"{data_type}_open": bar.open,
-                f"{data_type}_high": bar.high,
-                f"{data_type}_low": bar.low,
-                f"{data_type}_close": bar.close
+                "timestamp": np.int32(dt_utils.bar_date_to_epoch_time(bar.date)),
+                f"{data_type}_open": np.float32(bar.open),
+                f"{data_type}_high": np.float32(bar.high),
+                f"{data_type}_low": np.float32(bar.low),
+                f"{data_type}_close": np.float32(bar.close)
             } 
             for bar in bars]
 
@@ -301,12 +303,10 @@ def download_stock_bars_for_ticker_in_date_range(
                         
                         investigation_file_name = f"{cnts.error_investigation_folder}/{data_type}--{tiker_to_save}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}"
                         df_ls.save_df(df, investigation_file_name, "csv")
-
-                        # df.to_csv(investigation_file_name, index=False)
                     else:
                         final_data_frame = concatenated_data_frame
 
-                waitTime = max(0.1, 10.0 - reqHistoricalDataDelay)
+                waitTime = max(3.0, 10.0 - reqHistoricalDataDelay)
                 logging.debug(f"waiting for {waitTime} seconds")
                 ib_client.sleep(waitTime)
 
@@ -316,7 +316,6 @@ def download_stock_bars_for_ticker_in_date_range(
                 logging.info(f"Saving file {file_name}. {len(final_data_frame)}")
 
                 df_ls.save_df(final_data_frame, file_name)
-                # final_data_frame.to_csv(file_name, index=False)
 
             if (len(oldest_dates) > 0):
                 min_oldest_date = min(oldest_dates)

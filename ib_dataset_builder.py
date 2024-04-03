@@ -4,6 +4,8 @@ import pandas as pd
 
 from typing import Optional
 
+import np_utils as np_utils
+import numpy as np
 import ib_tickers_cache as ib_tickers_cache
 import constants as cnts
 import ib_tickers as ib_tckrs
@@ -55,9 +57,23 @@ def reverse_dataframe(df:pd.DataFrame) -> pd.DataFrame:
 
     return result
 
+def fix_trading_price_misprints(df:pd.DataFrame) -> pd.DataFrame:
+    df_copy = df.copy()
+    
+    for column in trades_price_fields:
+        if column not in df_copy.columns:
+            continue
+        
+        column_data = df_copy[column]
+        column_data_shifted = column_data.shift(-1, fill_value=np.nan)
+        ratio_change = column_data / column_data_shifted
+        misprints = (ratio_change > 30.0)        
+        df_copy.loc[misprints, column] = np.nan
+    
+    return df_copy
+
 def add_minute_multiplier_to_column_names(df:pd.DataFrame, minute_multiplier:int) -> pd.DataFrame:
     result:pd.DataFrame = df.add_prefix(f"{minute_multiplier}m_")
-    # result.set_index(f"{minute_multiplier}m_timestamp", inplace=True)
 
     return result
 
@@ -85,9 +101,10 @@ def create_datasets(
                 if minute_multiplier != 1:
                     continue
 
-                # df = df.tail(50000)
-
                 logging.info(f"Processing '{ticker_symbvol}' - '{exchange}' - {minute_multiplier} ...")
+
+                logging.info(f"Fixing trading price misprints ...")
+                df = fix_trading_price_misprints(df)
 
                 logging.info(f"Adding normalized time columns ...")
                 df = df_dt_utils.add_normalized_time_columns(df)
@@ -147,6 +164,21 @@ def do_step():
 
     logging.info("All processes finished ...")
 # ----------------------------
+
+# test fix_trading_price_misprints(df:pd.DataFrame)
+"""
+df = pd.DataFrame({
+    "TRADES_open": [
+        1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 1500.0, 16.0, 17.0, 18.0, 19.0, 20.0
+    ]  
+})
+
+print(df)
+
+df_fixed = fix_trading_price_misprints(df)
+
+print(df_fixed)
+"""
 
 if __name__ == "__main__":
     
