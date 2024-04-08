@@ -13,11 +13,11 @@ def add_normalized_time_columns(df:pd.DataFrame) -> pd.DataFrame:
     time_since_930 = (toronto_time - normalized_dt) - pd.Timedelta(hours=9, minutes=30)
 
     # Normalized calculations
-    df['normalized_day_of_week'] = normalized_dt.dt.dayofweek / 6  # Normalize: day 0 -> 0, day 6 -> 1
-    df['normalized_week'] = (normalized_dt.dt.isocalendar().week - 1) / 52  # Normalize: week 1 -> 0, week 53 -> 1
-    df['normalized_day_of_year'] = (normalized_dt.dt.dayofyear - 1) / 365  # Normalize: day 1 -> 0, day 366 -> 1
+    df['normalized_day_of_week'] = (normalized_dt.dt.dayofweek / 6.0).astype(np.float32)  # Normalize: day 0 -> 0, day 6 -> 1
+    df['normalized_week'] = ((normalized_dt.dt.isocalendar().week - 1) / 52.0).astype(np.float32)  # Normalize: week 1 -> 0, week 53 -> 1
+    df['normalized_day_of_year'] = ((normalized_dt.dt.dayofyear - 1) / 365.0).astype(np.float32)  # Normalize: day 1 -> 0, day 366 -> 1
 
-    df['normalized_trading_time'] = time_since_930.dt.total_seconds() / total_seconds_from_930_to_1600
+    df['normalized_trading_time'] = (time_since_930.dt.total_seconds() / total_seconds_from_930_to_1600).astype(np.float32)
 
     df = df.copy()
 

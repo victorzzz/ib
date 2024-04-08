@@ -67,8 +67,10 @@ def fix_trading_price_misprints(df:pd.DataFrame) -> pd.DataFrame:
         column_data = df_copy[column]
         column_data_shifted = column_data.shift(-1, fill_value=np.nan)
         ratio_change = column_data / column_data_shifted
-        misprints = (ratio_change > 30.0)        
-        df_copy.loc[misprints, column] = np.nan
+        misprints = (ratio_change > 15.0)
+        
+        for c in  trades_price_fields:
+            df_copy.loc[misprints, c] = np.nan
     
     return df_copy
 
@@ -120,9 +122,6 @@ def create_datasets(
 
                 logging.info(f"Adding technical indicators ...")
                 df = df_tech_utils.add_technical_indicators(df)
-
-                logging.info(f"Adding volume profile ...")
-                df = df_tech_utils.add_volume_profile(df)
                 
                 logging.info(f"Adding minute multiplier to column names ...")
                 df = add_minute_multiplier_to_column_names(df, minute_multiplier)

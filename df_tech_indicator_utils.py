@@ -1,12 +1,8 @@
 import pandas as pd
 import numpy as np
-
 import pandas_ta as ta
 
 import logging
-
-volume_profile_depths = (112, 224,)
-depth_to_bins_koeff = 8
 
 def add_technical_indicators(df:pd.DataFrame) -> pd.DataFrame:
 
@@ -122,63 +118,3 @@ def add_technical_indicators(df:pd.DataFrame) -> pd.DataFrame:
     logging.info(f"Dataframe copied 5 ...")
 
     return df
-
-def calculate_volume_profile(vwap:np.ndarray, volume:np.ndarray, depth:int, num_bins:int) -> np.ndarray:
-
-    total_records = vwap.shape[0]
-    result = np.zeros((total_records, num_bins + 2))
-
-    for index in range(depth, total_records):
-        
-        r_index = index - depth
-
-        vwap_for_volume_profile = vwap[r_index:index]
-        volume_for_volume_profile = volume[r_index:index]
-
-        hist, bins = np.histogram(vwap_for_volume_profile, bins=num_bins, weights=volume_for_volume_profile, density=False)
-        sum_hist = np.sum(hist)
-        if sum_hist != 0.0:
-            hist = hist / sum_hist
-        
-        result[index, 0] = bins[0]
-        result[index, 1] = bins[1] - bins[0]
-        result[index, 2:] = hist
-
-    np.nan_to_num(result, copy=False)
-
-    return result
-
-def add_volume_profile(df:pd.DataFrame) -> pd.DataFrame:
-
-    vwap = df['TRADES_average'].to_numpy(copy=True)
-    volume = df['TRADES_volume'].to_numpy(copy=True)
-
-    for depth in volume_profile_depths:
-
-        logging.info(f"Processing volume profile for depth {depth} ...")
-
-        num_bins = int(depth / depth_to_bins_koeff)
-        volume_fields = [f'vp_{depth}_{histogram_index}_volume' for histogram_index in range(num_bins)] 
-
-        vp = calculate_volume_profile(vwap, volume, depth, num_bins)
-
-        df[f'vp_{depth}_min_price'] = vp[:, 0]
-        df[f'vp_{depth}_width'] = vp[:, 1]
-        df[volume_fields] = vp[:, 2:]
-
-        df = df.copy()
-
-    return df
-
-# wvap = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 6], dtype=np.float64)
-# wvol = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 11, 19, 20, 1, 2, 90023400000, 100345345], dtype=np.float64)
-# wvap = np.array([10, 20, 30, 40, 200, 3, 4, 5, 6, 10, 10, 2, 3, 4, 10, 10, 1, 2, 3, 40])
-# wvol = np.zeros(wvap.shape[0])
-
-# print(calculate_volume_profile(wvap, wvol, 10, 7))
-
-# hist, bins = np.histogram(wvap, bins=5, weights=wvol, density=False)
-# hist1 = hist / np.sum(hist)
-
-# print (hist1) 
-# print (bins)
