@@ -199,16 +199,16 @@ def add_top_of_volume_profile(
 
     return df
 
-wvap = np.array([1, 200, 1, 200, 1, 300, 1, 400, 1, 500, 1, 600, 1, 700, 1, 3, 1, 4, 1, 5, 1, 9, 7, 6], dtype=np.float32)
-wvol = np.array([1, 2,   3,  4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 11, 19, 20, 1, 2, 90023400000, 100345345], dtype=np.float32)
+# wvap = np.array([1, 20, 2, 30, 3, 40, 4, 50, 5, 60, 6, 70, 7, 80, 9, 3, 9, 4, 10, 5, 11, 9, 7, 6], dtype=np.float32)
+# wvol = np.array([1, 2,   3,  4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 11, 19, 20, 1, 2, 90023400000, 100345345], dtype=np.float32)
 # wvap = np.array([10, 20, 30, 40, 200, 3, 4, 5, 6, 10, 10, 2, 3, 4, 10, 10, 1, 2, 3, 40])
 # wvol = np.zeros(wvap.shape[0])
 
 # print(calculate_volume_profile(wvap, wvol, 10, 3))
 
-dataframe:pd.DataFrame = pd.DataFrame({'TRADES_average': wvap, 'TRADES_volume': wvol})
-print(add_volume_profile(dataframe, volume_profile_depths=(12, 6), depth_to_bins_coeff=2))
-print(add_top_of_volume_profile(dataframe, volume_profile_depths=(12, 6), depth_to_bins_coeff=2))
+# dataframe:pd.DataFrame = pd.DataFrame({'TRADES_average': wvap, 'TRADES_volume': wvol})
+# print(add_volume_profile(dataframe, volume_profile_depths=(12, 6), depth_to_bins_coeff=2))
+# print(add_top_of_volume_profile(dataframe, volume_profile_depths=(12, 6), depth_to_bins_coeff=2, top_bins_coeff=2))
 
 # hist, bins = np.histogram(wvap, bins=5, weights=wvol, density=False)
 # hist1 = hist / np.sum(hist)
