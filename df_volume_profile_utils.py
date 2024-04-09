@@ -5,10 +5,11 @@ import torchist as th
 
 import logging
 
-DEFAULT_VOLUME_PROFILE_DEPTHS = (112, 224,)
+DEFAULT_VOLUME_PROFILE_DEPTHS = (128, 256)
 DEFAULT_VOLUME_TO_BIN_COEFF:float = 8.0
 DEFAULT_TOP_BINS_COEFF:float = 4.0
 
+"""
 def calculate_volume_profile(
     vwap_np_array:np.ndarray, 
     volume_np_array:np.ndarray, 
@@ -50,7 +51,12 @@ def calculate_volume_profile_torch(
         vwap_for_volume_profile = vwap[r_index:index]
         volume_for_volume_profile = volume[r_index:index]
     
-        bins:torch.Tensor = th.histogram_edges(vwap_for_volume_profile, num_bins).to(vwap.device)
+        if torch.all(vwap_for_volume_profile == vwap_for_volume_profile[0]):
+            logging.info(f"Index {index} - constant '{vwap_for_volume_profile[0]}' price values")
+            bins:torch.Tensor = vwap_for_volume_profile[0] + torch.arange(num_bins + 1, device=vwap.device) * 0.1
+        else:
+            bins:torch.Tensor = th.histogram_edges(vwap_for_volume_profile, num_bins).to(vwap.device)
+            
         hist:torch.Tensor = th.histogram(vwap_for_volume_profile, edges=bins, weights=volume_for_volume_profile)
     
         sum_hist:torch.Tensor = torch.sum(hist).float()  # ensure floating point division
@@ -91,10 +97,11 @@ def add_volume_profile(
         df = df.copy()
 
     return df
-
+"""
 
 # top of valume profile
 
+"""
 def calculate_top_of_volume_profile(
     vwap_np_array:np.ndarray, 
     volume_np_array:np.ndarray, 
@@ -138,36 +145,87 @@ def calculate_top_of_volume_profile_torch(
 
         vwap_for_volume_profile = vwap[r_index:index]
         volume_for_volume_profile = volume[r_index:index]
-    
-        bins:torch.Tensor = th.histogram_edges(vwap_for_volume_profile, num_bins).to(vwap.device)
-        hist:torch.Tensor = th.histogram(vwap_for_volume_profile, edges=bins, weights=volume_for_volume_profile)
+        
+        try:
+            if torch.all(vwap_for_volume_profile == vwap_for_volume_profile[0]):
+                logging.info(f"Index {index} - constant '{vwap_for_volume_profile[0]}' price values")
+                bins:torch.Tensor = vwap_for_volume_profile[0] + torch.arange(top_bins + 1, device=vwap.device) * 0.1
+            else:
+                bins:torch.Tensor = th.histogram_edges(vwap_for_volume_profile, top_bins).to(vwap.device)
+            
+            hist:torch.Tensor = th.histogram(vwap_for_volume_profile, edges=bins, weights=volume_for_volume_profile)
 
-        bin_width = bins[1] - bins[0]
+            bin_width = bins[1] - bins[0]
+            
+            bin_widths[r_index] = bin_width.item()
         
-        bin_widths[r_index] = bin_width.item()
-    
-        sum_hist:torch.Tensor = torch.sum(hist).float()  # ensure floating point division
-        if sum_hist.item() != 0.0:
-            hist = hist / sum_hist
+            sum_hist:torch.Tensor = torch.sum(hist).float()  # ensure floating point division
+            if sum_hist.item() != 0.0:
+                hist = hist / sum_hist
 
-        # Sort `hist` in descending order and adjust `bins` accordingly
-        sorted_hist, sorted_indices = torch.sort(hist, descending=True)
+            # Sort `hist` in descending order and adjust `bins` accordingly
+            sorted_hist, sorted_indices = torch.sort(hist, descending=True)
+            
+            # Only considering the first `top_bins`, adjust the bins accordingly
+            # Since bins are edges, we pick the edges that correspond to the sorted top bins
+            # Here, we pick the lower edge of each of the top bins for simplicity
+            sorted_indices_for_edges = sorted_indices[:top_bins]
+            
+            # Populate the top histograms and their corresponding bin edges
+            histograms[r_index] = sorted_hist[:top_bins]
+            
+            # Adjust for the bin edges; each bin's left edge is what we consider here
+            bin_edges[r_index] = bins[sorted_indices_for_edges]
+        except Exception as e:
+            logging.error(f"Error at index {index}: {e}")
+            
+            # rethrow the exception
+            raise e
         
-        # Only considering the first `top_bins`, adjust the bins accordingly
-        # Since bins are edges, we pick the edges that correspond to the sorted top bins
-        # Here, we pick the lower edge of each of the top bins for simplicity
-        sorted_indices_for_edges = sorted_indices[:top_bins]
-        
-        # Populate the top histograms and their corresponding bin edges
-        histograms[r_index] = sorted_hist[:top_bins]
-        
-        # Adjust for the bin edges; each bin's left edge is what we consider here
-        bin_edges[r_index] = bins[sorted_indices_for_edges]
-    
     # Replace NaN values with 0. This operation is in-place.
     histograms = torch.nan_to_num(histograms)
 
     return (histograms, bin_edges, bin_widths)
+"""
+
+def calculate_top_of_volume_profile(
+    vwap:np.ndarray, 
+    volume:np.ndarray, 
+    depth:int, 
+    num_bins:int, 
+    top_bins:int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+
+    total_records = vwap.shape[0]
+    hist_result = np.zeros((total_records, top_bins))
+    bins_result = np.zeros((total_records, top_bins))
+    widths = np.zeros(total_records)
+
+    for index in range(depth, total_records):
+        
+        r_index = index - depth
+
+        vwap_for_volume_profile = vwap[r_index:index]
+        volume_for_volume_profile = volume[r_index:index]
+
+        hist, bins = np.histogram(vwap_for_volume_profile, bins=num_bins, weights=volume_for_volume_profile, density=False)
+        sum_hist = np.sum(hist)
+        if sum_hist.item() != 0.0:
+            hist = hist / sum_hist
+        
+        # Find the indices of the top 'top_bins' values in 'hist'
+        top_indices = np.argpartition(hist, -top_bins)[-top_bins:]
+        
+        # Sort 'top_indices' by the 'hist' values in descending order
+        top_indices_sorted = top_indices[np.argsort(hist[top_indices])[::-1]]
+        
+        for i, ti in enumerate(top_indices_sorted):
+            hist_result[r_index, i] = hist[ti]
+            bins_result[r_index, i] = bins[ti]
+        
+        widths[r_index] = bins[1] - bins[0]
+               
+
+    return (hist_result, bins_result, widths)
 
 def add_top_of_volume_profile(
     df:pd.DataFrame, 
@@ -189,9 +247,9 @@ def add_top_of_volume_profile(
         price_fileds = [f'vp_{depth}_{histogram_index}_price' for histogram_index in range(top_bins)]
         volume_fields = [f'vp_{depth}_{histogram_index}_volume' for histogram_index in range(top_bins)] 
 
-        hist, bins, bin_widths = calculate_top_of_volume_profile(vwap, volume, depth, num_bins, top_bins)
+        hist, bins, widths = calculate_top_of_volume_profile(vwap, volume, depth, num_bins, top_bins)
 
-        df[f'vp_{depth}_width'] = bin_widths
+        df[f'vp_{depth}_width'] = widths
         df[price_fileds] = bins
         df[volume_fields] = hist
 
@@ -208,6 +266,7 @@ def add_top_of_volume_profile(
 
 # dataframe:pd.DataFrame = pd.DataFrame({'TRADES_average': wvap, 'TRADES_volume': wvol})
 # print(add_volume_profile(dataframe, volume_profile_depths=(12, 6), depth_to_bins_coeff=2))
+
 # print(add_top_of_volume_profile(dataframe, volume_profile_depths=(12, 6), depth_to_bins_coeff=2, top_bins_coeff=2))
 
 # hist, bins = np.histogram(wvap, bins=5, weights=wvol, density=False)
