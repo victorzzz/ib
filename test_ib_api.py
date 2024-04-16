@@ -6,9 +6,12 @@ from typing import Optional
 from ib_insync import IB, Contract
 import pandas as pd
 import date_time_utils as dt_utils
+import df_loader_saver as df_ls
 
 import ib_tickers as ib_tckrs
 import ib_constants as ib_cnts
+
+import ib_historical_data_downloader as ib_hdd
 
 ib_client:IB = IB()
 ib_client.connect(
@@ -17,8 +20,8 @@ ib_client.connect(
     clientId=ib_cnts.hist_data_loader_live_client_id,
     host=ib_cnts.hist_data_loader_live_host)
 
-contract = Contract(conId=2008980)
-# contract = Contract(conId=4458964)
+# contract = Contract(conId=2008980)
+contract = Contract(conId=4458964)
 # contract = Contract(conId=4458978)
 
 ib_client.qualifyContracts(contract)
@@ -90,12 +93,12 @@ ib_client.sleep(3)
 """
 
 # date_to = dt.datetime.now() - dt.timedelta(days=4)
-date_to = dt.datetime(2020, 12, 8)
+date_to = dt.datetime(2009, 5, 16)
 
 midpointBars_1_min = ib_client.reqHistoricalData(
         contract = contract,
         endDateTime = date_to,
-        durationStr = f"10 D",
+        durationStr = f"1 D",
         barSizeSetting = "1 min",
         whatToShow='MIDPOINT',
         useRTH = True
@@ -106,7 +109,7 @@ ib_client.sleep(3)
 tradesBars_1_min = ib_client.reqHistoricalData(
         contract = contract,
         endDateTime = date_to,
-        durationStr = f"10 D",
+        durationStr = f"1 D",
         barSizeSetting = "1 min",
         whatToShow='TRADES',
         useRTH = True
@@ -117,7 +120,7 @@ ib_client.sleep(3)
 bidBars_1_min = ib_client.reqHistoricalData(
         contract = contract,
         endDateTime = date_to,
-        durationStr = f"10 D",
+        durationStr = f"1 D",
         barSizeSetting = "1 min",
         whatToShow='BID',
         useRTH = True
@@ -128,7 +131,7 @@ ib_client.sleep(3)
 askBars_1_min = ib_client.reqHistoricalData(
         contract = contract,
         endDateTime = date_to,
-        durationStr = f"10 D",
+        durationStr = f"1 D",
         barSizeSetting = "1 min",
         whatToShow='ASK',
         useRTH = True
@@ -142,6 +145,28 @@ print(f"bidBars_1_min - {len(bidBars_1_min)}")
 print(f"askBars_1_min - {len(askBars_1_min)}")
 
 print("!")
+
+print("midpointBars_1_min")
+df = ib_hdd.bars_to_dataframe("MIDPOINT", midpointBars_1_min)
+df_ls.save_df(df, f"test_data/test_ib_api_MIDPOINT_{date_to.strftime('%Y-%m-%d')}")
+print(" --------- ")
+
+print("tradesBars_1_min")
+df = ib_hdd.bars_to_dataframe("TRADES", tradesBars_1_min)
+df_ls.save_df(df, f"test_data/test_ib_api_TRADES_{date_to.strftime('%Y-%m-%d')}")
+print(" --------- ")
+
+print("bidBars_1_min")
+df = ib_hdd.bars_to_dataframe("BID", bidBars_1_min)
+df_ls.save_df(df, f"test_data/test_ib_api_BID_{date_to.strftime('%Y-%m-%d')}")
+print(" --------- ")
+
+print("askBars_1_min")
+df = ib_hdd.bars_to_dataframe("ASK", askBars_1_min)
+df_ls.save_df(df, f"test_data/test_ib_api_ASK_{date_to.strftime('%Y-%m-%d')}")
+print(" --------- ")
+
+print(" ")
 
 """
 histVolatilityBars_1_min = ib_client.reqHistoricalData(

@@ -13,6 +13,7 @@ import ib_logging as ib_log
 import file_system_utils as fsu
 import df_date_time_utils as df_dt_utils
 import df_tech_indicator_utils as df_tech_utils
+import df_volume_profile_utils as df_vp_utils
 import df_loader_saver as df_ls
 
 midpoint_fields = ["MIDPOINT_open", "MIDPOINT_high", "MIDPOINT_low", "MIDPOINT_close"]
@@ -41,21 +42,18 @@ def load_merged_dataframes(
 
     return merged_dataframes
 
-def replace_nan_values(df:pd.DataFrame):
+def process_empty_values(df:pd.DataFrame) -> pd.DataFrame:
+    
+    df = df.dropna(subset=trades_volume_fields, how='any')
+    
+    df = df[(df['TRADES_volume'] > 0.0)]
+    
     for column in df.columns:
-        if column in midpoint_fields or column in bid_fields or column in ask_fields or column in trades_price_fields:
+        if (column in midpoint_fields) or (column in bid_fields) or (column in ask_fields) or (column in trades_price_fields):
             df[column].fillna(method='bfill', inplace=True)
             df[column].fillna(method='ffill', inplace=True)
-        elif column in trades_volume_fields:
-            df[column].fillna(0.0, inplace=True)
-
-def reverse_dataframe(df:pd.DataFrame) -> pd.DataFrame:
-    result:pd.DataFrame = df.iloc[::-1]
-    result.reset_index(drop=True, inplace=True)
-
-    result = result.copy()
-
-    return result
+            
+    return df
 
 def fix_trading_price_misprints(df:pd.DataFrame) -> pd.DataFrame:
     df_copy = df.copy()
@@ -76,6 +74,14 @@ def fix_trading_price_misprints(df:pd.DataFrame) -> pd.DataFrame:
 
 def add_minute_multiplier_to_column_names(df:pd.DataFrame, minute_multiplier:int) -> pd.DataFrame:
     result:pd.DataFrame = df.add_prefix(f"{minute_multiplier}m_")
+
+    return result
+
+def reverse_dataframe(df:pd.DataFrame) -> pd.DataFrame:
+    result:pd.DataFrame = df.iloc[::-1]
+    result.reset_index(drop=True, inplace=True)
+
+    result = result.copy()
 
     return result
 
@@ -105,23 +111,26 @@ def create_datasets(
 
                 logging.info(f"Processing '{ticker_symbvol}' - '{exchange}' - {minute_multiplier} ...")
 
-                logging.info(f"Fixing trading price misprints ...")
-                df = fix_trading_price_misprints(df)
-
                 logging.info(f"Adding normalized time columns ...")
                 df = df_dt_utils.add_normalized_time_columns(df)
 
                 logging.info("Deleting non-trading hours records")
-                df = df[(df['normalized_trading_time'] >= 0) & (df['normalized_trading_time'] <= 1)]
+                df = df[(df['normalized_trading_time'] >= 0) & (df['normalized_trading_time'] < 1)]
 
-                logging.info(f"Replacing nan values ...")
-                replace_nan_values(df)
+                logging.info(f"Fixing trading price misprints ...")
+                df = fix_trading_price_misprints(df)
+
+                logging.info(f"Processing empty values...")
+                df = process_empty_values(df)
 
                 logging.info(f"Reversing dataframe ...")
                 df = reverse_dataframe(df)
-
+                
                 logging.info(f"Adding technical indicators ...")
                 df = df_tech_utils.add_technical_indicators(df)
+                
+                logging.info(f"Adding volume profile ...")
+                df = df_vp_utils.add_top_of_volume_profile(df)
                 
                 logging.info(f"Adding minute multiplier to column names ...")
                 df = add_minute_multiplier_to_column_names(df, minute_multiplier)
