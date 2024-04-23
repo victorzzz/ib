@@ -14,6 +14,7 @@ import file_system_utils as fsu
 import df_date_time_utils as df_dt_utils
 import df_tech_indicator_utils as df_tech_utils
 import df_volume_profile_utils as df_vp_utils
+import df_price_analizer as df_pa
 import df_loader_saver as df_ls
 
 midpoint_fields = ["MIDPOINT_open", "MIDPOINT_high", "MIDPOINT_low", "MIDPOINT_close"]
@@ -129,8 +130,11 @@ def create_datasets(
                 logging.info(f"Adding technical indicators ...")
                 df = df_tech_utils.add_technical_indicators(df)
                 
-                logging.info(f"Adding volume profile ...")
-                df = df_vp_utils.add_top_of_volume_profile(df)
+                logging.info(f"Adding price change labels ...")
+                df = df_pa.addPriceChangeLabelsToDataFrame(df)
+                
+                # logging.info(f"Adding volume profile ...")
+                # df = df_vp_utils.add_top_of_volume_profile(df)
                 
                 logging.info(f"Adding minute multiplier to column names ...")
                 df = add_minute_multiplier_to_column_names(df, minute_multiplier)

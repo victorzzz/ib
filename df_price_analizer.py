@@ -1,4 +1,12 @@
 import numpy as np
+import pandas as pd
+
+PRICE_FIELD:str = 'TRADES_average'
+DAY_FIELD:str = 'normalized_day_of_week'
+
+DEFAULT_TARGET_PROFITS_PERCENTS:list[float] = [1.5, 3.0]
+
+DEFAULT_PROFIT_LOSS_RATIO:float = 5.0
 
 def getArrayPairs(arr:np.ndarray) -> np.ndarray:
     pairs = np.column_stack((np.roll(arr, 1), arr))[1:]
@@ -92,3 +100,33 @@ def calculateDayPriceChangeWithTrailingStopLoss(
             previous = i_price
 
     return (inc_results_for_losses, dec_results_for_losses)
+
+# add new columns to the dataframe
+#   - for each target profit add new column of type int with long position label 1 if profit is reached and 0 otherwise
+#   - for each target profit add new column of type int with short position label 1 if profit is reached and 0 otherwise
+# returns new dataframe
+def addPriceChangeLabelsToDataFrame(
+    df:pd.DataFrame, 
+    target_profits_percents:list[float] = DEFAULT_TARGET_PROFITS_PERCENTS, 
+    profit_lost_ratio:float = DEFAULT_PROFIT_LOSS_RATIO ) -> pd.DataFrame:
+
+    prices:np.ndarray = df[PRICE_FIELD].to_numpy(dtype=np.float32)
+    days:np.ndarray = df[DAY_FIELD].to_numpy(dtype=np.float32)
+
+    l_profits:int = len(target_profits_percents)
+
+    profits:np.ndarray = np.array(target_profits_percents, dtype=np.float32) / 100.0
+    trailing_stop_losses:np.ndarray = profits / profit_lost_ratio
+
+    inc_results_for_losses, dec_results_for_losses = calculateDayPriceChangeWithTrailingStopLoss(prices, days, trailing_stop_losses)
+    
+    for i, profit in enumerate(target_profits_percents):
+        df[f"long_profit_{profit}".replace(".", "_")] = np.where(inc_results_for_losses[i] >= profits[i], 1, 0)
+        df[f"long_exit_{profit}".replace(".", "_")] = np.where(dec_results_for_losses[i] >= trailing_stop_losses[i], 1, 0)
+        
+        df[f"short_profit_{profit}".replace(".", "_")] = np.where(dec_results_for_losses[i] >= profits[i], 1, 0)
+        df[f"short_exit_{profit}".replace(".", "_")] = np.where(inc_results_for_losses[i] >= trailing_stop_losses[i], 1, 0)
+        
+        df = df.copy()
+        
+    return df
