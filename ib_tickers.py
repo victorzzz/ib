@@ -40,13 +40,16 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "ENB": [ "NYSE", "TSE"]
         },
 
-    "usa_banks": 
+    "oil_gas": 
         {
-            "C" : ["NYSE"], 
-            "BAC": ["NYSE"], 
-            "JPM": ["NYSE"],
-            "GS" : ["NYSE"],
-            "MS" : ["NYSE"]
+            "ARX" : ["TSE"],  # ++++++++++
+            "SU" :  ["NYSE", "TSE"], # ++++++
+            "TRP" : ["NYSE", "TSE"], # ++++++
+            "VET" : ["NYSE", "TSE"],
+            "ERF" : ["NYSE", "TSE"],
+            "OVV" : ["NYSE", "TSE"],
+            "CVE" : ["NYSE", "TSE"],
+            "CNQ" : ["NYSE", "TSE"]
         },
 
     "tech_software": 
@@ -70,17 +73,32 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "CP" : ["NYSE", "TSE"],
         },
 
-    "oil_gas": 
+        "canadian_etf": 
         {
-            "TRP" : ["NYSE", "TSE"],
-            "ENB" : ["NYSE", "TSE"],
-            "SU" : ["NYSE", "TSE"], # ++++++
-            "VET" : ["NYSE", "TSE"],
-            "ERF" : ["NYSE", "TSE"],
-            "OVV" : ["NYSE", "TSE"],
-            "CVE" : ["NYSE", "TSE"],
-            "CNQ" : ["NYSE", "TSE"],
-            "ARX" : ["TSE"]  # ++++++++++
+            "ZSP" : ["TSE"],
+            "XIU" : ["TSE"], 
+            "XIC" : ["TSE"], 
+            "XUU" : ["TSE"], 
+            "XRE" : ["TSE"], 
+            "XBB" : ["TSE"], 
+            "XPF" : ["TSE"], 
+            "XIT" : ["TSE"], 
+            "XSP" : ["TSE"]
+        },
+
+        "canadian_leveraged_etf" : 
+        {
+            "HQU" : ["TSE"],
+
+        },
+
+    "usa_banks": 
+        {
+            "C" : ["NYSE"], 
+            "BAC": ["NYSE"], 
+            "JPM": ["NYSE"],
+            "GS" : ["NYSE"],
+            "MS" : ["NYSE"]
         },
 
     "usa": 
@@ -110,31 +128,12 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "SPY" : ["NYSE"], 
             "DIA" : ["NYSE"]
         },
-        
-        "canadian_etf": 
-        {
-            "ZSP" : ["TSE"],
-            "XIU" : ["TSE"], 
-            "XIC" : ["TSE"], 
-            "XUU" : ["TSE"], 
-            "XRE" : ["TSE"], 
-            "XBB" : ["TSE"], 
-            "XPF" : ["TSE"], 
-            "XIT" : ["TSE"], 
-            "XSP" : ["TSE"]
-        },
 
     "leveraged_etf" : 
         {
             "TQQQ" : ["NASDAQ"], 
             "SQQQ" : ["NASDAQ"], 
             "QLD" : ["NYSE"]
-        },
-
-        "canadian_leveraged_etf" : 
-        {
-            "HQU" : ["TSE"],
-
         },
 
     "fixed_income": 

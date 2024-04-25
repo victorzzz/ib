@@ -107,9 +107,6 @@ def create_datasets(
 
             for minute_multiplier, df in dfs.items():
 
-                if minute_multiplier != 1:
-                    continue
-
                 logging.info(f"Processing '{ticker_symbvol}' - '{exchange}' - {minute_multiplier} ...")
 
                 logging.info(f"Adding normalized time columns ...")
@@ -130,11 +127,13 @@ def create_datasets(
                 logging.info(f"Adding technical indicators ...")
                 df = df_tech_utils.add_technical_indicators(df)
                 
-                logging.info(f"Adding price change labels ...")
-                df = df_pa.addPriceChangeLabelsToDataFrame(df)
+                if minute_multiplier == 1:
                 
-                # logging.info(f"Adding volume profile ...")
-                # df = df_vp_utils.add_top_of_volume_profile(df)
+                    logging.info(f"Adding volume profile ...")
+                    df = df_vp_utils.add_top_of_volume_profile(df)
+                
+                    logging.info(f"Adding price change labels ...")
+                    df = df_pa.addPriceChangeLabelsToDataFrame(df)
                 
                 logging.info(f"Adding minute multiplier to column names ...")
                 df = add_minute_multiplier_to_column_names(df, minute_multiplier)

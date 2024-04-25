@@ -24,7 +24,7 @@ import df_loader_saver as df_ls
 
 #from_date:dt.date = dt.datetime.now().date()
 
-from_date:dt.date = dt.date(2024, 3, 28)
+from_date:dt.date = dt.date(2024, 4, 23)
 
 fb_from_date:dt.date = dt.date(2022, 6, 8)
 meta_to_day:dt.date = dt.date(2022, 6, 9)
@@ -165,7 +165,7 @@ def bars_to_dataframe(data_type:str, bars:list[BarData]) -> pd.DataFrame:
 
 def get_oldest_date_from_saved_data(file_name:str) -> Optional[dt.date]:
 
-    if df_ls.is_df_exists(file_name):
+    if not df_ls.is_df_exists(file_name):
         return None
 
     df = df_ls.load_df(file_name, columns=["timestamp"])
