@@ -24,6 +24,12 @@ oiv_fields = ["OPTION_IMPLIED_VOLATILITY_open", "OPTION_IMPLIED_VOLATILITY_high"
 trades_price_fields = ["TRADES_open", "TRADES_high", "TRADES_low", "TRADES_close", "TRADES_average"]
 trades_volume_fields = ["TRADES_volume", "TRADES_barCount"]
 
+PRICES_DEPTH = 60
+TECH_INDICATORS_DEPTH = 15
+VOLUME_PROFILE_DEPTH = 5
+
+TEST_MULTYRANGE_DATASET_SIZE = 50000
+
 def load_merged_dataframes(
         ticker_symbvol:str, 
         exchange:str,
@@ -86,10 +92,17 @@ def reverse_dataframe(df:pd.DataFrame) -> pd.DataFrame:
 
     return result
 
+def create_test_multyrange_dataset(enriched_dfs:dict[int, pd.DataFrame], size:int) -> None:
+    main_df = enriched_dfs[1].tail(size).copy()
+    
+    
+    
+        
+
 def create_datasets(
         tickers:list[tuple[str, list[str]]],
         lock, 
-        shared_tickers_cache:dict[str, int]):
+        shared_tickers_cache:dict[str, int]) -> None:
     
     logging.info(f"Processing tickers: {tickers}")
 
@@ -125,7 +138,7 @@ def create_datasets(
                 df = reverse_dataframe(df)
                 
                 logging.info(f"Adding technical indicators ...")
-                df = df_tech_utils.add_technical_indicators(df)
+                df = df_tech_utils.add_technical_indicators(df, minute_multiplier)
                 
                 if minute_multiplier == 1:
                 
@@ -143,6 +156,8 @@ def create_datasets(
                 logging.info(f"Saving dataset ...")
                 result_file_name = f"{cnts.data_sets_folder}/{ticker_symbvol}-{exchange}--ib--{minute_multiplier:.0f}--minute--dataset"
                 df_ls.save_df(df, result_file_name)
+
+                create_test_multyrange_dataset(enriched_dfs, TEST_MULTYRANGE_DATASET_SIZE)
 
             dfs.clear()
 

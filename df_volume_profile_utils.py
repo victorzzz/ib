@@ -1,11 +1,9 @@
 import pandas as pd
 import numpy as np
-import torch
-import torchist as th
 
 import logging
 
-DEFAULT_VOLUME_PROFILE_DEPTHS = (128, 256, 512)
+DEFAULT_VOLUME_PROFILE_DEPTHS = (64, 128, 256, 384)
 DEFAULT_VOLUME_TO_BIN_COEFF:float = 8.0
 DEFAULT_TOP_BINS_COEFF:float = 4.0
 

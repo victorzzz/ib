@@ -56,15 +56,6 @@ def merge_csv_files(
 
                     merged_data_frame = pd.concat([raw_data_frame, merged_data_frame], axis=0)
                     
-                    duplicated_array = merged_data_frame.duplicated(subset=['timestamp'])
-
-                    if(duplicated_array.sum() > 0):
-                        logging.error(f"MERGER !!!! Found {duplicated_array.sum()} duplicates in {raw_file} ...")
-
-                        duplicates_data_frame:pd.DataFrame = pd.DataFrame(duplicated_array)
-                        duplicates_file_name:str = f"{cnts.merged_data_duplicates_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged-DUP.csv"
-                        duplicates_data_frame.to_csv(duplicates_file_name, index=False)
-
                 merged_data_frame.sort_values(by='timestamp', inplace=True, ascending=False)
                 merged_data_frame.drop_duplicates(subset=['timestamp'], inplace=True)
 
@@ -76,7 +67,6 @@ def merge_csv_files(
                 logging.info(f"Archiving {', '.join(filtered_raw_files)} ...")
                 for raw_file in filtered_raw_files:
                     fsu.move_file_to_folder(raw_file, cnts.data_archived_folder)
-
 
 def do_step():
     processes = []
