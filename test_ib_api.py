@@ -1,14 +1,9 @@
 
 import datetime as dt
 
-from typing import Optional
-
 from ib_insync import IB, Contract
-import pandas as pd
-import date_time_utils as dt_utils
 import df_loader_saver as df_ls
 
-import ib_tickers as ib_tckrs
 import ib_constants as ib_cnts
 
 import ib_historical_data_downloader as ib_hdd
@@ -84,9 +79,9 @@ news = ib_client.reqHistoricalNews(contract.conId, "FLY", "20210101 00:00:00", "
 ib_client.sleep(3)
 
 
-final_data_frame:Optional[pd.DataFrame] = None
+final_data_frame:pd.DataFrame | None = None
 
-histValatility:Optional[pd.DataFrame] = None
+histValatility:pd.DataFrame | None = None
 
 headTimeStamp:dt.datetime = ib_client.reqHeadTimeStamp(contract = contract, whatToShow="MIDPOINT", useRTH = True)
 ib_client.sleep(3)
@@ -263,7 +258,7 @@ for data_type in ib_cnts.hist_data_types_reduced:
         useRTH = True
     )
 
-    bars_to_save:Optional[list[dict[str, float]]] = None
+    bars_to_save:list[dict[str, float]] | None = None
 
     if (data_type == "TRADES"):
         bars_to_save = [

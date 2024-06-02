@@ -1,11 +1,8 @@
 import multiprocessing
 import constants as cnts
 import pandas as pd
-import numpy as np
-from typing import Optional
 import ib_tickers as ib_tckrs
 import file_system_utils as fsu
-import df_date_time_utils as df_dt_utils
 import logging
 import ib_logging as ib_log
 import ib_tickers_cache as ib_tickers_cache
@@ -29,7 +26,7 @@ def merge_csv_files(
         
         for exchange in ticker_exchanges:
 
-            contract_id:Optional[int] = ib_tickers_cache.get_contact_id(ticker_symbvol, exchange, lock, shared_tickers_cache)
+            contract_id:int | None = ib_tickers_cache.get_contact_id(ticker_symbvol, exchange, lock, shared_tickers_cache)
 
             if contract_id is None:
                 logging.warning(f"Contract ID not found for '{ticker_symbvol}' '{exchange}' ...")

@@ -1,11 +1,8 @@
 import constants as cnts
-from typing import Optional
 import json
-from multiprocessing import Lock
 import file_system_utils as fsu
 
 import logging
-import ib_logging as ib_log
 
 tickers_cache_file:str = f"{cnts.tickers_cache_folder}/ib_tickers_cache.json"
 
@@ -29,7 +26,7 @@ def read_cached_data_if_needed(shared_tickers_cache:dict[str, int]) -> None:
         logging.debug(f"Cahce data is already in memory")
         logging.debug(f"CACHE IN MEMORY STATE. tickers_cache: {shared_tickers_cache}")
 
-def get_contact_id(symbol:str, exchange:str, lock, shared_tickers_cache:dict[str, int]) -> Optional[int]:
+def get_contact_id(symbol:str, exchange:str, lock, shared_tickers_cache:dict[str, int]) -> int | None:
     
     logging.debug(f"Reading cached data for {symbol} {exchange}")
 

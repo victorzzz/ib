@@ -1,10 +1,9 @@
 import datetime as dt
 import logging
-from typing import Optional
 
 logs_folder = "Logs"
 
-def configure_logging(logger_name:Optional[str] = None, ib_sync_log_level:int = logging.WARNING):
+def configure_logging(logger_name:str | None = None, ib_sync_log_level:int = logging.WARNING):
     # Configure logging
     # logging.basicConfig(filename=cnts.error_log_file, filemode="a", level=logging.ERROR, force=True, format='%(asctime)s| %(message)s')
 

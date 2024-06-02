@@ -2,8 +2,6 @@ import multiprocessing
 import logging
 import pandas as pd
 
-from typing import Optional
-
 import np_utils as np_utils
 import numpy as np
 import ib_tickers_cache as ib_tickers_cache
@@ -20,9 +18,11 @@ import df_loader_saver as df_ls
 midpoint_fields = ["MIDPOINT_open", "MIDPOINT_high", "MIDPOINT_low", "MIDPOINT_close"]
 bid_fields = ["BID_open", "BID_high", "BID_low", "BID_close"]
 ask_fields = ["ASK_open", "ASK_high", "ASK_low", "ASK_close"]
-oiv_fields = ["OPTION_IMPLIED_VOLATILITY_open", "OPTION_IMPLIED_VOLATILITY_high", "OPTION_IMPLIED_VOLATILITY_low", "OPTION_IMPLIED_VOLATILITY_close"]
+# oiv_fields = ["OPTION_IMPLIED_VOLATILITY_open", "OPTION_IMPLIED_VOLATILITY_high", "OPTION_IMPLIED_VOLATILITY_low", "OPTION_IMPLIED_VOLATILITY_close"]
 trades_price_fields = ["TRADES_open", "TRADES_high", "TRADES_low", "TRADES_close", "TRADES_average"]
 trades_volume_fields = ["TRADES_volume", "TRADES_barCount"]
+
+all_price_volume_fields = midpoint_fields + bid_fields + ask_fields + trades_price_fields + trades_volume_fields
 
 PRICES_DEPTH = 60
 TECH_INDICATORS_DEPTH = 15
@@ -30,36 +30,46 @@ VOLUME_PROFILE_DEPTH = 5
 
 TEST_MULTYRANGE_DATASET_SIZE = 50000
 
+def load_merged_dataframe(multiplier:int, ticker_symbvol:str, contract_id:int, exchange:str) -> pd.DataFrame | None:
+    
+    merged_file_name = f"{cnts.merged_data_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{multiplier:.0f}--minute--merged"
+    
+    if df_ls.is_df_exists(merged_file_name):
+        result = df_ls.load_df(merged_file_name)
+    else:
+        logging.error(f"File '{merged_file_name}' does not exist")
+        result = None
+
+    return result
+
 def load_merged_dataframes(
         ticker_symbvol:str, 
         exchange:str,
         lock, 
-        shared_tickers_cache:dict[str, int]) -> dict[int, pd.DataFrame]:
+        shared_tickers_cache:dict[str, int],
+        multiplier: int | None) -> dict[int, pd.DataFrame]:
     
     merged_dataframes = {}
 
-    contract_id:Optional[int] = ib_tickers_cache.get_contact_id(ticker_symbvol, exchange, lock, shared_tickers_cache)
+    contract_id:int | None = ib_tickers_cache.get_contact_id(ticker_symbvol, exchange, lock, shared_tickers_cache)
 
-    for minute_multiplier in cnts.minute_multipliers:
-        merged_file_name = f"{cnts.merged_data_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged"
-        if df_ls.is_df_exists(merged_file_name):
-            merged_dataframes[int(minute_multiplier)] = df_ls.load_df(merged_file_name)
-        else:
-            logging.error(f"File '{merged_file_name}' does not exist")
+    if multiplier is None:
+        for minute_multiplier in cnts.minute_multipliers:
+            merged_file_name = f"{cnts.merged_data_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged"
+            if df_ls.is_df_exists(merged_file_name):
+                merged_dataframes[int(minute_multiplier)] = df_ls.load_df(merged_file_name)
+            else:
+                logging.error(f"File '{merged_file_name}' does not exist")
+    else:
+        
 
     return merged_dataframes
 
 def process_empty_values(df:pd.DataFrame) -> pd.DataFrame:
     
-    df = df.dropna(subset=trades_volume_fields, how='any')
-    
+    df = df.dropna(subset=all_price_volume_fields, how='any')
     df = df[(df['TRADES_volume'] > 0.0)]
-    
-    for column in df.columns:
-        if (column in midpoint_fields) or (column in bid_fields) or (column in ask_fields) or (column in trades_price_fields):
-            df[column].fillna(method='bfill', inplace=True)
-            df[column].fillna(method='ffill', inplace=True)
-            
+   
     return df
 
 def fix_trading_price_misprints(df:pd.DataFrame) -> pd.DataFrame:
@@ -95,8 +105,6 @@ def reverse_dataframe(df:pd.DataFrame) -> pd.DataFrame:
 def create_test_multyrange_dataset(enriched_dfs:dict[int, pd.DataFrame], size:int) -> None:
     main_df = enriched_dfs[1].tail(size).copy()
     
-    
-    
         
 
 def create_datasets(
@@ -120,16 +128,20 @@ def create_datasets(
 
             for minute_multiplier, df in dfs.items():
 
+                # if minute_multiplier != 390:
+                #    continue
+
                 logging.info(f"Processing '{ticker_symbvol}' - '{exchange}' - {minute_multiplier} ...")
 
                 logging.info(f"Adding normalized time columns ...")
                 df = df_dt_utils.add_normalized_time_columns(df)
 
-                logging.info("Deleting non-trading hours records")
-                df = df[(df['normalized_trading_time'] >= 0) & (df['normalized_trading_time'] < 1)]
+                if minute_multiplier < 390:
+                    logging.info("Deleting non-trading hours records")
+                    df = df[(df['normalized_trading_time'] >= 0) & (df['normalized_trading_time'] < 1)]
 
-                logging.info(f"Fixing trading price misprints ...")
-                df = fix_trading_price_misprints(df)
+                # logging.info(f"Fixing trading price misprints ...")
+                # df = fix_trading_price_misprints(df)
 
                 logging.info(f"Processing empty values...")
                 df = process_empty_values(df)
@@ -138,7 +150,7 @@ def create_datasets(
                 df = reverse_dataframe(df)
                 
                 logging.info(f"Adding technical indicators ...")
-                df = df_tech_utils.add_technical_indicators(df, minute_multiplier)
+                df, price_normalizing_columns = df_tech_utils.add_technical_indicators(df, minute_multiplier)
                 
                 if minute_multiplier == 1:
                 
@@ -157,7 +169,7 @@ def create_datasets(
                 result_file_name = f"{cnts.data_sets_folder}/{ticker_symbvol}-{exchange}--ib--{minute_multiplier:.0f}--minute--dataset"
                 df_ls.save_df(df, result_file_name)
 
-                create_test_multyrange_dataset(enriched_dfs, TEST_MULTYRANGE_DATASET_SIZE)
+                # create_test_multyrange_dataset(enriched_dfs, TEST_MULTYRANGE_DATASET_SIZE)
 
             dfs.clear()
 

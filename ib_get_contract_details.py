@@ -1,12 +1,5 @@
-import datetime as dt
-
-from typing import Optional
-
 from ib_insync import IB, Contract
 import pandas as pd
-import date_time_utils as dt_utils
-
-import ib_tickers as ib_tckrs
 import ib_constants as ib_cnts
 
 ib_client:IB = IB()

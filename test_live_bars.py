@@ -1,18 +1,12 @@
 import time
 import datetime as dt
 
-from typing import Optional
-
 from ib_insync import *
-import pandas as pd
-import date_time_utils as dt_utils
-
-import ib_tickers as ib_tckrs
 import ib_constants as ib_cnts
 import ib_logging as ib_log
 import logging
 
-bars:Optional[BarDataList] = None
+bars:BarDataList | None = None
 
 def onPendingTickers(tickers):
     print("Pending tickers: ", tickers)

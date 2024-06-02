@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pandas as pd
 import pyarrow.parquet as pq
 import os
@@ -22,21 +20,21 @@ def adjust_types32(df:pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def load_df_first_timestamp(file_pathwithout_extension:str, format:str = "parquet") -> Optional[int]:
+def load_df_first_timestamp(file_pathwithout_extension:str, format:str = "parquet") -> int | None:
     df:pd.DataFrame = load_df(file_pathwithout_extension, format, first_row_only=True, columns=["timestamp"])
     if df.empty or ("timestamp" not in df.columns):
         return None
     
     return df["timestamp"].iloc[0]
 
-def load_df(file_path:str, format:Optional[str] = "parquet", first_row_only:bool = False, columns:Optional[list[str]] = None, adjust_types:bool = True) -> pd.DataFrame:
+def load_df(file_path:str, format:str | None = "parquet", first_row_only:bool = False, columns:list[str] | None = None, adjust_types:bool = True) -> pd.DataFrame:
     result = load_df_internal(file_path, format, first_row_only, columns)
     if adjust_types:
         result = adjust_types32(result)
     
     return result
 
-def load_df_internal(file_path:str, format:Optional[str] = "parquet", first_row_only:bool = False, columns:Optional[list[str]] = None, adjust_types:bool = True) -> pd.DataFrame:
+def load_df_internal(file_path:str, format:str | None = "parquet", first_row_only:bool = False, columns:list[str] | None = None, adjust_types:bool = True) -> pd.DataFrame:
     if format == "csv":
         if first_row_only:
             return pd.read_csv(file_path + ".csv", nrows=1, usecols=columns)
@@ -64,7 +62,7 @@ def load_df_internal(file_path:str, format:Optional[str] = "parquet", first_row_
     else:
         raise ValueError("Invalid format")
 
-def load_parquet_first_group(file_pathwithout_extension:str, columns:Optional[list[str]]) -> pd.DataFrame:
+def load_parquet_first_group(file_pathwithout_extension:str, columns:list[str] | None) -> pd.DataFrame:
     parquet_file = pq.ParquetFile(file_pathwithout_extension + ".parquet")
     first_row_group = parquet_file.read_row_group(0, use_threads=True, columns=columns)
     return first_row_group.to_pandas()

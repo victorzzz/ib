@@ -1,5 +1,4 @@
 
-from typing import Optional
 from typing import Union
 import numpy as np
 import math
@@ -40,7 +39,7 @@ failed_request_delay:float = 10.0
 
 def get_contract_for_symbol_and_exchange(ib_client:IB, symbol:str, exchange:str, lock, shared_tickers_cache:dict[str, int]) -> Contract:
 
-    contract_id:Optional[int] = ib_tickers_cache.get_contact_id(symbol, exchange, lock, shared_tickers_cache)
+    contract_id:int | None = ib_tickers_cache.get_contact_id(symbol, exchange, lock, shared_tickers_cache)
 
     if (contract_id is None):
         reqContractDetailsStartTime = time.time()    
@@ -83,12 +82,12 @@ def get_bars_for_contract(
         data_type:str,
         duration_days:int,
         date_to:dt.date,
-        minute_multiplier:float) -> tuple[Optional[list[BarData]], float]:
+        minute_multiplier:float) -> tuple[list[BarData] | None, float]:
     
         attempt:int = 1
 
         while True:
-            bars:Optional[list[BarData]] = None
+            bars:list[BarData] | None = None
 
             reqHistoricalDataStartTime = time.time()
             
@@ -133,7 +132,7 @@ def get_bars_for_contract(
 
 def bars_to_dataframe(data_type:str, bars:list[BarData]) -> pd.DataFrame:
 
-    bars_to_save:Optional[list[dict[str, Union[np.float32, np.int32]]]] = None
+    bars_to_save:list[dict[str, Union[np.float32, np.int32]]] | None = None
 
     if (data_type == "TRADES"):
         bars_to_save = [
@@ -163,7 +162,7 @@ def bars_to_dataframe(data_type:str, bars:list[BarData]) -> pd.DataFrame:
 
     return df
 
-def get_oldest_date_from_saved_data(file_name:str) -> Optional[dt.date]:
+def get_oldest_date_from_saved_data(file_name:str) -> dt.date | None:
 
     if not df_ls.is_df_exists(file_name):
         return None
@@ -181,7 +180,7 @@ def get_oldest_date_from_saved_data(file_name:str) -> Optional[dt.date]:
 
     return oldest_date
 
-def concat_dataframes(df1:pd.DataFrame, df2:pd.DataFrame, logContext:str) -> Optional[pd.DataFrame]:
+def concat_dataframes(df1:pd.DataFrame, df2:pd.DataFrame, logContext:str) ->pd.DataFrame | None:
 
     if (df1 is None):
         logging.warning(f"Concat {logContext} !! df1 is None")
@@ -220,7 +219,7 @@ def get_nearest_data_head(ib_client:IB, contract:Contract, data_types_to_downloa
     return maxHeadTimeStamp
 
 # returns (min(timestamp), max(timestamp))
-def get_min_max_merged_datetime(ticker:str, contract_id:int, exchange:str, minute_multiplier:float) -> Optional[tuple[dt.datetime, dt.datetime]]:
+def get_min_max_merged_datetime(ticker:str, contract_id:int, exchange:str, minute_multiplier:float) -> tuple[dt.datetime, dt.datetime] | None:
     file_name = f"{cnts.merged_data_folder}/{ticker}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged"
     if not df_ls.is_df_exists(file_name):
         return None
@@ -245,7 +244,7 @@ def download_stock_bars_for_ticker_in_date_range(
         contract:Contract, 
         minute_multiplier:float, 
         data_types_to_download:tuple[str, ...], 
-        save_as:Optional[str] = None):
+        save_as:str | None = None):
     
     processing_date = in_date_to
 
@@ -266,13 +265,13 @@ def download_stock_bars_for_ticker_in_date_range(
                 processing_date = oldest_date_in_data_from_file - dt.timedelta(days=1)
         else:
 
-            final_data_frame:Optional[pd.DataFrame] = None
+            final_data_frame:pd.DataFrame | None = None
 
             oldest_dates:list[dt.date] = []
 
             for data_type in data_types_to_download:
 
-                bars:Optional[list[BarData]]
+                bars:list[BarData] | None
                 reqHistoricalDataDelay:float
                 
                 bars, reqHistoricalDataDelay= get_bars_for_contract(
@@ -332,7 +331,7 @@ def download_stock_bars(
         data_types_to_download:tuple[str, ...],
         lock, 
         shared_tickers_cache:dict[str, int],
-        save_as:Optional[str] = None, 
+        save_as:str | None = None, 
         max_days_history:int = twenty_years_days):
     
     iteration_time_delta_days = int(minute_to_days_for_iteration * minute_multiplier)
