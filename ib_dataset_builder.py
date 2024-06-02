@@ -30,7 +30,7 @@ VOLUME_PROFILE_DEPTH = 5
 
 TEST_MULTYRANGE_DATASET_SIZE = 50000
 
-def load_merged_dataframe(multiplier:int, ticker_symbvol:str, contract_id:int, exchange:str) -> pd.DataFrame | None:
+def load_merged_dataframe(multiplier:float, ticker_symbvol:str, contract_id:int, exchange:str) -> pd.DataFrame | None:
     
     merged_file_name = f"{cnts.merged_data_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{multiplier:.0f}--minute--merged"
     
@@ -47,22 +47,26 @@ def load_merged_dataframes(
         exchange:str,
         lock, 
         shared_tickers_cache:dict[str, int],
-        multiplier: int | None) -> dict[int, pd.DataFrame]:
+        multiplier: float | None = None) -> dict[int, pd.DataFrame]:
     
     merged_dataframes = {}
 
     contract_id:int | None = ib_tickers_cache.get_contact_id(ticker_symbvol, exchange, lock, shared_tickers_cache)
 
+    if contract_id is None:
+        logging.error(f"Contract ID for '{ticker_symbvol}' - '{exchange}' not found")
+        return merged_dataframes;
+
     if multiplier is None:
         for minute_multiplier in cnts.minute_multipliers:
-            merged_file_name = f"{cnts.merged_data_folder}/{ticker_symbvol}-{contract_id}-{exchange}--ib--{minute_multiplier:.0f}--minute--merged"
-            if df_ls.is_df_exists(merged_file_name):
-                merged_dataframes[int(minute_multiplier)] = df_ls.load_df(merged_file_name)
-            else:
-                logging.error(f"File '{merged_file_name}' does not exist")
+            df: pd.DataFrame | None = load_merged_dataframe(minute_multiplier, ticker_symbvol, contract_id, exchange)
+            if df is not None:
+                merged_dataframes[int(minute_multiplier)] = df
     else:
-        
-
+        df: pd.DataFrame | None = load_merged_dataframe(multiplier, ticker_symbvol, contract_id, exchange)
+        if df is not None:
+            merged_dataframes[int(multiplier)] = df
+            
     return merged_dataframes
 
 def process_empty_values(df:pd.DataFrame) -> pd.DataFrame:
@@ -72,6 +76,7 @@ def process_empty_values(df:pd.DataFrame) -> pd.DataFrame:
    
     return df
 
+"""
 def fix_trading_price_misprints(df:pd.DataFrame) -> pd.DataFrame:
     df_copy = df.copy()
     
@@ -88,6 +93,7 @@ def fix_trading_price_misprints(df:pd.DataFrame) -> pd.DataFrame:
             df_copy.loc[misprints, c] = np.nan
     
     return df_copy
+"""
 
 def add_minute_multiplier_to_column_names(df:pd.DataFrame, minute_multiplier:int) -> pd.DataFrame:
     result:pd.DataFrame = df.add_prefix(f"{minute_multiplier}m_")
@@ -102,9 +108,10 @@ def reverse_dataframe(df:pd.DataFrame) -> pd.DataFrame:
 
     return result
 
+"""
 def create_test_multyrange_dataset(enriched_dfs:dict[int, pd.DataFrame], size:int) -> None:
     main_df = enriched_dfs[1].tail(size).copy()
-    
+""" 
         
 
 def create_datasets(
@@ -150,7 +157,7 @@ def create_datasets(
                 df = reverse_dataframe(df)
                 
                 logging.info(f"Adding technical indicators ...")
-                df, price_normalizing_columns = df_tech_utils.add_technical_indicators(df, minute_multiplier)
+                df, price_normalizing_columns, value_denominator = df_tech_utils.add_technical_indicators(df, minute_multiplier)
                 
                 if minute_multiplier == 1:
                 

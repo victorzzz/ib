@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import pandas_ta as ta
 
 import logging
@@ -129,9 +128,9 @@ def add_technical_indicators(
     logging.info(f"Volume price trend added to dataframe ...")
 
     if for_midpoint_price:
-        df['_t_NVI_MIDPOINT'] = ta.nvi(df['MIDPOINT_close'], df['TRADES_volume']) / volume_denominator
+        df['_t_NVI_MIDPOINT'] = ta.nvi(df['MIDPOINT_close'], df['TRADES_volume'])
     if for_trades_average:
-        df['_t_NVI_TRADES_average'] = ta.nvi(df['TRADES_average'], df['TRADES_volume']) / volume_denominator
+        df['_t_NVI_TRADES_average'] = ta.nvi(df['TRADES_average'], df['TRADES_volume'])
 
     logging.info(f"Negative volume index added to dataframe ...")
     
