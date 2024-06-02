@@ -9,13 +9,21 @@ import torch.utils.data as data
 import constants as cnts
 import df_loader_saver as df_ls
 
+FEATURES:int = 260
+CLASSES:int = 3
+
 class HistoricalMarketDataDataset(data.Dataset):
-    def __init__(self, ticker_symbvol:str, exchange:str):
+    def __init__(self, dfs:list[pd.DataFrame], purpose:str, shift:int = 256):
         super().__init__()
 
-        self.dfs = load_prepared_raw_datasets(ticker_symbvol, exchange)
+        self.shift = shift
 
-        df1 = self.dfs[1]
+        df1 = dfs[1]
+        len = df1.shape[0]
+        
+        start, end = get_index_range_for_purpose(len, purpose)
+        df1 = df1[start:end]
+
         price_volume = df1[["1m_TRADES_average", "1m_TRADES_volume"]].values
         
         sc_x = StandardScaler()
@@ -28,10 +36,44 @@ class HistoricalMarketDataDataset(data.Dataset):
         self.y = torch.tensor(get_y_as_categories(df1), dtype=torch.int8)
 
     def __getitem__(self, index):
-        return self.x[index + 256], self.y[index + 256]
+        return self.x[index + self.shift], self.y[index + self.shift]
 
     def __len__(self):
-        return self.y.shape[0] - 256
+        return self.y.shape[0] - self.shift
+
+class HistoricalMarketDataDataModule(L.LightningDataModule):
+    def __init__(self, ticker_symbvol:str, exchange:str, batch_size:int = 256):
+        super().__init__()
+
+        self.ticker_symbvol = ticker_symbvol
+        self.exchange = exchange
+        self.batch_size = batch_size
+        
+        self.dfs = load_prepared_raw_datasets(ticker_symbvol, exchange)
+
+    def setup(self, stage=None):
+        self.train_dataset = HistoricalMarketDataDataset(self.dfs, "train")
+        self.val_dataset = HistoricalMarketDataDataset(self.dfs, "val")
+        self.test_dataset = HistoricalMarketDataDataset(self.dfs, "test")
+
+    def train_dataloader(self):
+        return data.DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4)
+    
+    def val_dataloader(self):
+        return data.DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=False, num_workers=4)
+    
+    def test_dataloader(self):
+        return data.DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=False, num_workers=4)
+
+def get_index_range_for_purpose(len:int, purpose:str) -> tuple[int, int]:
+    if purpose == "train":
+        return 0, int(len * 0.8)
+    elif purpose == "val":
+        return int(len * 0.8), int(len * 0.9)
+    elif purpose == "test":
+        return int(len * 0.9), len
+    else:
+        raise ValueError(f"Invalid purpose: {purpose}")
     
 def load_prepared_raw_datasets(ticker_symbvol:str, exchange:str) -> list[pd.DataFrame]:
     dfs:list[pd.DataFrame] = []
