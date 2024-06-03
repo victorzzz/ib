@@ -6,34 +6,21 @@ import constants as cnts
 import lightning_datamodule as ldm
 
 class PyTorchTradingModel(torch.nn.Module):
-    def __init__(self, num_features = ldm.FEATURES, num_classes = ldm.CLASSES, hidden_sizes:list[int] = [512, 256, 128, 64]):
+    def __init__(self, num_features = ldm.FEATURES, num_classes = ldm.CLASSES, hidden_sizes:list[int] = [512, 256, 128]):
         super().__init__()
 
-        self.all_layers = torch.nn.Sequential(
-            # 1st hidden layer
-            torch.nn.Linear(num_features, hidden_sizes[0]),
-            torch.nn.BatchNorm1d(hidden_sizes[0]),
-            torch.nn.ReLU(),
-            
-            # 2nd hidden layer
-            torch.nn.Linear(hidden_sizes[0], hidden_sizes[1]),
-            torch.nn.BatchNorm1d(hidden_sizes[1]),
-            torch.nn.ReLU(),
-            
-            # 3d hidden layer
-            torch.nn.Linear(hidden_sizes[1], hidden_sizes[2]),
-            torch.nn.BatchNorm1d(hidden_sizes[2]),
-            torch.nn.ReLU(),            
-            
-            # 4th hidden layer
-            torch.nn.Linear(hidden_sizes[2], hidden_sizes[3]),
-            torch.nn.BatchNorm1d(hidden_sizes[3]),
-            torch.nn.ReLU(),               
-            
-            # output layer
-            torch.nn.Linear(hidden_sizes[3], num_classes),
-        )
-
+        self.all_layers = torch.nn.Sequential()
+        
+        for i in range(0, len(hidden_sizes)):
+            if i == 0:
+                self.all_layers.append(torch.nn.Linear(num_features, hidden_sizes[i]))
+            else:
+                self.all_layers.append(torch.nn.Linear(hidden_sizes[i-1], hidden_sizes[i]))
+            self.all_layers.append(torch.nn.BatchNorm1d(hidden_sizes[i]))
+            self.all_layers.append(torch.nn.ReLU())
+        
+        self.all_layers.append(torch.nn.Linear(hidden_sizes[-1], num_classes))
+        
     def forward(self, x):
         x = torch.flatten(x, start_dim=1)
         logits = self.all_layers(x)

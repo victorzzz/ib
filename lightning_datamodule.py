@@ -9,7 +9,7 @@ import torch.utils.data as data
 import constants as cnts
 import df_loader_saver as df_ls
 
-FEATURES:int = 260
+FEATURES:int = 256
 CLASSES:int = 3
 
 class HistoricalMarketDataDataset(data.Dataset):
@@ -18,10 +18,10 @@ class HistoricalMarketDataDataset(data.Dataset):
 
         self.shift = shift
 
-        df1 = dfs[1]
-        len = df1.shape[0]
+        df1 = dfs[0]
+        origin_len = df1.shape[0]
         
-        start, end = get_index_range_for_purpose(len, purpose)
+        start, end = get_index_range_for_purpose(origin_len, purpose)
         df1 = df1[start:end]
 
         price_volume = df1[["1m_TRADES_average", "1m_TRADES_volume"]].values
@@ -32,14 +32,16 @@ class HistoricalMarketDataDataset(data.Dataset):
         time = df1[["1m_normalized_day_of_week", "1m_normalized_week", "1m_normalized_day_of_year", "1m_normalized_trading_time"]].values
         x_array = np.hstack((time, price_volume_std))
 
-        self.x = torch.tensor(x_array, dtype=torch.float16)
-        self.y = torch.tensor(get_y_as_categories(df1), dtype=torch.int8)
+        self.x = torch.tensor(x_array)
+        self.y = torch.tensor(get_y_as_categories(df1), dtype=torch.long)
+        self.len = self.y.shape[0] - self.shift
 
     def __getitem__(self, index):
-        return self.x[index + self.shift], self.y[index + self.shift]
+        result = (create_x_row(self.x, index + self.shift), self.y[index + self.shift])
+        return result
 
     def __len__(self):
-        return self.y.shape[0] - self.shift
+        return self.len
 
 class HistoricalMarketDataDataModule(L.LightningDataModule):
     def __init__(self, ticker_symbvol:str, exchange:str, batch_size:int = 256):
@@ -90,7 +92,7 @@ def get_y_as_categories(df:pd.DataFrame) -> np.ndarray:
     long_profit_1_5 = df["1m_long_profit_1_5"].values
     short_profit_1_5 = df["1m_short_profit_1_5"].values
     
-    result_array = np.full(len(long_profit_1_5), 0, dtype=np.int8)
+    result_array = np.full(len(long_profit_1_5), 0, dtype=np.longlong)
     
     result_array[(long_profit_1_5 == 1) & (short_profit_1_5 == 0)] = 1
     result_array[(long_profit_1_5 == 0) & (short_profit_1_5 == 1)] = 2
@@ -103,11 +105,8 @@ def create_x_row(original_tensor: torch.Tensor, index:int) -> torch.Tensor:
     col0_values:torch.Tensor = original_tensor[index-127:index+1, 0].flip(dims=[0])  # This includes the current index value as the first element
     col128_values:torch.Tensor = original_tensor[index-127:index+1, 1].flip(dims=[0])  # Similarly, includes the current index value
 
-    # Extract the last four columns (2, 3, 4, 5) from the current index
-    last_four_values:torch.Tensor = original_tensor[index, 2:6]
-
     # Assemble the final tensor
-    new_row:torch.Tensor = torch.cat((col0_values, col128_values, last_four_values))
+    new_row:torch.Tensor = torch.cat((col0_values, col128_values))
 
     return new_row
 
