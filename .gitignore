@@ -175,3 +175,4 @@ cython_debug/
 SECRETS.py
 /Logs
 /IB_TickersCache
+/lightning_logs

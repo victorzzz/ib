@@ -4,9 +4,10 @@ import torch.nn.functional as F
 import torchmetrics
 import constants as cnts
 import lightning_datamodule as ldm
+import logging
 
 class PyTorchTradingModel(torch.nn.Module):
-    def __init__(self, num_features = ldm.FEATURES, num_classes = ldm.CLASSES, hidden_sizes:list[int] = [512, 256, 128]):
+    def __init__(self, num_features = ldm.FEATURES, num_classes = ldm.CLASSES, hidden_sizes:list[int] = [100, 50]):
         super().__init__()
 
         self.all_layers = torch.nn.Sequential()
@@ -16,7 +17,7 @@ class PyTorchTradingModel(torch.nn.Module):
                 self.all_layers.append(torch.nn.Linear(num_features, hidden_sizes[i]))
             else:
                 self.all_layers.append(torch.nn.Linear(hidden_sizes[i-1], hidden_sizes[i]))
-            self.all_layers.append(torch.nn.BatchNorm1d(hidden_sizes[i]))
+            # self.all_layers.append(torch.nn.BatchNorm1d(hidden_sizes[i]))
             self.all_layers.append(torch.nn.ReLU())
         
         self.all_layers.append(torch.nn.Linear(hidden_sizes[-1], num_classes))
@@ -53,6 +54,7 @@ class LightningTradingModel(L.LightningModule):
         return loss, true_labels, predicted_labels
 
     def training_step(self, batch, batch_idx):
+        
         loss, true_labels, predicted_labels = self._shared_step(batch)
 
         self.log("train_loss", loss)
@@ -60,15 +62,17 @@ class LightningTradingModel(L.LightningModule):
         self.log(
             "train_acc", self.train_acc, prog_bar=True, on_epoch=True, on_step=False
         )
+        
         return loss
 
     def validation_step(self, batch, batch_idx):
+                
         loss, true_labels, predicted_labels = self._shared_step(batch)
 
         self.log("val_loss", loss, prog_bar=True)
         self.val_acc(predicted_labels, true_labels)
         self.log("val_acc", self.val_acc, prog_bar=True)
-
+        
     def test_step(self, batch, batch_idx):
         loss, true_labels, predicted_labels = self._shared_step(batch)
         self.test_acc(predicted_labels, true_labels)
