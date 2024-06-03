@@ -8,11 +8,13 @@ import df_loader_saver as df_ls
 import logging
 import torch
 
-FEATURES:int = 260
+HISTORY_SIZE:int = 8192
+FEATURES:int = HISTORY_SIZE * 2 + 4
 CLASSES:int = 3
 
+
 class HistoricalMarketDataDataset(data.Dataset):
-    def __init__(self, dfs:list[pd.DataFrame], purpose:str, shift:int = 256):
+    def __init__(self, dfs:list[pd.DataFrame], purpose:str, shift:int = HISTORY_SIZE):
         super().__init__()
 
         self.shift = shift
@@ -45,7 +47,7 @@ class HistoricalMarketDataDataset(data.Dataset):
         return self.len
     
 class HistoricalMarketDataDataModule(L.LightningDataModule):
-    def __init__(self, ticker_symbvol:str, exchange:str, batch_size:int = 64):
+    def __init__(self, ticker_symbvol:str, exchange:str, batch_size:int = 512):
         super().__init__()
 
         self.ticker_symbvol = ticker_symbvol
@@ -62,13 +64,28 @@ class HistoricalMarketDataDataModule(L.LightningDataModule):
         logging.info(f"Datasets were loaded train_dataset: {len(self.train_dataset)}")
         
     def train_dataloader(self):
-        return data.DataLoader(self.train_dataset, batch_size=self.batch_size, collate_fn=collate_fn, shuffle=True, num_workers=4)
+        return data.DataLoader(
+            self.train_dataset, 
+            batch_size=self.batch_size, 
+            collate_fn=collate_fn, 
+            shuffle=False,
+            persistent_workers=False)
     
     def val_dataloader(self):
-        return data.DataLoader(self.val_dataset, batch_size=self.batch_size, collate_fn=collate_fn, shuffle=False, num_workers=2)
+        return data.DataLoader(
+            self.val_dataset, 
+            batch_size=self.batch_size, 
+            collate_fn=collate_fn, 
+            shuffle=False,
+            persistent_workers=False)
     
     def test_dataloader(self):
-        return data.DataLoader(self.test_dataset, batch_size=self.batch_size, collate_fn=collate_fn, shuffle=False, num_workers=4)
+        return data.DataLoader(
+            self.test_dataset, 
+            batch_size=self.batch_size, 
+            collate_fn=collate_fn, 
+            shuffle=False,
+            persistent_workers=False)
 
 def collate_fn(batch):
     features = torch.tensor(batch[:, :-1]).float()
@@ -78,7 +95,7 @@ def collate_fn(batch):
 
 def get_index_range_for_purpose(len:int, purpose:str) -> tuple[int, int]:
     if purpose == "train":
-        return int(len * 0.7), int(len * 0.8)
+        return int(len * 0.05), int(len * 0.8)
     elif purpose == "val":
         return int(len * 0.8), int(len * 0.9)
     elif purpose == "test":
@@ -130,24 +147,22 @@ def create_rows(original: np.ndarray, indexes:np.ndarray) -> np.ndarray:
     
     # Determine number of indices to process
     num_indices = len(indexes)
-    # Columns required for column 0 and column 1 values and their previous values
-    num_col_values = 128  # Including the value at the index and 127 previous values
 
     # Pre-allocate results array
-    results = np.empty((num_indices, 261))
+    results = np.empty((num_indices, HISTORY_SIZE*2 + 4 + 1), dtype=original.dtype)
 
     # Fetch the last four columns for all specified indices at once
     last_four_values = original[indexes, 2:6]
 
     # Process columns 0 and 1 with flipping
     for i, index in enumerate(indexes):
-        col0_values = np.flip(original[index-127:index+1, 0])
-        col128_values = np.flip(original[index-127:index+1, 1])
+        col0_values = np.flip(original[index-HISTORY_SIZE+1:index+1, 0])
+        col128_values = np.flip(original[index-HISTORY_SIZE+1:index+1, 1])
 
-        results[i, :num_col_values] = col0_values
-        results[i, num_col_values:num_col_values*2] = col128_values
+        results[i, :HISTORY_SIZE] = col0_values
+        results[i, HISTORY_SIZE:HISTORY_SIZE*2] = col128_values
     
-    results[:, num_col_values*2:num_col_values*2 + 4] = last_four_values[i]            
+    results[:, HISTORY_SIZE*2:HISTORY_SIZE*2 + 4] = last_four_values[i]            
     results[:, -1] = original[indexes, -1]        
 
     return results

@@ -7,7 +7,7 @@ import lightning_datamodule as ldm
 import logging
 
 class PyTorchTradingModel(torch.nn.Module):
-    def __init__(self, num_features = ldm.FEATURES, num_classes = ldm.CLASSES, hidden_sizes:list[int] = [100, 50]):
+    def __init__(self, num_features = ldm.FEATURES, num_classes = ldm.CLASSES, hidden_sizes:list[int] = [8192 * 4, 8192 * 2, 4096, 4096, 2048, 2048]):
         super().__init__()
 
         self.all_layers = torch.nn.Sequential()

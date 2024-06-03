@@ -1,6 +1,7 @@
 import sys
 
 import lightning as L
+from lightning.pytorch.profilers import AdvancedProfiler
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.utilities.model_summary import model_summary
 from watermark import watermark
@@ -12,7 +13,7 @@ import ib_logging as ib_log
 
 if __name__ == "__main__":
 
-    ib_log.configure_logging("ib_raw_data_merger")
+    ib_log.configure_logging("lightning_trading_model_trainer")
 
     logging.info(f"Starting {__file__} ...")
 
@@ -30,16 +31,21 @@ if __name__ == "__main__":
     summary = model_summary.ModelSummary(lightning_model, max_depth=-1)
     logging.info(summary)
 
+    profiler = AdvancedProfiler(dirpath="profiler_logs", filename="trading_model_profiler_log")
     trainer = L.Trainer(
-        overfit_batches=1,
+        # overfit_batches=1,
         # fast_dev_run=5,
-        max_epochs=2,
+        max_epochs=10,
         accelerator="gpu",
         devices="auto",
         logger=Lloggers.TensorBoardLogger("lightning_logs", name="trading_model"),
         deterministic=True,
+        profiler=profiler,
     )
     
     trainer.fit(model=lightning_model, datamodule=dm)
+    
+    profiler.describe()
+    logging.info(profiler.summary())
     
     trainer.test(model=lightning_model, datamodule=dm)
