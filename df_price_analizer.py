@@ -4,9 +4,9 @@ import pandas as pd
 PRICE_FIELD:str = 'TRADES_average'
 DAY_FIELD:str = 'normalized_day_of_week'
 
-DEFAULT_TARGET_PROFITS_PERCENTS:list[float] = [1.5, 3.0]
+DEFAULT_TARGET_PROFITS_PERCENTS:list[float] = [0.9, 1.5, 2.1]
 
-DEFAULT_PROFIT_LOSS_RATIO:float = 5.0
+DEFAULT_PROFIT_LOSS_RATIO:float = 3.0
 
 def getArrayPairs(arr:np.ndarray) -> np.ndarray:
     pairs = np.column_stack((np.roll(arr, 1), arr))[1:]

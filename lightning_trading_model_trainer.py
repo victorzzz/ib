@@ -35,7 +35,7 @@ if __name__ == "__main__":
     trainer = L.Trainer(
         # overfit_batches=1,
         # fast_dev_run=5,
-        max_epochs=10,
+        max_epochs=30,
         accelerator="gpu",
         devices="auto",
         logger=Lloggers.TensorBoardLogger("lightning_logs", name="trading_model"),

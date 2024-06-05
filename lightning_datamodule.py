@@ -8,7 +8,7 @@ import df_loader_saver as df_ls
 import logging
 import torch
 
-HISTORY_SIZE:int = 8192
+HISTORY_SIZE:int = 1024
 FEATURES:int = HISTORY_SIZE * 2 + 4
 CLASSES:int = 3
 
@@ -68,7 +68,7 @@ class HistoricalMarketDataDataModule(L.LightningDataModule):
             self.train_dataset, 
             batch_size=self.batch_size, 
             collate_fn=collate_fn, 
-            shuffle=False,
+            shuffle=True,
             persistent_workers=False)
     
     def val_dataloader(self):
@@ -117,8 +117,8 @@ def load_prepared_raw_datasets(ticker_symbvol:str, exchange:str) -> list[pd.Data
     return dfs
 
 def get_y_as_categories(df:pd.DataFrame) -> np.ndarray:
-    long_profit_1_5 = df["1m_long_profit_1_5"].values
-    short_profit_1_5 = df["1m_short_profit_1_5"].values
+    long_profit_1_5 = df["1m_long_profit_0_9"].values
+    short_profit_1_5 = df["1m_short_profit_0_9"].values
     
     result_array = np.full(len(long_profit_1_5), 0, dtype=np.float32)
     
