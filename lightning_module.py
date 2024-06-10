@@ -7,7 +7,7 @@ import lightning_datamodule as ldm
 import logging
 
 class PyTorchTradingModel(torch.nn.Module):
-    def __init__(self, num_features = ldm.FEATURES, num_classes = ldm.CLASSES, hidden_sizes:list[int] = [1024, 1024, 1024, 512, 512, 512, 256, 256, 256, 128, 128, 128]):
+    def __init__(self, num_features = ldm.FEATURES, num_classes = ldm.CLASSES, hidden_sizes:list[int] = [1024, 1024, 1024, 1024, 512, 512, 512, 512, 256, 256, 256, 256, 128, 128, 128, 128]):
         super().__init__()
 
         self.all_layers = torch.nn.Sequential()
@@ -47,6 +47,8 @@ class LightningTradingModel(L.LightningModule):
         self.train_acc_non_avg = torchmetrics.Accuracy(task="multiclass", num_classes=ldm.CLASSES, average=None)
         self.val_acc_non_avg = torchmetrics.Accuracy(task="multiclass", num_classes=ldm.CLASSES, average=None)
         self.test_acc_non_avg = torchmetrics.Accuracy(task="multiclass", num_classes=ldm.CLASSES, average=None)
+        
+        self.confmat = torchmetrics.ConfusionMatrix(task="multiclass", num_classes=ldm.CLASSES)
 
 
     def forward(self, x):
@@ -95,10 +97,18 @@ class LightningTradingModel(L.LightningModule):
         self.test_acc(predicted_labels, true_labels)
         self.log("test_acc", self.test_acc)
 
+        self.confmat.update(predicted_labels, true_labels)
+
         test_acc_non_avg_result = self.test_acc_non_avg(predicted_labels, true_labels)
         self.log("test_a0", test_acc_non_avg_result[0])
         self.log("test_a1", test_acc_non_avg_result[1])
         self.log("test_a2", test_acc_non_avg_result[2])
+
+    def on_test_end(self):
+        # Log the confusion matrix at the end of testing
+        conf_matrix = self.confmat.compute()
+        logging.info(f"Confusion Matrix: {conf_matrix}")
+        self.confmat.reset()
 
 
     def configure_optimizers(self):

@@ -76,7 +76,6 @@ def process_empty_values(df:pd.DataFrame) -> pd.DataFrame:
    
     return df
 
-"""
 def fix_trading_price_misprints(df:pd.DataFrame) -> pd.DataFrame:
     df_copy = df.copy()
     
@@ -89,11 +88,9 @@ def fix_trading_price_misprints(df:pd.DataFrame) -> pd.DataFrame:
         ratio_change = column_data / column_data_shifted
         misprints = (ratio_change > 15.0)
         
-        for c in  trades_price_fields:
-            df_copy.loc[misprints, c] = np.nan
+        df_copy.loc[misprints, column] = np.nan
     
     return df_copy
-"""
 
 def add_minute_multiplier_to_column_names(df:pd.DataFrame, minute_multiplier:int) -> pd.DataFrame:
     result:pd.DataFrame = df.add_prefix(f"{minute_multiplier}m_")
@@ -147,8 +144,8 @@ def create_datasets(
                     logging.info("Deleting non-trading hours records")
                     df = df[(df['normalized_trading_time'] >= 0) & (df['normalized_trading_time'] < 1)]
 
-                # logging.info(f"Fixing trading price misprints ...")
-                # df = fix_trading_price_misprints(df)
+                logging.info(f"Fixing trading price misprints ...")
+                df = fix_trading_price_misprints(df)
 
                 logging.info(f"Processing empty values...")
                 df = process_empty_values(df)
@@ -161,11 +158,11 @@ def create_datasets(
                 
                 if minute_multiplier == 1:
                 
+                    logging.info(f"Adding price change labels ...")
+                    df = df_pa.addPriceChangeLabelsToDataFrame(df)                
+                
                     logging.info(f"Adding volume profile ...")
                     df = df_vp_utils.add_top_of_volume_profile(df)
-                
-                    logging.info(f"Adding price change labels ...")
-                    df = df_pa.addPriceChangeLabelsToDataFrame(df)
                 
                 logging.info(f"Adding minute multiplier to column names ...")
                 df = add_minute_multiplier_to_column_names(df, minute_multiplier)

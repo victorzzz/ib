@@ -4,7 +4,7 @@ import pandas as pd
 PRICE_FIELD:str = 'TRADES_average'
 DAY_FIELD:str = 'normalized_day_of_week'
 
-DEFAULT_TARGET_PROFITS_PERCENTS:list[float] = [0.9, 1.5, 2.1]
+DEFAULT_TARGET_PROFITS_PERCENTS:list[float] = [0.6, 0.9, 1.5, 2.1]
 
 DEFAULT_PROFIT_LOSS_RATIO:float = 3.0
 
@@ -113,20 +113,36 @@ def addPriceChangeLabelsToDataFrame(
     prices:np.ndarray = df[PRICE_FIELD].to_numpy(dtype=np.float32)
     days:np.ndarray = df[DAY_FIELD].to_numpy(dtype=np.float32)
 
-    l_profits:int = len(target_profits_percents)
-
     profits:np.ndarray = np.array(target_profits_percents, dtype=np.float32) / 100.0
-    trailing_stop_losses:np.ndarray = profits / profit_lost_ratio
+    trailing_stop_losses:np.ndarray = np.round(profits / profit_lost_ratio, 3)
 
     inc_results_for_losses, dec_results_for_losses = calculateDayPriceChangeWithTrailingStopLoss(prices, days, trailing_stop_losses)
     
     for i, profit in enumerate(target_profits_percents):
+        
+        trailing_stop_loss = trailing_stop_losses[i]
+        
         df[f"long_profit_{profit}".replace(".", "_")] = np.where(inc_results_for_losses[i] >= profits[i], 1, 0)
-        df[f"long_exit_{profit}".replace(".", "_")] = np.where(dec_results_for_losses[i] >= trailing_stop_losses[i], 1, 0)
+        df[f"long_exit_{profit}".replace(".", "_")] = np.where(dec_results_for_losses[i] >= trailing_stop_loss, 1, 0)
         
         df[f"short_profit_{profit}".replace(".", "_")] = np.where(dec_results_for_losses[i] >= profits[i], 1, 0)
-        df[f"short_exit_{profit}".replace(".", "_")] = np.where(inc_results_for_losses[i] >= trailing_stop_losses[i], 1, 0)
+        df[f"short_exit_{profit}".replace(".", "_")] = np.where(inc_results_for_losses[i] >= trailing_stop_loss, 1, 0)
+        
+        df[f"increase_for_loss_{(trailing_stop_loss * 100.0):.1f}".replace(".", "_")] = inc_results_for_losses[i]
+        df[f"decrease_for_loss_{(trailing_stop_loss * 100.0):.1f}".replace(".", "_")] = dec_results_for_losses[i]
         
         df = df.copy()
         
     return df
+
+prices = np.array([100,120,130,140,150,120,115,110,105,104,103,101,130,140,150,160,170,180,190,170,150,130,110,150,170,190,185,180,175,170,165,160,155,150,160,
+                   170,175,170,150,140,130,150,170,180,190])
+days   = np.array([1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3, 
+                   4,  4,  4,  4,  4,  4,  4,  4,  4,  4])
+
+inc, dec = calculateDayPriceChangeWithTrailingStopLoss(prices, days, np.array([0.002, 0.003, 0.005, 0.007]))
+
+print(inc)
+print(dec)
+
+

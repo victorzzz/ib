@@ -8,13 +8,40 @@ import df_loader_saver as df_ls
 import logging
 import torch
 
-HISTORY_SIZE:int = 1024
-FEATURES:int = HISTORY_SIZE * 2 + 4
 CLASSES:int = 3
 
+# TIME FIELDS
+TIME_FIELDS:list[str] = ["1m_normalized_day_of_week", "1m_normalized_week", "1m_normalized_day_of_year", "1m_normalized_trading_time"]
+
+# TECHNICAL INDICATORS FIELDS
+TI_FIELDS:list[str] = [
+    "1m__t_MFI_TRADES_average_7", "1m__t_MFI_TRADES_average_14", "1m__t_MFI_TRADES_average_21",
+    "1m__t_CCI_TRADES_average_7", "1m__t_CCI_TRADES_average_14", "1m__t_CCI_TRADES_average_21",
+    "1m__t_VPT_TRADES_average",
+    "1m__t_RSI_TRADES_average_7", "1m__t_RSI_TRADES_average_14", "1m__t_RSI_TRADES_average_21",
+]
+
+# SCALING AND FITTING FIELDS
+
+VOLUME_SCALING_FIELDS:list[str] = ["1m_TRADES_volume"]
+VOLUME_FITTING_FIELD:str = "1m_TRADES_volume"
+
+PRICE_SCALING_FIELDS:list[str] = [
+    "1m_TRADES_average", 
+    "1m_TRADES_high", "1m_TRADES_low", "1m_TRADES_close", "1m_TRADES_open", 
+    "1m_MIDPOINT_high", "1m_MIDPOINT_low", "1m_MIDPOINT_close", "1m_MIDPOINT_open"]
+PRICE_FITTING_FIELD:str = "1m_TRADES_average"
+
+INDEPENDENT_FIT_TRANSFORM_FIELDS:list[str] = ["1m_TRADES_barCount"]
+
+PRICE_VOLUME_HISTORY_SIZE:int = 512
+
+PRICE_VOLUME_FIELDS:list[str] = VOLUME_SCALING_FIELDS + PRICE_SCALING_FIELDS + INDEPENDENT_FIT_TRANSFORM_FIELDS
+
+FEATURES:int = PRICE_VOLUME_HISTORY_SIZE * 2 + 4
 
 class HistoricalMarketDataDataset(data.Dataset):
-    def __init__(self, dfs:list[pd.DataFrame], purpose:str, shift:int = HISTORY_SIZE):
+    def __init__(self, dfs:list[pd.DataFrame], purpose:str, shift:int = PRICE_VOLUME_HISTORY_SIZE):
         super().__init__()
 
         self.shift = shift
@@ -30,7 +57,7 @@ class HistoricalMarketDataDataset(data.Dataset):
         sc_x = StandardScaler()
         price_volume_std = sc_x.fit_transform(price_volume)
 
-        time = df1[["1m_normalized_day_of_week", "1m_normalized_week", "1m_normalized_day_of_year", "1m_normalized_trading_time"]].values
+        time = df1[TIME_FIELDS].values
         y = get_y_as_categories(df1).reshape(-1, 1)
         
         self.array = np.hstack((price_volume_std, time, y))
@@ -69,7 +96,8 @@ class HistoricalMarketDataDataModule(L.LightningDataModule):
             batch_size=self.batch_size, 
             collate_fn=collate_fn, 
             shuffle=True,
-            persistent_workers=False)
+            persistent_workers=False,
+            pin_memory=True)
     
     def val_dataloader(self):
         return data.DataLoader(
@@ -77,7 +105,8 @@ class HistoricalMarketDataDataModule(L.LightningDataModule):
             batch_size=self.batch_size, 
             collate_fn=collate_fn, 
             shuffle=False,
-            persistent_workers=False)
+            persistent_workers=False,
+            pin_memory=True)
     
     def test_dataloader(self):
         return data.DataLoader(
@@ -85,7 +114,8 @@ class HistoricalMarketDataDataModule(L.LightningDataModule):
             batch_size=self.batch_size, 
             collate_fn=collate_fn, 
             shuffle=False,
-            persistent_workers=False)
+            persistent_workers=False,
+            pin_memory=True)
 
 def collate_fn(batch):
     features = torch.tensor(batch[:, :-1]).float()

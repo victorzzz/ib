@@ -25,7 +25,7 @@ if __name__ == "__main__":
     pytorch_model = lm.PyTorchTradingModel()
     lightning_model = lm.LightningTradingModel(
         model = pytorch_model, 
-        learning_rate = 0.15
+        learning_rate = 0.015
     )
 
     summary = model_summary.ModelSummary(lightning_model, max_depth=-1)
