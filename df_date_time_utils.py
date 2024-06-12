@@ -5,6 +5,9 @@ import pandas as pd
 
 total_seconds_from_930_to_1600 = 6 * 3600 + 30 * 60  # 6 hours and 30 minutes in seconds
 
+def timestamp_to_datetime(timestamp:pd.Series) -> pd.Series:
+    return pd.to_datetime(timestamp, unit='s', utc=True).dt.tz_convert('America/Toronto')
+
 def add_normalized_time_columns(df:pd.DataFrame) -> pd.DataFrame:
     # Normalize timestamps to midnight
     toronto_time = pd.to_datetime(df['timestamp'], unit='s', utc=True).dt.tz_convert('America/Toronto')
