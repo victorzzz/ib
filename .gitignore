@@ -177,3 +177,4 @@ SECRETS.py
 /IB_TickersCache
 /lightning_logs
 /profiler_logs
+/darts_logs

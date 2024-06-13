@@ -15,6 +15,7 @@ from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 
 from darts_tft_model_data_preparation import prepare_traine_val_test_datasets
 
+"""
 QUANTILES:list[float] = [
     0.01,
     0.05,
@@ -34,19 +35,28 @@ QUANTILES:list[float] = [
     0.95,
     0.99,
 ]
+"""
 
-FORECAST_HORIZON:int = 390  # 1 day of 1m data
+QUANTILES:list[float] = [
+    0.05,
+    0.1,
+    0.5,
+    0.9,
+    0.95,
+]
+
+FORECAST_HORIZON:int = 64  # 1 day of 1m data
 INPUT_CHUNK_LENGTH:int = FORECAST_HORIZON * 5 
 
 model:TFTModel = TFTModel(
     input_chunk_length=INPUT_CHUNK_LENGTH,
     output_chunk_length=FORECAST_HORIZON,
     hidden_size=64,
-    lstm_layers=2,
-    num_attention_heads=4,
+    lstm_layers=4,
+    num_attention_heads=16,
     dropout=0.1,
-    batch_size=32,
-    n_epochs=30,
+    batch_size=256,
+    n_epochs=5,
     add_relative_index=True,
     add_encoders=None,
     likelihood=QuantileRegression(
@@ -70,9 +80,13 @@ trainer = Trainer(
 )
 """
 
-(target_train, target_val, target_test), (covar_train, covar_val, covar_test), price_scaler, val_scaler = prepare_traine_val_test_datasets("RY", "TSE", tail=0.1)
+(target_train, target_val, target_test), (covar_train, covar_val, covar_test), (future_covar_train, future_covar_val, future_covar_test), price_scaler, val_scaler = prepare_traine_val_test_datasets("RY", "TSE", tail=0.2)
 
 model.fit(
-    target_train, past_covariates = covar_train, 
-    val_series = target_val, val_past_covariates = covar_val,
+    target_train, 
+    past_covariates = covar_train, 
+    future_covariates = future_covar_train,
+    val_series = target_val,
+    val_past_covariates = covar_val,
+    val_future_covariates = future_covar_val,
     verbose=True)
