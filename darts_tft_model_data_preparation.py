@@ -1,30 +1,25 @@
-import typing as tp
-
 import logging
 
 import numpy as np
 import pandas as pd
 
-from darts import TimeSeries, concatenate
+from darts import TimeSeries
 from darts.dataprocessing.transformers import Scaler
-from darts.models import TFTModel
-
-from darts.metrics import mape
-from darts.utils.likelihood_models import QuantileRegression
 
 import constants as cnts
 import df_loader_saver as df_ls
-import df_date_time_utils as df_dt_utils
 
 TARGET_COLUMNS:list[str] = [
-    '1m_MIDPOINT_close', # '1m_BID_close', '1m_ASK_close',
+    '1m_MIDPOINT_close', '1m_BID_close', '1m_ASK_close',
     ]
 
 COVARIATE_COLUMNS:list[str] = [
-    # '1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low',
-    # '1m_BID_open', '1m_BID_high', '1m_BID_low',
-    # '1m_ASK_open', '1m_ASK_high', '1m_ASK_low',
-    # '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
+    #'1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low',
+    '1m_BID_open', '1m_BID_high', '1m_BID_low', 
+    #'1m_BID_close',
+    '1m_ASK_open', '1m_ASK_high', '1m_ASK_low', 
+    #'1m_ASK_close',
+    #'1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
     '1m_TRADES_volume', '1m_TRADES_average',
 
     '1m__t_MFI_TRADES_average_14',

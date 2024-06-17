@@ -1,14 +1,18 @@
+import datetime as dt
+
 import numpy as np
 import pandas as pd
+import torch
 
 from darts import TimeSeries, concatenate
 from darts.dataprocessing.transformers import Scaler
 from darts.models import TFTModel
-from darts.metrics import mape
+from darts.metrics import mape, mase, smape, mse, rmse, ope, mae
 from darts.utils.statistics import check_seasonality, plot_acf
 from darts.datasets import AirPassengersDataset, IceCreamHeaterDataset
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from darts.utils.likelihood_models import QuantileRegression
+from darts.explainability import TFTExplainer
 
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
@@ -36,7 +40,7 @@ QUANTILES:list[float] = [
     0.99,
 ]
 """
-
+"""
 QUANTILES:list[float] = [
     0.05,
     0.1,
@@ -44,49 +48,95 @@ QUANTILES:list[float] = [
     0.9,
     0.95,
 ]
+"""
 
-FORECAST_HORIZON:int = 64  # 1 day of 1m data
-INPUT_CHUNK_LENGTH:int = FORECAST_HORIZON * 5 
+FORECAST_HORIZON:int = 8  
+INPUT_CHUNK_LENGTH:int = FORECAST_HORIZON * 30 
+
+MODEL_HIDENT_SIZE:int = 256
+MODEL_LSTM_LAYERS:int = 3
+MODEL_ATTENTION_HEADS:int = 32
+MODEL_BATCH_SIZE:int = 128
+
+ # reproducibility
+torch.manual_seed(42)
+
+# throughout training we'll monitor the validation loss for early stopping
+early_stopper = EarlyStopping("val_loss", min_delta=0.001, patience=3, verbose=True)
+lr_monitor = LearningRateMonitor(logging_interval='step')
+callbacks = [early_stopper, lr_monitor]
+
+pl_trainer_kwargs = {"callbacks": callbacks}
 
 model:TFTModel = TFTModel(
     input_chunk_length=INPUT_CHUNK_LENGTH,
     output_chunk_length=FORECAST_HORIZON,
-    hidden_size=64,
-    lstm_layers=4,
-    num_attention_heads=16,
-    dropout=0.1,
-    batch_size=256,
+    hidden_size=MODEL_HIDENT_SIZE,
+    lstm_layers=MODEL_LSTM_LAYERS,
+    num_attention_heads=MODEL_ATTENTION_HEADS,
+    dropout=0.05,
+    hidden_continuous_size=16,
+    batch_size=MODEL_BATCH_SIZE,
     n_epochs=5,
     add_relative_index=True,
+    full_attention = True,
     add_encoders=None,
-    likelihood=QuantileRegression(
-        quantiles=QUANTILES
-    ),  # QuantileRegression is set per default
-    # loss_fn=MSELoss(),
+    #likelihood=QuantileRegression(
+    #    quantiles=QUANTILES
+    #),  # QuantileRegression is set per default
+    loss_fn=torch.nn.MSELoss(),
+    # pl_trainer_kwargs=pl_trainer_kwargs,
     log_tensorboard=True,
+    save_checkpoints=True,
     random_state=42,
 )
-
-"""
-# Callbacks
-early_stop_callback = EarlyStopping(monitor='val_loss', patience=10, verbose=True, mode='min')
-lr_monitor = LearningRateMonitor(logging_interval='step')
-
-# Trainer
-trainer = Trainer(
-    callbacks=[early_stop_callback, lr_monitor],
-    max_epochs=100,
-    log_every_n_steps=50,
-)
-"""
 
 (target_train, target_val, target_test), (covar_train, covar_val, covar_test), (future_covar_train, future_covar_val, future_covar_test), price_scaler, val_scaler = prepare_traine_val_test_datasets("RY", "TSE", tail=0.2)
 
 model.fit(
-    target_train, 
-    past_covariates = covar_train, 
+    target_train[:-FORECAST_HORIZON], 
+    past_covariates = covar_train[:-FORECAST_HORIZON], 
     future_covariates = future_covar_train,
-    val_series = target_val,
-    val_past_covariates = covar_val,
+    val_series = target_val[:-FORECAST_HORIZON],
+    val_past_covariates = covar_val[:-FORECAST_HORIZON],
     val_future_covariates = future_covar_val,
     verbose=True)
+
+date = dt.datetime.now().strftime("%Y-%m-%d-%H-%M")
+model.save(f"darts_models/tft_model_final_{FORECAST_HORIZON}-pred_{INPUT_CHUNK_LENGTH}-input_{MODEL_HIDENT_SIZE}-hiddensize_{MODEL_ATTENTION_HEADS}-heads_{MODEL_LSTM_LAYERS}-lstm__{date}")
+
+if isinstance(model, TFTModel):
+
+    explainer = TFTExplainer(
+        model,
+        background_series=target_train[:-FORECAST_HORIZON],
+        background_past_covariates=covar_train[:-FORECAST_HORIZON],
+        background_future_covariates=future_covar_train)
+    
+    explainability_result = explainer.explain()
+    print(" ===== explainability_result ====")
+    print(explainability_result)
+
+prediction_on_test = model.predict(FORECAST_HORIZON, target_test[:-FORECAST_HORIZON], covar_test[:-FORECAST_HORIZON], future_covar_test)
+prediction_on_val = model.predict(FORECAST_HORIZON, target_val[:-FORECAST_HORIZON], covar_val[:-FORECAST_HORIZON], future_covar_val)
+
+mape_on_test = mape(target_test, prediction_on_test)
+mape_on_val = mape(target_val, prediction_on_val)
+
+smape_on_test = smape(target_test, prediction_on_test)
+smape_on_val = smape(target_val, prediction_on_val)
+
+ope_on_test = ope(target_test, prediction_on_test)
+ope_on_val = ope(target_val, prediction_on_val)
+
+rmse_on_test = rmse(target_test, prediction_on_test)
+rmse_on_val = rmse(target_val, prediction_on_val)
+
+print(f"MAPE on test set: {mape_on_test}")
+print(f"MAPE on val set: {mape_on_val}")
+print(f"SMAPE on test set: {smape_on_test}")
+print(f"SMAPE on val set: {smape_on_val}")
+print(f"OPE on test set: {ope_on_test}")
+print(f"OPE on val set: {ope_on_val}")
+print(f"RMSE on test set: {rmse_on_test}")
+print(f"RMSE on val set: {rmse_on_val}")
