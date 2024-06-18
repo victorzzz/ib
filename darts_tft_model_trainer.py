@@ -51,15 +51,19 @@ QUANTILES:list[float] = [
 """
 
 FORECAST_HORIZON:int = 8  
-INPUT_CHUNK_LENGTH:int = FORECAST_HORIZON * 30 
+INPUT_CHUNK_LENGTH:int = FORECAST_HORIZON * 32 
 
-MODEL_HIDENT_SIZE:int = 256
+MODEL_HIDDEN_SIZE:int = 128
+MODEL_HIDDEN_CONTINUOUS_SIZE:int = 64
 MODEL_LSTM_LAYERS:int = 3
-MODEL_ATTENTION_HEADS:int = 32
-MODEL_BATCH_SIZE:int = 128
+MODEL_ATTENTION_HEADS:int = 16
+MODEL_BATCH_SIZE:int = 192
+MODEL_DROP_OUT:float = 0.06
 
  # reproducibility
 torch.manual_seed(42)
+
+torch.set_float32_matmul_precision('medium')
 
 # throughout training we'll monitor the validation loss for early stopping
 early_stopper = EarlyStopping("val_loss", min_delta=0.001, patience=3, verbose=True)
@@ -68,19 +72,23 @@ callbacks = [early_stopper, lr_monitor]
 
 pl_trainer_kwargs = {"callbacks": callbacks}
 
+date = dt.datetime.now().strftime("%Y-%m-%d-%H-%M")
+model_name = f"tft_{FORECAST_HORIZON}-pred_{INPUT_CHUNK_LENGTH}-input_{MODEL_HIDDEN_SIZE}-hidden-size_{MODEL_HIDDEN_CONTINUOUS_SIZE}-hidden-cont-size_{MODEL_ATTENTION_HEADS}-heads_{MODEL_LSTM_LAYERS}-lstm__{date}"
+
 model:TFTModel = TFTModel(
     input_chunk_length=INPUT_CHUNK_LENGTH,
     output_chunk_length=FORECAST_HORIZON,
-    hidden_size=MODEL_HIDENT_SIZE,
+    hidden_size=MODEL_HIDDEN_SIZE,
     lstm_layers=MODEL_LSTM_LAYERS,
     num_attention_heads=MODEL_ATTENTION_HEADS,
-    dropout=0.05,
-    hidden_continuous_size=16,
+    dropout=MODEL_DROP_OUT,
+    hidden_continuous_size=MODEL_HIDDEN_CONTINUOUS_SIZE,
     batch_size=MODEL_BATCH_SIZE,
-    n_epochs=5,
+    n_epochs=10,
     add_relative_index=True,
     full_attention = True,
     add_encoders=None,
+    use_static_covariates=False,
     #likelihood=QuantileRegression(
     #    quantiles=QUANTILES
     #),  # QuantileRegression is set per default
@@ -89,6 +97,7 @@ model:TFTModel = TFTModel(
     log_tensorboard=True,
     save_checkpoints=True,
     random_state=42,
+    model_name=model_name,
 )
 
 (target_train, target_val, target_test), (covar_train, covar_val, covar_test), (future_covar_train, future_covar_val, future_covar_test), price_scaler, val_scaler = prepare_traine_val_test_datasets("RY", "TSE", tail=0.2)
@@ -102,8 +111,7 @@ model.fit(
     val_future_covariates = future_covar_val,
     verbose=True)
 
-date = dt.datetime.now().strftime("%Y-%m-%d-%H-%M")
-model.save(f"darts_models/tft_model_final_{FORECAST_HORIZON}-pred_{INPUT_CHUNK_LENGTH}-input_{MODEL_HIDENT_SIZE}-hiddensize_{MODEL_ATTENTION_HEADS}-heads_{MODEL_LSTM_LAYERS}-lstm__{date}")
+model.save(f"darts_models/final_{model_name}")
 
 if isinstance(model, TFTModel):
 

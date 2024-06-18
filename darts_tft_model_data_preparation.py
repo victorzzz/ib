@@ -10,22 +10,38 @@ import constants as cnts
 import df_loader_saver as df_ls
 
 TARGET_COLUMNS:list[str] = [
-    '1m_MIDPOINT_close', '1m_BID_close', '1m_ASK_close',
+    '1m_BID_close', '1m_ASK_close',
+    '1m_BID_high', '1m_BID_low',
+    '1m_ASK_high', '1m_ASK_low',
+    '1m_BID_open', '1m_ASK_open',
     ]
 
 COVARIATE_COLUMNS:list[str] = [
-    #'1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low',
-    '1m_BID_open', '1m_BID_high', '1m_BID_low', 
+    #'1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', '1m_MIDPOINT_close'
+    #'1m_BID_open', 
+    #'1m_BID_high', '1m_BID_low', 
     #'1m_BID_close',
-    '1m_ASK_open', '1m_ASK_high', '1m_ASK_low', 
+    #'1m_ASK_open', 
+    #'1m_ASK_high', '1m_ASK_low', 
     #'1m_ASK_close',
-    #'1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
+    '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
     '1m_TRADES_volume', '1m_TRADES_average',
 
     '1m__t_MFI_TRADES_average_14',
     '1m__t_RSI_TRADES_average_14',
     '1m__t_CCI_TRADES_average_14',
-    '1m__t_STOCH_k_TRADES_average_14_3', '1m__t_STOCH_d_TRADES_average_14_3',     
+    '1m__t_STOCH_k_TRADES_average_14_3', '1m__t_STOCH_d_TRADES_average_14_3',
+    
+    '1m__t_BBL_TRADES_average_20', '1m__t_BBM_TRADES_average_20', '1m__t_BBU_TRADES_average_20',
+    '1m__t_BBP_TRADES_average_20',
+    
+    '1m_vp_64_width',
+    '1m_vp_64_0_price', '1m_vp_64_1_price',
+    '1m_vp_64_0_volume', '1m_vp_64_1_volume',
+    
+    '1m_vp_128_width',
+    '1m_vp_128_0_price', '1m_vp_128_1_price', '1m_vp_128_2_price', '1m_vp_128_3_price',
+    '1m_vp_128_0_volume', '1m_vp_128_1_volume', '1m_vp_128_2_volume', '1m_vp_128_3_volume',       
         
     # '1m__t_MFI_TRADES_average_7', '1m__t_MFI_TRADES_average_14', '1m__t_MFI_TRADES_average_21',
     # '1m__t_RSI_TRADES_average_7', '1m__t_RSI_TRADES_average_14', '1m__t_RSI_TRADES_average_21',
@@ -45,6 +61,9 @@ PRICE_SCALING_COLUMNS:list[str] = [
     '1m_ASK_open', '1m_ASK_high', '1m_ASK_low',
     '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
     '1m_TRADES_average',
+    '1m__t_BBL_TRADES_average_20', '1m__t_BBM_TRADES_average_20', '1m__t_BBU_TRADES_average_20',
+    '1m_vp_64_0_price', '1m_vp_64_1_price',
+    '1m_vp_128_0_price', '1m_vp_128_1_price', '1m_vp_128_2_price', '1m_vp_128_3_price'
     ]
 
 COVARIATE_PRICE_SCALING_COLUMNS:list[str] = [x for x in COVARIATE_COLUMNS if x in PRICE_SCALING_COLUMNS]
@@ -103,14 +122,11 @@ def prepare_traine_val_test_datasets(symbol:str, exchange:str, tail:float | None
 # returns (target_timeseries, covariate_timeseries)
 def prepare_timeseries_from_dataframe(df:pd.DataFrame) -> tuple[TimeSeries, TimeSeries, TimeSeries]:
     
-    target_ts = TimeSeries.from_dataframe(
-        df, value_cols = TARGET_COLUMNS)
+    target_ts = TimeSeries.from_dataframe(df, value_cols = TARGET_COLUMNS)
     
-    covariate_ts = TimeSeries.from_dataframe(
-        df, value_cols = COVARIATE_COLUMNS)
+    covariate_ts = TimeSeries.from_dataframe(df, value_cols = COVARIATE_COLUMNS)
 
-    future_ts = TimeSeries.from_dataframe(
-        df, value_cols = FUTURE_COVARIATE_COLUMNS)
+    future_ts = TimeSeries.from_dataframe(df, value_cols = FUTURE_COVARIATE_COLUMNS)
     
     return target_ts, covariate_ts, future_ts
 

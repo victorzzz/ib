@@ -60,10 +60,14 @@ torch.manual_seed(42)
 
 (target_train, target_val, target_test), (covar_train, covar_val, covar_test), (future_covar_train, future_covar_val, future_covar_test), price_scaler, val_scaler = prepare_traine_val_test_datasets("RY", "TSE", tail=0.2)
 
-model = TFTModel.load("tft_model_final_8-pred_240-input_256-hiddensize_64-heads_8-lstm__2024-06-16-17-36") 
+# model = TFTModel.load("darts_models/m1") 
+model = TFTModel.load_from_checkpoint(
+    'tft_8-pred_256-input_128-hidden-size_64-hidden-cont-size_16-heads_3-lstm__2024-06-17-09-31')
 
 print(" ===== model ====")
 print(model)
+
+figsize = (9, 6)
 
 if isinstance(model, TFTModel):
 
@@ -78,68 +82,56 @@ if isinstance(model, TFTModel):
         background_future_covariates=future_covariates)
     
     explainability_result = explainer.explain()
-    print(" ===== explainability_result ====")
-    print(explainability_result)
 
-test_length = len(target_test)
+historical_prediction_val = model.historical_forecasts(
+    target_val[:-FORECAST_HORIZON], covar_val[:-FORECAST_HORIZON], future_covar_val, 
+    forecast_horizon=FORECAST_HORIZON, stride=FORECAST_HORIZON,
+    retrain=False)
 
-all_test_predictions:TimeSeries | Sequence[TimeSeries] | None = None
-all_val_predictions:TimeSeries | Sequence[TimeSeries] | None = None
+historical_prediction_test = model.historical_forecasts(
+    target_test[:-FORECAST_HORIZON], covar_test[:-FORECAST_HORIZON], future_covar_test,
+    forecast_horizon=FORECAST_HORIZON, stride=FORECAST_HORIZON,
+    retrain=False)
 
+"""
+historical_prediction_train = model.historical_forecasts(
+    target_train[:-FORECAST_HORIZON], covar_train[:-FORECAST_HORIZON], future_covar_train,
+    start=0.5, forecast_horizon=FORECAST_HORIZON, stride=FORECAST_HORIZON,
+    retrain=False)
+"""
 
-for i in range(0, test_length - INPUT_CHUNK_LENGTH - FORECAST_HORIZON - 1, FORECAST_HORIZON):
-    target_test_chunk = target_test[i:i+INPUT_CHUNK_LENGTH + 1]
-    covar_test_chunk = covar_test[i:i+INPUT_CHUNK_LENGTH + 1]
-    future_covar_test_chunk = future_covar_test[i:i+INPUT_CHUNK_LENGTH+FORECAST_HORIZON+1]
-    
-    target_val_chunk = target_val[i:i+INPUT_CHUNK_LENGTH + 1]
-    covar_val_chunk = covar_val[i:i+INPUT_CHUNK_LENGTH + 1]
-    future_covar_val_chunk = future_covar_val[i:i+INPUT_CHUNK_LENGTH+FORECAST_HORIZON+1]
-    
-    prediction_on_test_chunk = model.predict(FORECAST_HORIZON, target_test_chunk, covar_test_chunk, future_covar_test_chunk) 
-    prediction_on_val_chunk = model.predict(FORECAST_HORIZON, target_val_chunk, covar_val_chunk, future_covar_val_chunk)
-    
-    if all_test_predictions is None:
-        all_test_predictions = prediction_on_test_chunk
-    elif isinstance(all_test_predictions, TimeSeries) and isinstance(prediction_on_test_chunk, TimeSeries):
-        all_test_predictions = all_test_predictions.append(prediction_on_test_chunk)    
-    
-    if all_val_predictions is None:
-        all_val_predictions = prediction_on_val_chunk
-    elif isinstance(all_val_predictions, TimeSeries) and isinstance(prediction_on_val_chunk, TimeSeries):
-        all_val_predictions = all_val_predictions.append(prediction_on_val_chunk)
-
-prediction_on_last_test = model.predict(FORECAST_HORIZON, target_test[:-FORECAST_HORIZON], covar_test[:-FORECAST_HORIZON], future_covar_test) #, predict_likelihood_parameters=True)
-prediction_on_last_val = model.predict(FORECAST_HORIZON, target_val[:-FORECAST_HORIZON], covar_val[:-FORECAST_HORIZON], future_covar_val) #, predict_likelihood_parameters=True)
-
-if isinstance(prediction_on_last_test, TimeSeries) and isinstance(prediction_on_last_val, TimeSeries):
-
-    mape_on_last_test = mape(target_test, prediction_on_last_test)
-    mape_on_last_val = mape(target_val, prediction_on_last_val)
-
-    print(f"MAPE on last test set: {mape_on_last_test}")
-    print(f"MAPE on last val set: {mape_on_last_val}")
-
-mape_on_all_test = mape(target_test, all_test_predictions)
-mape_on_all_val = mape(target_val, all_val_predictions)
+mape_on_all_test = mape(target_test, historical_prediction_test)
+mape_on_all_val = mape(target_val, historical_prediction_val)
+# mape_on_all_train = mape(target_train, historical_prediction_train)
 
 print(f"MAPE on all test set: {mape_on_all_test}")
 print(f"MAPE on all val set: {mape_on_all_val}")
-
-figsize = (9, 6)
+# print(f"MAPE on all train set: {mape_on_all_train}")
 
 def plot_all_predictions():
     
     # plot actual series
     plt.figure(figsize=figsize)
-    target_test.plot(label="actual test")
-    target_val.plot(label="actual val")
+    target_test['1m_BID_close'].plot(label="BID CLOSE test")
+    target_test['1m_BID_low'].plot(label="BID low test")
+    target_test['1m_BID_high'].plot(label="BID high test")
+    #target_val['1m_BID_close'].plot(label="BID CLOSE val")
+    target_test['1m_ASK_close'].plot(label="ASK CLOSE test")
+    target_test['1m_ASK_low'].plot(label="ASK low test")
+    target_test['1m_ASK_high'].plot(label="ASK high test")
+    #target_val['1m_ASK_close'].plot(label="ASK CLOSE val")
     
-    if isinstance(all_test_predictions, TimeSeries):
-        all_test_predictions.plot(label="prediction on test")
+    if isinstance(historical_prediction_test, TimeSeries):
+        historical_prediction_test['1m_BID_close'].plot(label="pred BID CLOSE test")
+        historical_prediction_test['1m_BID_low'].plot(label="pred BID low test")
+        historical_prediction_test['1m_BID_high'].plot(label="pred BID high test")
+        historical_prediction_test['1m_ASK_close'].plot(label="pred ASK CLOSE test")
+        historical_prediction_test['1m_ASK_low'].plot(label="pred ASK low test")
+        historical_prediction_test['1m_ASK_high'].plot(label="pred ASK high test")
 
-    if isinstance(all_val_predictions, TimeSeries):    
-        all_val_predictions.plot(label="prediction on val")    
+    #if isinstance(historical_prediction_val, TimeSeries):    
+    #    historical_prediction_val['1m_BID_close'].plot(label="pred val")    
+    #    historical_prediction_val['1m_ASK_close'].plot(label="pred val")    
 
     plt.show()
 

@@ -178,3 +178,4 @@ SECRETS.py
 /lightning_logs
 /profiler_logs
 /darts_logs
+/darts_models
