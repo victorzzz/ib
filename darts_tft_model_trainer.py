@@ -19,6 +19,9 @@ from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 
 from darts_tft_model_data_preparation import prepare_traine_val_test_datasets
 
+import matplotlib.pyplot as plt
+
+
 """
 QUANTILES:list[float] = [
     0.01,
@@ -53,11 +56,11 @@ QUANTILES:list[float] = [
 FORECAST_HORIZON:int = 8  
 INPUT_CHUNK_LENGTH:int = FORECAST_HORIZON * 32 
 
-MODEL_HIDDEN_SIZE:int = 128
+MODEL_HIDDEN_SIZE:int = 512
 MODEL_HIDDEN_CONTINUOUS_SIZE:int = 64
 MODEL_LSTM_LAYERS:int = 3
-MODEL_ATTENTION_HEADS:int = 16
-MODEL_BATCH_SIZE:int = 192
+MODEL_ATTENTION_HEADS:int = 32
+MODEL_BATCH_SIZE:int = 128
 MODEL_DROP_OUT:float = 0.06
 
  # reproducibility
@@ -85,7 +88,7 @@ model:TFTModel = TFTModel(
     hidden_continuous_size=MODEL_HIDDEN_CONTINUOUS_SIZE,
     batch_size=MODEL_BATCH_SIZE,
     n_epochs=10,
-    add_relative_index=True,
+    add_relative_index=False,
     full_attention = True,
     add_encoders=None,
     use_static_covariates=False,
@@ -100,7 +103,17 @@ model:TFTModel = TFTModel(
     model_name=model_name,
 )
 
-(target_train, target_val, target_test), (covar_train, covar_val, covar_test), (future_covar_train, future_covar_val, future_covar_test), price_scaler, val_scaler = prepare_traine_val_test_datasets("RY", "TSE", tail=0.2)
+(target_train, target_val, _), (covar_train, covar_val, covar_test), (future_covar_train, future_covar_val, future_covar_test), price_scaler, vol_scaler = prepare_traine_val_test_datasets("RY", "TSE", tail=0.3)
+
+"""
+target_train.plot()
+target_val.plot()
+plt.show()
+
+covar_train.plot()
+covar_val.plot()
+plt.show()
+"""
 
 model.fit(
     target_train[:-FORECAST_HORIZON], 
@@ -125,26 +138,17 @@ if isinstance(model, TFTModel):
     print(" ===== explainability_result ====")
     print(explainability_result)
 
-prediction_on_test = model.predict(FORECAST_HORIZON, target_test[:-FORECAST_HORIZON], covar_test[:-FORECAST_HORIZON], future_covar_test)
 prediction_on_val = model.predict(FORECAST_HORIZON, target_val[:-FORECAST_HORIZON], covar_val[:-FORECAST_HORIZON], future_covar_val)
 
-mape_on_test = mape(target_test, prediction_on_test)
 mape_on_val = mape(target_val, prediction_on_val)
 
-smape_on_test = smape(target_test, prediction_on_test)
 smape_on_val = smape(target_val, prediction_on_val)
 
-ope_on_test = ope(target_test, prediction_on_test)
 ope_on_val = ope(target_val, prediction_on_val)
 
-rmse_on_test = rmse(target_test, prediction_on_test)
 rmse_on_val = rmse(target_val, prediction_on_val)
 
-print(f"MAPE on test set: {mape_on_test}")
 print(f"MAPE on val set: {mape_on_val}")
-print(f"SMAPE on test set: {smape_on_test}")
 print(f"SMAPE on val set: {smape_on_val}")
-print(f"OPE on test set: {ope_on_test}")
 print(f"OPE on val set: {ope_on_val}")
-print(f"RMSE on test set: {rmse_on_test}")
 print(f"RMSE on val set: {rmse_on_val}")
