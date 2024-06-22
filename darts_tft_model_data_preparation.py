@@ -88,8 +88,8 @@ TARGET_VOLUME_SCALING_COMPONENT_MASK:list[bool] = [x in VOLUME_SCALING_COLUMNS f
 COVARIATE_PRICE_FITTING_COMPONENT_MASK:list[bool] = [x == PRICE_FITTING_COLUMN for x in COVARIATE_COLUMNS]
 COVARIATE_VOLUME_FITTING_COMPONENT_MASK:list[bool] = [x == VOLUME_FITTING_COLUMN for x in COVARIATE_COLUMNS]
 
-# returns target(trane, val, test), covariate(train, val, test), future_covariate(train, val, test), price_scaler, volume_scaler
-def prepare_traine_val_test_datasets(symbol:str, exchange:str, train_part:float = 0.8, tail:float | None = None, generate_test:bool = False) -> \
+# returns target(train, val, test), covariate(train, val, test), future_covariate(train, val, test), price_scaler, volume_scaler
+def prepare_train_val_test_datasets(symbol:str, exchange:str, train_part:float = 0.8, tail:float | None = None, generate_test:bool = False) -> \
         tuple[tuple[TimeSeries, TimeSeries, TimeSeries | None], tuple[TimeSeries, TimeSeries, TimeSeries | None], tuple[TimeSeries, TimeSeries, TimeSeries | None], Scaler, Scaler]:
     
     target_ts, covariate_ts, future_covariate_ts = prepare_timeseries_for_symbol(symbol, exchange, tail)
@@ -147,6 +147,15 @@ def prepare_traine_val_test_datasets(symbol:str, exchange:str, train_part:float 
     
     return (train_target, val_target, test_target), (train_covariate, val_covariate, test_covariate), (train_future_covariate, val_future_covariate, test_future_covariate), price_scaler, volume_scaler
 
+def inverse_transform(ts:TimeSeries | None, priceScaler:Scaler, volumeScaler:Scaler) -> TimeSeries:
+    
+    if isinstance(ts, TimeSeries):    
+        ts = inverse_transform_ts_with_components_mask(ts, priceScaler, TARGET_PRICE_SCALING_COMPONENT_MASK)
+        ts = inverse_transform_ts_with_components_mask(ts, volumeScaler, TARGET_VOLUME_SCALING_COMPONENT_MASK)
+    else:
+        raise ValueError("The transformed time series is not a TimeSeries object.")
+            
+    return ts
 
 # returns (target_timeseries, covariate_timeseries)
 def prepare_timeseries_from_dataframe(df:pd.DataFrame) -> tuple[TimeSeries, TimeSeries, TimeSeries]:
@@ -191,6 +200,20 @@ def transform_ts_with_components_mask(ts:TimeSeries, scaler:Scaler, component_ma
         mask_np:np.ndarray = np.array(mask)
         transofrmed_ts:TimeSeries | list[TimeSeries] = scaler.transform(ts, component_mask=mask_np)
                 
+        if isinstance(transofrmed_ts, TimeSeries):
+            ts = transofrmed_ts
+        else:
+            raise ValueError("The transformed time series is not a TimeSeries object.")
+        
+    return ts
+
+def inverse_transform_ts_with_components_mask(ts:TimeSeries, scaler:Scaler, component_mask_list:list[bool]) -> TimeSeries:
+    masks:list[list[bool]] = transform_boolean_list(component_mask_list)
+    
+    for mask in masks:
+        mask_np:np.ndarray = np.array(mask)
+        transofrmed_ts:TimeSeries | list[TimeSeries] | list[list[TimeSeries]] = scaler.inverse_transform(ts, component_mask=mask_np)
+        
         if isinstance(transofrmed_ts, TimeSeries):
             ts = transofrmed_ts
         else:
