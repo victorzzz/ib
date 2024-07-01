@@ -17,6 +17,7 @@ TARGET_COLUMNS:list[str] = [
     '1m_BID_open', '1m_ASK_open',
     ]
 
+
 COVARIATE_COLUMNS:list[str] = [
     #'1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
     '1m_MIDPOINT_close',
@@ -67,6 +68,68 @@ PRICE_SCALING_COLUMNS:list[str] = [
     '1m_vp_64_0_price', '1m_vp_64_1_price',
     '1m_vp_128_0_price', '1m_vp_128_1_price', '1m_vp_128_2_price', '1m_vp_128_3_price'
     ]
+
+
+"""
+COVARIATE_COLUMNS:list[str] = [
+    #'1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
+    '1m_MIDPOINT_close',
+    #'1m_BID_open', 
+    #'1m_BID_high', '1m_BID_low', 
+    #'1m_BID_close',
+    #'1m_ASK_open', 
+    #'1m_ASK_high', '1m_ASK_low', 
+    #'1m_ASK_close',
+    '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
+    '1m_TRADES_volume', '1m_TRADES_average',
+
+    #'1m__t_MFI_TRADES_average_14',
+    #'1m__t_RSI_TRADES_average_14',
+    #'1m__t_CCI_TRADES_average_14',
+    #'1m__t_STOCH_k_TRADES_average_14_3', '1m__t_STOCH_d_TRADES_average_14_3',
+    
+    '1m__t_BBL_TRADES_average_20', '1m__t_BBM_TRADES_average_20', '1m__t_BBU_TRADES_average_20',
+    '1m__t_BBP_TRADES_average_20',
+    
+    '1m__t_BBL_TRADES_average_30', '1m__t_BBM_TRADES_average_30', '1m__t_BBU_TRADES_average_30',
+    '1m__t_BBP_TRADES_average_30',
+    
+    '1m_vp_64_width',
+    '1m_vp_64_0_price', '1m_vp_64_1_price',
+    '1m_vp_64_0_volume', '1m_vp_64_1_volume',
+    
+    '1m_vp_128_width',
+    '1m_vp_128_0_price', '1m_vp_128_1_price', '1m_vp_128_2_price', '1m_vp_128_3_price',
+    '1m_vp_128_0_volume', '1m_vp_128_1_volume', '1m_vp_128_2_volume', '1m_vp_128_3_volume',       
+        
+    '1m_vp_256_width',
+    '1m_vp_256_0_price', '1m_vp_256_1_price', '1m_vp_256_2_price', '1m_vp_256_3_price', '1m_vp_256_4_price', '1m_vp_256_5_price', '1m_vp_256_6_price', '1m_vp_256_7_price',
+    '1m_vp_256_0_volume', '1m_vp_256_1_volume', '1m_vp_256_2_volume', '1m_vp_256_3_volume', '1m_vp_256_4_volume', '1m_vp_256_5_volume', '1m_vp_256_6_volume', '1m_vp_256_7_volume',        
+        
+    '1m__t_MFI_TRADES_average_7', '1m__t_MFI_TRADES_average_14', '1m__t_MFI_TRADES_average_21',
+    '1m__t_RSI_TRADES_average_7', '1m__t_RSI_TRADES_average_14', '1m__t_RSI_TRADES_average_21',
+    '1m__t_CCI_TRADES_average_7', '1m__t_CCI_TRADES_average_14', '1m__t_CCI_TRADES_average_21',
+    '1m__t_STOCH_k_TRADES_average_14_3', '1m__t_STOCH_d_TRADES_average_14_3', 
+    '1m__t_STOCH_k_TRADES_average_21_4', '1m__t_STOCH_d_TRADES_average_21_4',
+    ]
+
+FUTURE_COVARIATE_COLUMNS:list[str] = [
+    '1m_normalized_day_of_week', '1m_normalized_week', '1m_normalized_trading_time'
+    ]
+
+PRICE_SCALING_COLUMNS:list[str] = [
+    '1m_MIDPOINT_close', '1m_BID_close', '1m_ASK_close',
+    '1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low',
+    '1m_BID_open', '1m_BID_high', '1m_BID_low',
+    '1m_ASK_open', '1m_ASK_high', '1m_ASK_low',
+    '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
+    '1m_TRADES_average',
+    '1m__t_BBL_TRADES_average_20', '1m__t_BBM_TRADES_average_20', '1m__t_BBU_TRADES_average_20',
+    '1m_vp_64_0_price', '1m_vp_64_1_price',
+    '1m_vp_128_0_price', '1m_vp_128_1_price', '1m_vp_128_2_price', '1m_vp_128_3_price',
+    '1m_vp_256_0_price', '1m_vp_256_1_price', '1m_vp_256_2_price', '1m_vp_256_3_price', '1m_vp_256_4_price', '1m_vp_256_5_price', '1m_vp_256_6_price', '1m_vp_256_7_price',
+    ]
+"""
 
 COVARIATE_PRICE_SCALING_COLUMNS:list[str] = [x for x in COVARIATE_COLUMNS if x in PRICE_SCALING_COLUMNS]
 

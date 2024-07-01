@@ -66,8 +66,7 @@ if __name__ == "__main__":
 
     (target_train, target_val, target_test), (covar_train, covar_val, covar_test), (future_covar_train, future_covar_val, future_covar_test), price_scaler, vol_scaler = prepare_train_val_test_datasets("RY", "TSE", tail=0.3)
 
-    model = TFTModel.load("FromLambda/darts_models/final_tft_16-pred_512-input_256-hidden-size_64-hidden-cont-size_32-heads_3-lstm__2024-06-22-14-22") 
-    #model = TFTModel.load_from_checkpoint('tft_8-pred_256-input_128-hidden-size_64-hidden-cont-size_16-heads_3-lstm__2024-06-17-09-31')
+    model = TFTModel.load("FromLambda/darts_models/final_tft_16-pred_320-input_512-hidden-size_64-hidden-cont-size_32-heads_3-lstm__2024-06-22-09-19") 
 
     print(" ===== model ====")
     print(model)
@@ -89,6 +88,11 @@ if __name__ == "__main__":
     
     explainability_result = explainer.explain()
 
+    explainer.plot_variable_selection(explainability_result)
+    explainer.plot_attention(explainability_result, plot_type="time")
+    explainer.plot_attention(explainability_result, plot_type="all")
+    explainer.plot_attention(explainability_result, plot_type="heatmap")
+    
     """
     historical_prediction_val = model.historical_forecasts(
         target_val[:-horizon], covar_val[:-horizon], future_covar_val, 
