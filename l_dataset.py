@@ -51,11 +51,14 @@ class TimeSeriesDataset(Dataset):
         
         # Preallocate numpy arrays
         x = np.zeros((result_rows, max_history_len, x_len), dtype=np.float32)
-        y = np.zeros((result_rows, y_len), dtype=np.float32)
+        y = np.zeros((result_rows, y_len), dtype=np.float32)        
+        
+        # Convert relevant part of DataFrame to NumPy array for faster slicing
+        data_np = data[input_columns + pred_columns].to_numpy(dtype=np.float32)
         
         for i in range(result_rows):
-            x[i] = data.iloc[i:(i + max_history_len)][input_columns].to_numpy()
-            y[i] = data.iloc[i + max_history_len + pred_distance][pred_columns].to_numpy()
+            x[i] = data_np[i:i + max_history_len, :x_len]
+            y[i] = data_np[i + max_history_len + pred_distance, x_len:]
         
         return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
 

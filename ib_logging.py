@@ -38,3 +38,14 @@ def configure_logging(logger_name:str | None = None, ib_sync_log_level:int = log
 
     ib_insync_wrapper_logger = logging.getLogger('ib_insync.wrapper')
     ib_insync_wrapper_logger.setLevel(ib_sync_log_level)
+    
+    lib_namespaces = [
+    'matplotlib.pyplot'
+    'fsspec.local'
+    'matplotlib.pyplot'
+    'PIL.PngImagePlugin'
+    'matplotlib.font_manager']
+    
+    for lib_namespace in lib_namespaces:
+        lib_logger = logging.getLogger(lib_namespace)
+        lib_logger.setLevel(logging.WARNING)
