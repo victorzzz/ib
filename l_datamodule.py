@@ -2,9 +2,11 @@ import logging
 
 import pandas as pd
 import numpy as np
+import torch
 import lightning as L
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
 
 import l_dataset as l_ds
 import df_loader_saver as df_ls
@@ -22,9 +24,11 @@ class StockPriceDataModule(L.LightningDataModule):
         pred_distance:int,
         user_tensor_dataset:bool, 
         batch_size,
+        tail:float=0.075,
         train_part:float=0.8,
         keep_loaded_data:bool=False,
-        keep_scaled_data:bool=False):
+        keep_scaled_data:bool=False,
+        keep_validation_dataset:bool=False):
         
         super(StockPriceDataModule, self).__init__()
         
@@ -39,21 +43,29 @@ class StockPriceDataModule(L.LightningDataModule):
         self.pred_distance = pred_distance
         self.user_tensor_dataset = user_tensor_dataset
         self.batch_size = batch_size
+        self.tail = tail
         self.train_part = train_part
         self.keep_loaded_data = keep_loaded_data
         self.keep_scaled_data = keep_scaled_data
+        self.keep_validation_dataset = keep_validation_dataset
         
         self.scalers:dict[str, StandardScaler] = {fitting_column: StandardScaler() for fitting_column in scaling_column_groups}
         
         self.train_dataset : Dataset | None = None
         self.val_dataset : Dataset | None = None
+        
+        self.data_was_prepared = False
 
     def prepare_data(self) -> None:
+        
+        if self.data_was_prepared:
+            logging.info("Data was already prepared")
+            return
         
         logging.info(f"StockPriceDataModule.prepare_data : {self.ticker_symbvol} on {self.exchange} ...")
         
         data_frames:list[pd.DataFrame] = StockPriceDataModule.load_prepared_raw_datasets(self.ticker_symbvol, self.exchange)
-        df0:pd.DataFrame = data_frames[0][round(len(data_frames[0]) * 0.2):].copy()
+        df0:pd.DataFrame = data_frames[0].tail(round(len(data_frames[0]) * self.tail)).reset_index(drop=True)
         
         used_columns = l_ds.TimeSeriesDataset.get_unique_strings(self.sequences)
         used_columns.extend(self.pred_columns)
@@ -71,34 +83,52 @@ class StockPriceDataModule(L.LightningDataModule):
         
         logging.info(f"Original dataset length: {original_df_length}, train_val_border: {train_val_border}")
         
-        training_df:pd.DataFrame = df0[:train_val_border].copy()
-        val_df:pd.DataFrame = df0[train_val_border:].copy()
+        training_df_orig:pd.DataFrame = df0[:train_val_border].reset_index(drop=True)
+        val_df_orig:pd.DataFrame = df0[train_val_border:].reset_index(drop=True)
+    
+        if self.keep_loaded_data:
+            self.training_df_orig = training_df_orig
+            self.val_df_orig = val_df_orig
     
         logging.info("Fitting scalers ...")
-        training_df = self.fit_transform(training_df)
+        training_df = self.fit_transform(training_df_orig.copy())
         
         logging.info("Transforming data ...")
-        val_df = self.transform(val_df)
+        val_df = self.transform(val_df_orig.copy())
         
         if self.keep_scaled_data:
             self.tdf = training_df
             self.vdf = val_df
-        
+                
         logging.info("Creating datasets ...")
         if self.user_tensor_dataset:
             logging.info("Training tensor dataset ...")
             train_src, train_y = l_ds.TimeSeriesDataset.to_sequences(training_df, self.sequences, self.pred_columns, self.pred_distance)
-            self.train_dataset = TensorDataset(train_src, train_y)
+            
+            x = torch.tensor(train_src, dtype=torch.float32)
+            y = torch.tensor(train_y, dtype=torch.float32)
+            
+            self.train_dataset = TensorDataset(x, y)
             
             logging.info("Validation tensor dataset ...")
             val_scr, val_y = l_ds.TimeSeriesDataset.to_sequences(val_df, self.sequences, self.pred_columns, self.pred_distance)
-            self.val_dataset = TensorDataset(val_scr, val_y)            
+            
+            if self.keep_validation_dataset:
+                self.val_scr = val_scr
+                self.val_y = val_y
+            
+            x = torch.tensor(val_scr, dtype=torch.float32)
+            y = torch.tensor(val_y, dtype=torch.float32)   
+                     
+            self.val_dataset = TensorDataset(x, y)            
         else:
             logging.info("Training dataset ...")
             self.train_dataset = l_ds.TimeSeriesDataset(training_df, self.sequences, self.pred_columns, self.pred_distance)
             
             logging.info("Validation dataset ...")
             self.val_dataset = l_ds.TimeSeriesDataset(val_df, self.sequences, self.pred_columns, self.pred_distance)
+        
+        self.data_was_prepared = True
     
     def setup(self, stage=None):
         logging.info(f"StockPriceDataModule.setup : {stage}")
@@ -129,7 +159,7 @@ class StockPriceDataModule(L.LightningDataModule):
     def fit_transform(self, df:pd.DataFrame) -> pd.DataFrame:
         for fitting_column, (columns, log_before_scale) in self.scaling_column_groups.items():
                 if log_before_scale:
-                    df[fitting_column] = np.log(df[columns + [fitting_column]])
+                    df[columns + [fitting_column]] = np.log10(df[columns + [fitting_column]])
                 df = self.fit_transform_column(self.scalers[fitting_column], df, fitting_column)
                 df = self.transform_columns(self.scalers[fitting_column], df, columns)
         
@@ -148,7 +178,7 @@ class StockPriceDataModule(L.LightningDataModule):
     def transform(self, df:pd.DataFrame) -> pd.DataFrame:
         for fitting_column, (columns, log_before_scale) in self.scaling_column_groups.items():
             if log_before_scale:
-                df[fitting_column] = np.log(df[columns + [fitting_column]])
+                df[columns + [fitting_column]] = np.log10(df[columns + [fitting_column]])
             df = self.transform_columns(self.scalers[fitting_column], df, columns + [fitting_column])
         
         return df.copy()
@@ -161,9 +191,9 @@ class StockPriceDataModule(L.LightningDataModule):
         else:
             raise ValueError("Predictions should be numpy array")
 
-    def get_df(self) -> pd.DataFrame:
+    def get_df(self) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         if self.keep_loaded_data:
-            return self.df.copy()
+            return self.df.copy(), self.training_df_orig.copy(), self.val_df_orig.copy()
         else:
             raise ValueError("Data was not kept")
 
@@ -173,6 +203,12 @@ class StockPriceDataModule(L.LightningDataModule):
         else:
             raise ValueError("Scaled data was not kept")
 
+    def get_val_src_y(self) -> tuple[np.ndarray, np.ndarray]:
+        if self.keep_validation_dataset and self.user_tensor_dataset:
+            return self.val_scr, self.val_y
+        else:
+            raise ValueError("val_scr and val_y are not initialized")
+
     @staticmethod
     def fit_on_column(scaler:StandardScaler, df:pd.DataFrame, column:str):
         values_to_fit = df[[column]].values
@@ -180,21 +216,17 @@ class StockPriceDataModule(L.LightningDataModule):
     
     @staticmethod
     def fit_transform_column(scaler:StandardScaler, df:pd.DataFrame, column:str) -> pd.DataFrame:
-        df = df.copy()
-        
-        values_to_fit = df[[column]].values
-        df.loc[:, [column]]= scaler.fit_transform(values_to_fit)
+        values_to_fit = df[[column]].to_numpy()
+        df[[column]]= scaler.fit_transform(values_to_fit)
         return df
     
     @staticmethod
     def transform_columns(scaler:StandardScaler, df:pd.DataFrame, columns:list[str]) -> pd.DataFrame:
-        df = df.copy()
-        
         for column in columns:
-            values_to_transform = df[[column]].values
+            values_to_transform = df[[column]].to_numpy()
             transformed_vale = scaler.transform(values_to_transform)
             if isinstance(transformed_vale, np.ndarray):
-                df.loc[:, [column]] = transformed_vale
+                df[[column]] = transformed_vale
         
         return df
     

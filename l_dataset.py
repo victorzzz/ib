@@ -29,10 +29,13 @@ class TimeSeriesDataset(Dataset):
 
     def __getitem__(self, idx):
         window = self.data.iloc[idx:(idx + self.history_len)][self.input_columns].to_numpy()
-        after_window = self.data.data.iloc[idx + self.history_len + self.pred_distance][self.pred_columns].to_numpy()
+        pred_window = self.data.iloc[idx + self.history_len:idx + self.history_len + self.pred_distance][self.pred_columns].to_numpy()
         
         x_tensor = torch.tensor(window, dtype=torch.float32).view(self.history_len, self.x_len)
-        y_tensor = torch.tensor(after_window, dtype=torch.float32).view(self.y_len)
+        
+        min_vals = torch.tensor(pred_window.min(axis=0), dtype=torch.float32)
+        max_vals = torch.tensor(pred_window.max(axis=0), dtype=torch.float32)
+        y_tensor = torch.cat((min_vals, max_vals))
         
         return x_tensor, y_tensor
     
@@ -51,16 +54,22 @@ class TimeSeriesDataset(Dataset):
         
         # Preallocate numpy arrays
         x = np.zeros((result_rows, max_history_len, x_len), dtype=np.float32)
-        y = np.zeros((result_rows, y_len), dtype=np.float32)        
+        y = np.zeros((result_rows, y_len * 2), dtype=np.float32)        
         
         # Convert relevant part of DataFrame to NumPy array for faster slicing
         data_np = data[input_columns + pred_columns].to_numpy(dtype=np.float32)
         
         for i in range(result_rows):
             x[i] = data_np[i:i + max_history_len, :x_len]
-            y[i] = data_np[i + max_history_len + pred_distance, x_len:]
+            
+            pred_seq = data_np[i + max_history_len:i + max_history_len + pred_distance, x_len:]
+
+            min_vals = np.min(pred_seq, axis=0)
+            max_vals = np.max(pred_seq, axis=0)
+            
+            y[i] = np.concatenate((min_vals, max_vals))
         
-        return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
+        return x, y
 
     @staticmethod
     def get_unique_strings(data: list[tuple[int, list[str]]]) -> list[str]:

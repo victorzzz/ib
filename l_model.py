@@ -29,20 +29,66 @@ class TransformerEncoderModel(L.LightningModule):
                  out_dim:int, 
                  max_pos_encoder_length:int, 
                  nhead:int, 
-                 num_layers:int, 
-                 dropout:float):
+                 num_layers:int,
+                 encoder_dim_feedforward:int,
+                 num_decoder_layers:int,
+                 use_banchnorm_for_decoder:bool,
+                 use_dropout_for_decoder:bool, 
+                 dropout:float,
+                 dropout_for_decoder:float,
+                 learning_rate:float=0.001):
         super(TransformerEncoderModel, self).__init__()
 
         self.save_hyperparameters(ignore=["model"])
         
-        self.train_r2 = torchmetrics.R2Score()
-        self.val_r2 = torchmetrics.R2Score()
+        self.learning_rate = learning_rate
+        
+        self.train_r2 = torchmetrics.R2Score(num_outputs=out_dim)
+        self.val_r2 = torchmetrics.R2Score(num_outputs=out_dim)
+        
+        self.val_mape = torchmetrics.MeanAbsolutePercentageError()
+        self.val_smape = torchmetrics.SymmetricMeanAbsolutePercentageError ()
+        self.val_rse = torchmetrics.RelativeSquaredError(num_outputs=out_dim)
+        
+        self.d_model = d_model
+        self.nhead = nhead
+        self.num_layers = num_layers
+        self.encoder_dim_feedforward = encoder_dim_feedforward
+        self.max_pos_encoder_length = max_pos_encoder_length
+        self.out_dim = out_dim
+        self.num_decoder_layers = num_decoder_layers
+        self.use_banchnorm_for_decoder = use_banchnorm_for_decoder
+        self.use_dropout_for_decoder = use_dropout_for_decoder
+        self.dropout = dropout
+        self.dropout_for_decoder = dropout_for_decoder
 
         self.encoder = nn.Linear(input_dim, d_model)
         self.pos_encoder = PositionalEncodingForEncoder(d_model, max_pos_encoder_length)
-        encoder_layers = nn.TransformerEncoderLayer(d_model, nhead, dropout=dropout, batch_first=True)
+        encoder_layers = nn.TransformerEncoderLayer(d_model, nhead, dim_feedforward=self.encoder_dim_feedforward, dropout=self.dropout, batch_first=True)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layers, num_layers)
-        self.decoder = nn.Linear(d_model*max_pos_encoder_length, out_dim)
+        self.decoder =  self.generate_decoder()
+
+    def generate_decoder(self) -> nn.Module:
+        
+        decoder = torch.nn.Sequential()
+        in_dim = self.d_model * self.max_pos_encoder_length
+        
+        for _ in range(0, self.num_decoder_layers):
+            out_dim = in_dim // 4
+            
+            decoder.append(torch.nn.Linear(in_dim, out_dim))
+            if self.use_banchnorm_for_decoder:
+                decoder.append(torch.nn.BatchNorm1d(out_dim))
+            decoder.append(torch.nn.ReLU())
+            if self.use_dropout_for_decoder:
+                decoder.append(torch.nn.Dropout(p=self.dropout_for_decoder))
+
+            in_dim //= 4
+        
+        decoder.append(torch.nn.Linear(in_dim , self.out_dim))
+        
+        return decoder
+        
 
     def forward(self, x):
         
@@ -61,27 +107,36 @@ class TransformerEncoderModel(L.LightningModule):
     
     def training_step(self, batch, batch_idx):
         x, y = batch
+        y = y.view(y.size(0), -1) # Flatten the target tensor. Ensure y has shape [batch_size, out_dim]
+        
         y_hat = self.forward(x)
         loss = nn.MSELoss()(y_hat, y)
         self.log('train_loss', loss, on_epoch=True, on_step=True, prog_bar=True)
         
-        """
         r2 = self.train_r2(y_hat, y)
         self.log('train_r2', r2, on_epoch=True)
-        """
         
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
+        y = y.view(y.size(0), -1) # Flatten the target tensor. Ensure y has shape [batch_size, out_dim]
+
         y_hat = self.forward(x)
         loss = nn.MSELoss()(y_hat, y)
         self.log('val_loss', loss, on_epoch=True, prog_bar=True)
         
-        """
         r2 = self.train_r2(y_hat, y)
         self.log('val_r2', r2, on_epoch=True)
-        """
+        
+        mape = self.val_mape(y_hat, y)
+        self.log('val_mape', mape, on_epoch=True, prog_bar=True)
+        
+        smape = self.val_smape(y_hat, y)
+        self.log('val_smape', smape, on_epoch=True)
+        
+        rse = self.val_rse(y_hat, y)
+        self.log('val_rse', rse, on_epoch=True)
         
         return loss
 
@@ -92,4 +147,11 @@ class TransformerEncoderModel(L.LightningModule):
         return y_hat
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.001)
+        """
+        opt = torch.optim.SGD(
+            self.parameters(), 
+            lr=self.learning_rate,
+            momentum=0.9)
+        return opt
+        """
+        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)

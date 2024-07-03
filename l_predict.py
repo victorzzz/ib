@@ -14,6 +14,9 @@ import l_model as lm
 import l_common as lc
 import l_datamodule as ldm
 
+import ib_logging as ib_log
+import logging
+
 def transform_predictions_to_numpy(predictions, number_of_variables:int) -> np.ndarray:
     """
     Transforms the list of tensors (predictions) into a single numpy array.
@@ -35,9 +38,11 @@ def transform_predictions_to_numpy(predictions, number_of_variables:int) -> np.n
 
 if __name__ == "__main__":
 
+    ib_log.configure_logging("predictiong")
+
     torch.set_float32_matmul_precision('medium')
 
-    model = lc.load_model("models/final_tr_enc_2024-07-01-15-06.ckpt")
+    model = lc.load_model("lightning_logs/version_82/checkpoints/epoch=9-step=15130.ckpt")
 
     data_module = ldm.StockPriceDataModule (
             "RY", "TSE",
@@ -48,12 +53,10 @@ if __name__ == "__main__":
             user_tensor_dataset=True,
             batch_size=128,
             keep_loaded_data=True,
-            keep_scaled_data=True
+            keep_scaled_data=True,
+            keep_validation_dataset=True
         )
 
-    data_module.prepare_data()
-
-    """
     # Create a Trainer instance
     trainer = L.Trainer()
 
@@ -68,36 +71,39 @@ if __name__ == "__main__":
         numpy_predictions, 
         lc.pred_columns[0], 
         len(lc.pred_columns))
-    """
-    
-    df = data_module.get_df()
-    
-    train_border = int(0.8*len(df))
 
+    df, train_df, val_df = data_module.get_df()
+    
+    scaled_train_df, scaled_val_df = data_module.get_scaled_dfs()
+    
+    val_x, val_y = data_module.get_val_src_y()
+    
+    val_y_inverse_scaled = data_module.inverse_transform_predictions(val_y, lc.pred_columns[0], len(lc.pred_columns))
+    
     history_len = max(seq[0] for seq in lc.sequences)
+    actual_values = val_df[history_len + lc.prediction_distance:][lc.pred_columns].to_numpy()
+    
+    mape = np.mean(np.abs((actual_values - numpy_predictions_inverse_scaled) / actual_values)) * 100.0
+    smape = np.mean(np.abs(actual_values - numpy_predictions_inverse_scaled) / (np.abs(actual_values) + np.abs(numpy_predictions_inverse_scaled))) * 100.0
+    rse = np.sum(np.square(actual_values - numpy_predictions_inverse_scaled)) / np.sum(np.square(actual_values - np.mean(actual_values)))
+    
+    logging.info(f"Mean Absolute Percentage Error: {mape:.4f}%")
+    logging.info(f"Symmetric Mean Absolute Percentage Error: {smape:.4f}%")
+    logging.info(f"Relative Squared Error: {rse:.4f}")
+    
+    # plt.plot(numpy_predictions[:, 0], label='Predicted from model')
+    plt.plot(numpy_predictions_inverse_scaled[:, 0], label='Predicted inverse scaled')
         
-    # train_data:pd.DataFrame = data[:train_border]
-    val_data:pd.DataFrame = df[train_border + history_len + lc.prediction_distance:]
-    actual_values = val_data[lc.pred_columns].to_numpy()
+    # plt.plot(actual_scalled_midpoint_close, label='actual_scalled_midpoint_close')
+    plt.plot(val_y_inverse_scaled, label='val_y_inverse_scaled', linewidth=5)
     
-    _, scaled_val_data = data_module.get_scaled_dfs()
+    plt.plot(actual_values, label='Actual 1m_MIDPOINT_close')
+    # plt.plot(actual_volume, label='Actual 1m_TRADES_volume')
     
-    plt.plot(scaled_val_data['1m_MIDPOINT_close'], label='Scaled 1m_MIDPOINT_close')
-    plt.plot(scaled_val_data['1m_TRADES_average'], label='Scaled 1m_TRADES_average')
-    plt.plot(scaled_val_data['1m_TRADES_volume'], label='Scaled 1m_TRADES_volume')
-    plt.legend()
-    plt.show(block = True)
-    
-    """
-    plt.plot(numpy_predictions[:, 0], label='NOT Inverse Scalled (from model) Predicted 0')
-    plt.plot(numpy_predictions_inverse_scaled[:, 0], label='Predicted 0')
-    #plt.plot(numpy_predictions_inverse_scaled[:, 1], label='Predicted 1')
-    
-    plt.plot(actual_values[:, 0], label='Actual 0')
-    #plt.plot(actual_values[:, 1], label='Actual 1')
-    
-    plt.plot(scaled_val_data[lc.pred_columns[0]], label='Scaled actual data')
+    # draw grid
+    plt.grid(which='both')
+    plt.minorticks_on()
     
     plt.legend()
     plt.show(block = True)
-    """
+
