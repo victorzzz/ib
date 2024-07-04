@@ -28,7 +28,8 @@ class StockPriceDataModule(L.LightningDataModule):
         train_part:float=0.8,
         keep_loaded_data:bool=False,
         keep_scaled_data:bool=False,
-        keep_validation_dataset:bool=False):
+        keep_validation_dataset:bool=False,
+        keep_train_dataset:bool=False):
         
         super(StockPriceDataModule, self).__init__()
         
@@ -48,6 +49,7 @@ class StockPriceDataModule(L.LightningDataModule):
         self.keep_loaded_data = keep_loaded_data
         self.keep_scaled_data = keep_scaled_data
         self.keep_validation_dataset = keep_validation_dataset
+        self.keep_train_dataset = keep_train_dataset
         
         self.scalers:dict[str, StandardScaler] = {fitting_column: StandardScaler() for fitting_column in scaling_column_groups}
         
@@ -105,6 +107,10 @@ class StockPriceDataModule(L.LightningDataModule):
             logging.info("Training tensor dataset ...")
             train_src, train_y = l_ds.TimeSeriesDataset.to_sequences(training_df, self.sequences, self.pred_columns, self.pred_distance)
             
+            if self.keep_train_dataset:
+                self.train_scr = train_src
+                self.train_y = train_y
+            
             x = torch.tensor(train_src, dtype=torch.float32)
             y = torch.tensor(train_y, dtype=torch.float32)
             
@@ -146,6 +152,13 @@ class StockPriceDataModule(L.LightningDataModule):
             return DataLoader(self.val_dataset, batch_size=self.batch_size)
         else:
             raise ValueError("val_dataset is not initialized")
+    
+    def train_dataloader_not_shuffled(self):
+        if isinstance(self.train_dataset, Dataset):
+            logging.info(f"StockPriceDataModule.train_dataloader_not_shuffled ...")
+            return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=False)
+        else:
+            raise ValueError("train_dataset is not initialized")
     
     def predict_dataloader(self):
         return self.val_dataloader()
@@ -206,6 +219,12 @@ class StockPriceDataModule(L.LightningDataModule):
     def get_val_src_y(self) -> tuple[np.ndarray, np.ndarray]:
         if self.keep_validation_dataset and self.user_tensor_dataset:
             return self.val_scr, self.val_y
+        else:
+            raise ValueError("val_scr and val_y are not initialized")
+
+    def get_train_src_y(self) -> tuple[np.ndarray, np.ndarray]:
+        if self.keep_train_dataset and self.user_tensor_dataset:
+            return self.train_scr, self.train_y
         else:
             raise ValueError("val_scr and val_y are not initialized")
 

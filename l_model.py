@@ -73,17 +73,25 @@ class TransformerEncoderModel(L.LightningModule):
         decoder = torch.nn.Sequential()
         in_dim = self.d_model * self.max_pos_encoder_length
         
+        out_dim = in_dim // 2
+        
+        decoder.append(torch.nn.Linear(in_dim, out_dim))
+        decoder.append(torch.nn.ReLU())
+        if self.use_dropout_for_decoder:
+            decoder.append(torch.nn.Dropout(p=self.dropout_for_decoder))
+                
+        in_dim = out_dim
+
+                     
         for _ in range(0, self.num_decoder_layers):
-            out_dim = in_dim // 4
+            out_dim = in_dim // 2
             
             decoder.append(torch.nn.Linear(in_dim, out_dim))
             if self.use_banchnorm_for_decoder:
                 decoder.append(torch.nn.BatchNorm1d(out_dim))
             decoder.append(torch.nn.ReLU())
-            if self.use_dropout_for_decoder:
-                decoder.append(torch.nn.Dropout(p=self.dropout_for_decoder))
 
-            in_dim //= 4
+            in_dim = out_dim
         
         decoder.append(torch.nn.Linear(in_dim , self.out_dim))
         

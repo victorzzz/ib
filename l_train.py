@@ -33,7 +33,7 @@ if __name__ == "__main__":
         scaling_column_groups=lc.scaling_column_groups,
         pred_distance=lc.prediction_distance,
         user_tensor_dataset=True,
-        batch_size=64,
+        batch_size=lc.batch_size_param,
         keep_loaded_data=False,
         keep_scaled_data=False,
         keep_validation_dataset=False
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     trainer = L.Trainer(
         # overfit_batches=1,
         # fast_dev_run=5,
-        max_epochs=10, 
+        max_epochs=15, 
         log_every_n_steps=10,
         profiler=profiler,
         callbacks=[checkpoint_callback],)
@@ -99,6 +99,7 @@ if __name__ == "__main__":
     logging.info("Validating model ...")
     trainer.validate(model, data_module)
 
+    """
     # Save the model
     date_str = dt.datetime.now().strftime("%Y-%m-%d-%H-%M")
     model_path = f"models/final_tr_enc_{date_str}.ckpt"
@@ -107,3 +108,4 @@ if __name__ == "__main__":
     trainer.save_checkpoint(model_path)
 
     logging.info(f"Model saved")
+    """

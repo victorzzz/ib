@@ -13,19 +13,22 @@ sequences:list[tuple[int,list[str]]] = [
             '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
             #'1m_TRADES_volume', 
             '1m_TRADES_average',
-            "1m_normalized_day_of_week", "1m_normalized_week", "1m_normalized_trading_time"
+            # "1m_normalized_day_of_week", "1m_normalized_week", 
+            "1m_normalized_trading_time"
         ]
     )]
 
-pred_columns:list[str] = ['1m_MIDPOINT_close', '1m_TRADES_average', '1m_BID_close', '1m_ASK_close']
+pred_columns:list[str] = ['1m_BID_close', '1m_ASK_close']
 
 scaling_column_groups:dict[str, tuple[list[str], bool]] = {
-    '1m_MIDPOINT_close': 
+    '1m_BID_close': 
         ([
-            '1m_BID_close', '1m_ASK_close',
+            # '1m_BID_close', 
+            '1m_ASK_close',
             '1m_BID_high', '1m_BID_low',
             '1m_ASK_high', '1m_ASK_low',
             '1m_BID_open', '1m_ASK_open',
+            '1m_MIDPOINT_close', 
             '1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
             '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
             '1m_TRADES_average'
@@ -35,17 +38,19 @@ scaling_column_groups:dict[str, tuple[list[str], bool]] = {
     # '1m_TRADES_volume': ([], True)   
     }
 
-prediction_distance:int = 4
-d_model_param:int = 40
-nhead_param:int = 20
-num_layers_param:int = 5
-encoder_dim_feedforward_param:int = 256
-num_decoder_layers_param:int = 3
+prediction_distance:int = 16
+d_model_param:int = 32
+nhead_param:int = 32
+num_layers_param:int = 6
+encoder_dim_feedforward_param:int = 1024
+num_decoder_layers_param:int = 6
 use_banchnorm_for_decoder_param:bool = True
 use_dropout_for_decoder_param:bool = True
-dropout_param:float = 0.05
-dropout_for_decoder:float = 0.1
+dropout_param:float = 0.1
+dropout_for_decoder:float = 0.2
 learning_rate_param:float = 0.0001
+
+batch_size_param:int = 32
 
 def create_model() -> lm.TransformerEncoderModel:
     
