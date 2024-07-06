@@ -10,8 +10,8 @@ sequences:list[tuple[int,list[str]]] = [
             '1m_BID_high', '1m_BID_low',
             '1m_ASK_high', '1m_ASK_low',
             '1m_BID_open', '1m_ASK_open',
-            #'1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
-            #'1m_MIDPOINT_close',
+            '1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
+            '1m_MIDPOINT_close',
             '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
             '1m_TRADES_average',
             
@@ -28,10 +28,10 @@ sequences:list[tuple[int,list[str]]] = [
             '1m__t_RSI_TRADES_average_7', '1m__t_RSI_TRADES_average_14', '1m__t_RSI_TRADES_average_21',
             
             '1m__t_BBL_TRADES_average_20', '1m__t_BBM_TRADES_average_20', '1m__t_BBU_TRADES_average_20', 
-            #'1m__t_BBP_TRADES_average_20', '1m__t_BBB_TRADES_average_20',
+            '1m__t_BBP_TRADES_average_20', '1m__t_BBB_TRADES_average_20',
             
             '1m__t_BBL_TRADES_average_30', '1m__t_BBM_TRADES_average_30', '1m__t_BBU_TRADES_average_30', 
-            #'1m__t_BBP_TRADES_average_30', '1m__t_BBB_TRADES_average_30',
+            '1m__t_BBP_TRADES_average_30', '1m__t_BBB_TRADES_average_30',
             
             '1m__t_STOCH_k_TRADES_average_14_3', '1m__t_STOCH_d_TRADES_average_14_3',
             '1m__t_STOCH_k_TRADES_average_21_4', '1m__t_STOCH_d_TRADES_average_21_4',            
@@ -72,8 +72,8 @@ dataset_tail:float = 0.03
     
 max_epochs_param:int = 30
 
-d_model_param:int = 32
-nhead_param:int = 32
+d_model_param:int = 48
+nhead_param:int = 48
 num_layers_param:int = 6
 encoder_dim_feedforward_param:int = 1024
 num_decoder_layers_param:int = 5
@@ -90,7 +90,7 @@ learning_rate_param:float | None = 0.0001
 scheduler_warmup_steps_param:int = 1000 
 model_size_for_noam_scheduler_formula_param = 8192
 
-batch_size_param:int = 256 + 64
+batch_size_param:int = 128 + 64 + 32
 
 def create_model() -> lm.TransformerEncoderModule:
     
