@@ -24,7 +24,7 @@ class StockPriceDataModule(L.LightningDataModule):
         pred_distance:int,
         user_tensor_dataset:bool, 
         batch_size,
-        tail:float=0.075,
+        tail:float,
         train_part:float=0.8,
         keep_loaded_data:bool=False,
         keep_scaled_data:bool=False,

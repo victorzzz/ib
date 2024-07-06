@@ -30,7 +30,7 @@ def transform_predictions_to_numpy(predictions, number_of_variables:int) -> np.n
 def predict_and_show_with_expected_values(
     dataloader:DataLoader,
     expected_values:np.ndarray,
-    model:lm.TransformerEncoderModel):
+    model:lm.TransformerEncoderModule):
 
     # Create a Trainer instance
     trainer = L.Trainer()
@@ -77,6 +77,7 @@ if __name__ == "__main__":
 
     data_module = ldm.StockPriceDataModule (
             "RY", "TSE",
+            tail=lc.dataset_tail,
             sequences=lc.sequences,
             pred_columns=lc.pred_columns,
             scaling_column_groups=lc.scaling_column_groups,

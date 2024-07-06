@@ -4,7 +4,7 @@ import lightning as L
 import torch
 from lightning.pytorch.tuner.tuning import Tuner
 from lightning.pytorch.profilers import AdvancedProfiler
-from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor, DeviceStatsMonitor, ModelSummary
 
 import matplotlib.pyplot as plt
 
@@ -28,6 +28,7 @@ if __name__ == "__main__":
     # Create data module
     data_module = ldm.StockPriceDataModule (
         "RY", "TSE",
+        tail=lc.dataset_tail,
         sequences=lc.sequences,
         pred_columns=lc.pred_columns,
         scaling_column_groups=lc.scaling_column_groups,
@@ -48,49 +49,26 @@ if __name__ == "__main__":
     
     # Define the checkpoint callback
     checkpoint_callback = ModelCheckpoint(
-        monitor='val_loss',  # Metric to monitor
+        monitor='val_smape',  # Metric to monitor
         mode='min',  # 'min' for minimizing the monitored metric
-        save_top_k=3,  # Save only the best model
+        save_top_k=5,  # Save only the best model
         save_last=True,  # Save the last checkpoint
         enable_version_counter=True
     )
+    
+    lr_monitor = LearningRateMonitor(logging_interval='step')
+    # gpu_stats = DeviceStatsMonitor()
+    
+    model_summary = ModelSummary(max_depth=5)
     
     # Train the model
     trainer = L.Trainer(
         # overfit_batches=1,
         # fast_dev_run=5,
-        max_epochs=15, 
+        max_epochs=lc.max_epochs_param, 
         log_every_n_steps=10,
-        profiler=profiler,
-        callbacks=[checkpoint_callback],)
-    
-    """
-    # create learning rate tuner
-    tuner = Tuner(trainer)
-    
-    # Run learning rate finder
-    logging.info("Running learning rate finder ...")
-    lr_finder = tuner.lr_find(model, datamodule = data_module)
-    if lr_finder is None:
-        raise ValueError("No lr_finder object returned")
-    
-    # Results can be found in
-    logging.info(f"lr finder result {lr_finder.results}")
-
-    # Plot with
-    fig = lr_finder.plot(suggest=True, show=True)
-    if fig is None:
-        raise ValueError("No figure returned")
-    
-    # fig.show()
-    
-    # Pick point based on plot, or get suggestion
-    new_lr = lr_finder.suggestion()
-
-    # update hparams of the model
-    logging.info(f"Updating learning rate to {new_lr} ...")
-    model.hparams.lr = new_lr # type: ignore
-    """
+        # profiler=profiler,
+        callbacks=[checkpoint_callback, lr_monitor, model_summary, ],)
     
     logging.info("Fitting model ...")
     trainer.fit(model, data_module)
@@ -98,14 +76,3 @@ if __name__ == "__main__":
     # Validate the model
     logging.info("Validating model ...")
     trainer.validate(model, data_module)
-
-    """
-    # Save the model
-    date_str = dt.datetime.now().strftime("%Y-%m-%d-%H-%M")
-    model_path = f"models/final_tr_enc_{date_str}.ckpt"
-    logging.info(f"Saving model {model_path}...")
-
-    trainer.save_checkpoint(model_path)
-
-    logging.info(f"Model saved")
-    """

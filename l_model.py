@@ -1,8 +1,11 @@
 import torch
 import torch.nn as nn
+import torch.optim.lr_scheduler as lr_scheduler
 import torchmetrics
 
 import lightning as L
+
+import math
 
 import numpy as np
 
@@ -21,8 +24,9 @@ class PositionalEncodingForEncoder(nn.Module):
     def forward(self, x):
         x = x + self.pe[:, :x.size(1), :]
         return x
+
+class TransformerEncoderModel(nn.Module):
     
-class TransformerEncoderModel(L.LightningModule):
     def __init__(self, 
                  input_dim:int, 
                  d_model:int, 
@@ -36,19 +40,10 @@ class TransformerEncoderModel(L.LightningModule):
                  use_dropout_for_decoder:bool, 
                  dropout:float,
                  dropout_for_decoder:float,
-                 learning_rate:float=0.001):
+                 first_decoder_denominator:int,
+                 next_decoder_denominator:int):
+        
         super(TransformerEncoderModel, self).__init__()
-
-        self.save_hyperparameters(ignore=["model"])
-        
-        self.learning_rate = learning_rate
-        
-        self.train_r2 = torchmetrics.R2Score(num_outputs=out_dim)
-        self.val_r2 = torchmetrics.R2Score(num_outputs=out_dim)
-        
-        self.val_mape = torchmetrics.MeanAbsolutePercentageError()
-        self.val_smape = torchmetrics.SymmetricMeanAbsolutePercentageError ()
-        self.val_rse = torchmetrics.RelativeSquaredError(num_outputs=out_dim)
         
         self.d_model = d_model
         self.nhead = nhead
@@ -61,6 +56,8 @@ class TransformerEncoderModel(L.LightningModule):
         self.use_dropout_for_decoder = use_dropout_for_decoder
         self.dropout = dropout
         self.dropout_for_decoder = dropout_for_decoder
+        self.first_decoder_denominator = first_decoder_denominator
+        self.next_decoder_denominator = next_decoder_denominator
 
         self.encoder = nn.Linear(input_dim, d_model)
         self.pos_encoder = PositionalEncodingForEncoder(d_model, max_pos_encoder_length)
@@ -68,40 +65,9 @@ class TransformerEncoderModel(L.LightningModule):
         self.transformer_encoder = nn.TransformerEncoder(encoder_layers, num_layers)
         self.decoder =  self.generate_decoder()
 
-    def generate_decoder(self) -> nn.Module:
-        
-        decoder = torch.nn.Sequential()
-        in_dim = self.d_model * self.max_pos_encoder_length
-        
-        out_dim = in_dim // 2
-        
-        decoder.append(torch.nn.Linear(in_dim, out_dim))
-        decoder.append(torch.nn.ReLU())
-        if self.use_dropout_for_decoder:
-            decoder.append(torch.nn.Dropout(p=self.dropout_for_decoder))
-                
-        in_dim = out_dim
-
-                     
-        for _ in range(0, self.num_decoder_layers):
-            out_dim = in_dim // 2
-            
-            decoder.append(torch.nn.Linear(in_dim, out_dim))
-            if self.use_banchnorm_for_decoder:
-                decoder.append(torch.nn.BatchNorm1d(out_dim))
-            decoder.append(torch.nn.ReLU())
-
-            in_dim = out_dim
-        
-        decoder.append(torch.nn.Linear(in_dim , self.out_dim))
-        
-        return decoder
-        
-
     def forward(self, x):
         
         # x shape: [batch_size, seq_len, input_dim]
-        
         batch_size, _, _ = x.size()
         
         x = self.encoder(x)
@@ -112,6 +78,91 @@ class TransformerEncoderModel(L.LightningModule):
         x = x.view(batch_size, -1)
         x = self.decoder(x)
         return x
+
+    def generate_decoder(self) -> nn.Module:
+        
+        decoder = torch.nn.Sequential()
+        in_dim = self.d_model * self.max_pos_encoder_length
+        
+        out_dim = in_dim // self.first_decoder_denominator
+        
+        decoder.append(torch.nn.Linear(in_dim, out_dim))
+        if self.use_banchnorm_for_decoder:
+            decoder.append(torch.nn.BatchNorm1d(out_dim))
+        decoder.append(torch.nn.ReLU())
+        if self.use_dropout_for_decoder:
+            decoder.append(torch.nn.Dropout(p=self.dropout_for_decoder))
+                
+        in_dim = out_dim
+
+                     
+        for _ in range(0, self.num_decoder_layers):
+            out_dim = in_dim // self.next_decoder_denominator
+            
+            decoder.append(torch.nn.Linear(in_dim, out_dim))
+            if self.use_banchnorm_for_decoder:
+                decoder.append(torch.nn.BatchNorm1d(out_dim))
+            decoder.append(torch.nn.ReLU())
+            if self.use_dropout_for_decoder:
+                decoder.append(torch.nn.Dropout(p=self.dropout_for_decoder))            
+
+            in_dim = out_dim
+        
+        decoder.append(torch.nn.Linear(in_dim , self.out_dim))
+        
+        return decoder    
+    
+class TransformerEncoderModule(L.LightningModule):
+    def __init__(self, 
+                 input_dim:int, 
+                 d_model:int, 
+                 out_dim:int, 
+                 max_pos_encoder_length:int, 
+                 nhead:int, 
+                 num_layers:int,
+                 encoder_dim_feedforward:int,
+                 num_decoder_layers:int,
+                 use_banchnorm_for_decoder:bool,
+                 use_dropout_for_decoder:bool, 
+                 dropout:float,
+                 dropout_for_decoder:float,
+                 first_decoder_denominator:int,
+                 next_decoder_denominator:int,
+                 learning_rate:float | None,
+                 scheduler_warmup_steps:int,
+                 model_size_for_noam_scheduler_formula:int):
+        super(TransformerEncoderModule, self).__init__()
+
+        self.learning_rate = learning_rate
+        self.scheduler_warmup_steps = scheduler_warmup_steps
+        self.model_size_for_noam_scheduler_formula = model_size_for_noam_scheduler_formula
+        
+        self.model = TransformerEncoderModel(
+            input_dim, 
+            d_model, 
+            out_dim, 
+            max_pos_encoder_length, 
+            nhead, num_layers, 
+            encoder_dim_feedforward, 
+            num_decoder_layers, 
+            use_banchnorm_for_decoder, 
+            use_dropout_for_decoder, 
+            dropout, 
+            dropout_for_decoder,
+            first_decoder_denominator,
+            next_decoder_denominator)
+
+        self.save_hyperparameters()
+    
+        self.train_r2 = torchmetrics.R2Score(num_outputs=out_dim)
+        self.val_r2 = torchmetrics.R2Score(num_outputs=out_dim)
+        
+        self.val_mape = torchmetrics.MeanAbsolutePercentageError()
+        self.val_smape = torchmetrics.SymmetricMeanAbsolutePercentageError ()
+        self.val_rse = torchmetrics.RelativeSquaredError(num_outputs=out_dim)
+        
+    def forward(self, x):
+        return self.model(x)
     
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -155,11 +206,23 @@ class TransformerEncoderModel(L.LightningModule):
         return y_hat
 
     def configure_optimizers(self):
-        """
-        opt = torch.optim.SGD(
-            self.parameters(), 
-            lr=self.learning_rate,
-            momentum=0.9)
-        return opt
-        """
-        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        
+        if self.learning_rate is None:
+            optimizer = torch.optim.Adam(self.parameters())
+        
+            # Define the lambda function for Noam Scheduler (recomended for Transformer models in the paper Attention is All You Need)
+            lr_lambda = lambda step: (0.0 if step == 0 else (self.model_size_for_noam_scheduler_formula ** (-0.5)) * min(step ** (-0.5), step * (self.scheduler_warmup_steps ** (-1.5))))
+            
+            # Define the scheduler
+            scheduler_config = {
+                'scheduler': torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda),
+                'interval': 'step'
+            }
+            
+            return [optimizer], [scheduler_config]        
+        else:
+        
+            optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+            
+            return optimizer
+        
