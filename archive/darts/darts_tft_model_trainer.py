@@ -68,7 +68,7 @@ if __name__ == "__main__":
     # reproducibility
     torch.manual_seed(42)
 
-    torch.set_float32_matmul_precision('medium')
+    torch.set_float32_matmul_precision('high')
 
     # throughout training we'll monitor the validation loss for early stopping
     early_stopper = EarlyStopping("val_loss", min_delta=0.001, patience=3, verbose=True)

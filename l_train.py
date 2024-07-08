@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     logging.info(f"Starting {__file__} ...")
 
-    torch.set_float32_matmul_precision('medium')
+    torch.set_float32_matmul_precision('high')
 
     logging.info("Creating data module ...")
     # Create data module
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     
     # Define the checkpoint callback
     checkpoint_callback = ModelCheckpoint(
-        monitor='val_smape',  # Metric to monitor
+        monitor='val_loss',  # Metric to monitor
         mode='min',  # 'min' for minimizing the monitored metric
         save_top_k=5,  # Save only the best model
         save_last=True,  # Save the last checkpoint
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         max_epochs=lc.max_epochs_param, 
         log_every_n_steps=10,
         # profiler=profiler,
-        callbacks=[checkpoint_callback, lr_monitor, model_summary, ],)
+        callbacks=[checkpoint_callback, lr_monitor, model_summary, ])
     
     logging.info("Fitting model ...")
     trainer.fit(model, data_module)

@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import lightning as L
 from torch.utils.data import DataLoader, Dataset, TensorDataset
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
 import matplotlib.pyplot as plt
 
 import l_dataset as l_ds
@@ -35,6 +35,9 @@ class StockPriceDataModule(L.LightningDataModule):
         
         logging.info(f"StockPriceDataModule.__init__ : {ticker_symbvol} on {exchange} ...")
         
+        self.price_scaler_type = MinMaxScaler
+        self.volume_scaler_type = MinMaxScaler
+        
         self.ticker_symbvol = ticker_symbvol
         self.exchange = exchange
         
@@ -51,8 +54,16 @@ class StockPriceDataModule(L.LightningDataModule):
         self.keep_validation_dataset = keep_validation_dataset
         self.keep_train_dataset = keep_train_dataset
         
-        self.scalers:dict[str, StandardScaler] = {fitting_column: StandardScaler() for fitting_column in scaling_column_groups}
-        
+        """
+        self.scalers:dict[str, StandardScaler | RobustScaler | MinMaxScaler] = {
+            fitting_column: (RobustScaler(quantile_range=(0.4, 0.6)) if log_before_scaling else StandardScaler()) for fitting_column, (_, log_before_scaling) in scaling_column_groups.items()
+            }
+        """
+
+        self.scalers:dict[str, StandardScaler | RobustScaler | MinMaxScaler] = {
+            fitting_column: (self.volume_scaler_type() if log_before_scaling else self.price_scaler_type()) for fitting_column, (_, log_before_scaling) in scaling_column_groups.items()
+            }
+
         self.train_dataset : Dataset | None = None
         self.val_dataset : Dataset | None = None
         
@@ -101,7 +112,16 @@ class StockPriceDataModule(L.LightningDataModule):
         if self.keep_scaled_data:
             self.tdf = training_df
             self.vdf = val_df
-                
+            
+        training_df_description = training_df.describe().T
+        logging.info(f"Scaled training df description:\n{training_df_description}")
+
+        val_df_description = val_df.describe().T
+        logging.info(f"Scaled validation df description:\n {val_df_description}")
+        
+        self.check_scaled_df_description(training_df_description)
+        self.check_scaled_df_description(val_df_description)
+                        
         logging.info("Creating datasets ...")
         if self.user_tensor_dataset:
             logging.info("Training tensor dataset ...")
@@ -197,7 +217,7 @@ class StockPriceDataModule(L.LightningDataModule):
         return df.copy()
     
     def inverse_transform_predictions(self, predictions:np.ndarray, fiting_column:str, number_of_columns:int) -> np.ndarray:
-        scaler:StandardScaler = self.scalers[fiting_column]
+        scaler:StandardScaler | RobustScaler | MinMaxScaler = self.scalers[fiting_column]
         scaled_predictions = scaler.inverse_transform(predictions.reshape(-1, 1))
         if isinstance(scaled_predictions, np.ndarray):
             return scaled_predictions.reshape(-1, number_of_columns)
@@ -229,18 +249,24 @@ class StockPriceDataModule(L.LightningDataModule):
             raise ValueError("val_scr and val_y are not initialized")
 
     @staticmethod
-    def fit_on_column(scaler:StandardScaler, df:pd.DataFrame, column:str):
+    def check_scaled_df_description(scaled_df_description:pd.DataFrame):
+        if scaled_df_description["min"].min() < -5.0 or scaled_df_description["max"].max() > 5.0:
+            logging.critical("Scaled data is out of range [-5, 5]")
+            raise ValueError("Scaled data is out of range [-5, 5]")
+
+    @staticmethod
+    def fit_on_column(scaler:StandardScaler | RobustScaler | MinMaxScaler, df:pd.DataFrame, column:str):
         values_to_fit = df[[column]].values
         scaler.fit(values_to_fit)
     
     @staticmethod
-    def fit_transform_column(scaler:StandardScaler, df:pd.DataFrame, column:str) -> pd.DataFrame:
+    def fit_transform_column(scaler:StandardScaler | RobustScaler | MinMaxScaler, df:pd.DataFrame, column:str) -> pd.DataFrame:
         values_to_fit = df[[column]].to_numpy()
         df[[column]]= scaler.fit_transform(values_to_fit)
         return df
     
     @staticmethod
-    def transform_columns(scaler:StandardScaler, df:pd.DataFrame, columns:list[str]) -> pd.DataFrame:
+    def transform_columns(scaler:StandardScaler | RobustScaler | MinMaxScaler, df:pd.DataFrame, columns:list[str]) -> pd.DataFrame:
         for column in columns:
             values_to_transform = df[[column]].to_numpy()
             transformed_vale = scaler.transform(values_to_transform)

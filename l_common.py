@@ -1,17 +1,23 @@
 import l_model as lm
 
-prediction_distance:int = 8
+prediction_distance:int = 4
 
 sequences:list[tuple[int,list[str]]] = [
     (
-        prediction_distance * 16, 
+        prediction_distance * 30, 
         [
-            '1m_BID_close', '1m_ASK_close',
-            '1m_BID_high', '1m_BID_low',
-            '1m_ASK_high', '1m_ASK_low',
-            '1m_BID_open', '1m_ASK_open',
+            '1m_BID_close', 
+            '1m_ASK_close',
+            '1m_BID_high', 
+            #'1m_BID_low',
+            #'1m_ASK_high', 
+            '1m_ASK_low',
+            #'1m_BID_open', 
+            #'1m_ASK_open',
+            
             '1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
             '1m_MIDPOINT_close',
+            
             '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
             '1m_TRADES_average',
             
@@ -21,7 +27,7 @@ sequences:list[tuple[int,list[str]]] = [
             '1m__t_CCI_TRADES_average_7', '1m__t_CCI_TRADES_average_14', '1m__t_CCI_TRADES_average_21',
             '1m__t_FI_TRADES_average_13', '1m__t_FI_TRADES_average_26',
             
-            '1m__t_VPT_TRADES_average', 
+            #'1m__t_VPT_TRADES_average', 
             
             #'1m__t_NVI_TRADES_average',
             
@@ -49,12 +55,15 @@ scaling_column_groups:dict[str, tuple[list[str], bool]] = {
         ([
             # '1m_BID_close', 
             '1m_ASK_close',
-            '1m_BID_high', '1m_BID_low',
-            '1m_ASK_high', '1m_ASK_low',
-            '1m_BID_open', '1m_ASK_open',
+            '1m_BID_high', 
+            #'1m_BID_low',
+            #'1m_ASK_high', 
+            '1m_ASK_low',
+            #'1m_BID_open', 
+            #'1m_ASK_open',
             
-            # '1m_MIDPOINT_close', 
-            # '1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
+            '1m_MIDPOINT_close', 
+            '1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
             
             '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
             '1m_TRADES_average',
@@ -68,17 +77,23 @@ scaling_column_groups:dict[str, tuple[list[str], bool]] = {
     '1m_TRADES_volume': ([], True)   
     }
 
-dataset_tail:float = 0.03
+dataset_tail:float = 0.1
     
 max_epochs_param:int = 30
 
-d_model_param:int = 48
-nhead_param:int = 48
-num_layers_param:int = 6
-encoder_dim_feedforward_param:int = 1024
+batch_size_param:int = 128
+
+d_model_param:int = 256
+use_linear_embeding_layer_param:bool = True
+num_embeding_linear_layers_param:int = 1
+nhead_param:int = d_model_param // 64
+num_layers_param:int = 3
+encoder_dim_feedforward_param:int = d_model_param * 4
 num_decoder_layers_param:int = 5
-use_banchnorm_for_decoder_param:bool = True
+use_decoder_normalization_param:bool = True
+use_banchnorm_for_decoder_param:bool = False
 use_dropout_for_decoder_param:bool = True
+dropout_for_embeding_param:float = 0.05
 dropout_param:float = 0.1
 dropout_for_decoder:float = 0.15
 first_decoder_denominator:int = 2
@@ -90,8 +105,6 @@ learning_rate_param:float | None = 0.0001
 scheduler_warmup_steps_param:int = 1000 
 model_size_for_noam_scheduler_formula_param = 8192
 
-batch_size_param:int = 128 + 64 + 32
-
 def create_model() -> lm.TransformerEncoderModule:
     
     input_dim = sum(len(columns) for _, columns in sequences)
@@ -99,7 +112,9 @@ def create_model() -> lm.TransformerEncoderModule:
     out_dim = len(pred_columns) * 2
     
     model = lm.TransformerEncoderModule(
-        input_dim,  # Number of input features
+        input_dim=input_dim,  # Number of input features
+        use_linear_embeding_layer=use_linear_embeding_layer_param,
+        num_embeding_linear_layers=num_embeding_linear_layers_param,
         d_model=d_model_param,  # Embedding dimension
         out_dim=out_dim,  # Number of output features
         max_pos_encoder_length=max_seq_len,
@@ -107,8 +122,10 @@ def create_model() -> lm.TransformerEncoderModule:
         num_layers=num_layers_param,
         encoder_dim_feedforward=encoder_dim_feedforward_param,
         num_decoder_layers=num_decoder_layers_param,
+        use_decoder_normalization=use_decoder_normalization_param,
         use_banchnorm_for_decoder=use_banchnorm_for_decoder_param,
         use_dropout_for_decoder=use_dropout_for_decoder_param,
+        dropout_for_embeding=dropout_for_embeding_param,
         dropout=dropout_param,
         dropout_for_decoder=dropout_for_decoder,
         learning_rate=learning_rate_param,
@@ -129,6 +146,8 @@ def load_model(path:str) -> lm.TransformerEncoderModule:
     model = lm.TransformerEncoderModule.load_from_checkpoint(
         path,
         input_dim=input_dim,  # Number of input features
+        use_linear_embeding_layer=use_linear_embeding_layer_param,
+        num_embeding_linear_layers=num_embeding_linear_layers_param,
         d_model=d_model_param,  # Embedding dimension
         out_dim=out_dim,  # Number of output features
         max_pos_encoder_length=max_seq_len,
@@ -136,15 +155,21 @@ def load_model(path:str) -> lm.TransformerEncoderModule:
         num_layers=num_layers_param,
         encoder_dim_feedforward=encoder_dim_feedforward_param,
         num_decoder_layers=num_decoder_layers_param,
+        use_decoder_normalization=use_decoder_normalization_param,
         use_banchnorm_for_decoder=use_banchnorm_for_decoder_param,
         use_dropout_for_decoder=use_dropout_for_decoder_param,
+        dropout_for_embeding=dropout_for_embeding_param,
         dropout=dropout_param,
         dropout_for_decoder=dropout_for_decoder,
         learning_rate=learning_rate_param,
         scheduler_warmup_steps=scheduler_warmup_steps_param,
         first_decoder_denominator=first_decoder_denominator,
         next_decoder_denominator=next_decoder_denominator,
-        model_size_for_noam_scheduler_formula=model_size_for_noam_scheduler_formula_param   
+        model_size_for_noam_scheduler_formula=model_size_for_noam_scheduler_formula_param 
     )
     
     return model
+
+if __name__ == "__main__":
+    print(len(sequences))
+    print(len(sequences[0][1]))

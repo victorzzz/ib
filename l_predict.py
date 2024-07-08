@@ -71,10 +71,11 @@ if __name__ == "__main__":
 
     ib_log.configure_logging("predictiong")
 
-    torch.set_float32_matmul_precision('medium')
+    torch.set_float32_matmul_precision('high')
 
-    model = lc.load_model("lightning_logs/version_109/checkpoints/last.ckpt")
+    model = lc.load_model("lightning_logs/version_257/checkpoints/epoch=6-step=7084.ckpt")
 
+    
     data_module = ldm.StockPriceDataModule (
             "RY", "TSE",
             tail=lc.dataset_tail,
@@ -83,7 +84,7 @@ if __name__ == "__main__":
             scaling_column_groups=lc.scaling_column_groups,
             pred_distance=lc.prediction_distance,
             user_tensor_dataset=True,
-            batch_size=128,
+            batch_size=1024,
             keep_loaded_data=True,
             keep_scaled_data=True,
             keep_validation_dataset=True,
