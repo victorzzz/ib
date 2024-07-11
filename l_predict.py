@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
     torch.set_float32_matmul_precision('high')
 
-    model = lc.load_model("lightning_logs/version_257/checkpoints/epoch=6-step=7084.ckpt")
+    model = lc.load_model("lightning_logs/version_287/checkpoints/epoch=28-step=4205.ckpt")
 
     
     data_module = ldm.StockPriceDataModule (
