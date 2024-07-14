@@ -17,7 +17,7 @@ class TimeSeriesModule(L.LightningModule):
         
         self.model = model
 
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["model"])
         
     def forward(self, x):
         return self.model(x)

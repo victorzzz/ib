@@ -53,12 +53,7 @@ class StockPriceDataModule(L.LightningDataModule):
         self.keep_scaled_data = keep_scaled_data
         self.keep_validation_dataset = keep_validation_dataset
         self.keep_train_dataset = keep_train_dataset
-        
-        """
-        self.scalers:dict[str, StandardScaler | RobustScaler | MinMaxScaler] = {
-            fitting_column: (RobustScaler(quantile_range=(0.4, 0.6)) if log_before_scaling else StandardScaler()) for fitting_column, (_, log_before_scaling) in scaling_column_groups.items()
-            }
-        """
+
 
         self.scalers:dict[str, StandardScaler | RobustScaler | MinMaxScaler] = {
             fitting_column: (self.volume_scaler_type() if log_before_scaling else self.price_scaler_type()) for fitting_column, (_, log_before_scaling) in scaling_column_groups.items()

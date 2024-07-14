@@ -154,7 +154,7 @@ def create_datasets(
                 df = reverse_dataframe(df)
                 
                 logging.info(f"Adding technical indicators ...")
-                df, price_normalizing_columns, value_denominator = df_tech_utils.add_technical_indicators(df, minute_multiplier)
+                df, price_normalizing_columns, log_normalized_columns = df_tech_utils.add_technical_indicators(df, minute_multiplier)
                 
                 if minute_multiplier == 1:
                 

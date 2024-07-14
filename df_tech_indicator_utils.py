@@ -8,12 +8,53 @@ DEFAULT_PERIODS_2:tuple[int, ...] = (20, 30)
 DEFAULT_PERIODS_3:tuple[int, ...] = (13, 26)
 DEFAULT_PERIODS_4:tuple[tuple[int, int, int], ...] = ((26, 12, 9), (39, 18, 13))
 DEFAULT_PERIODS_5:tuple[tuple[int, int], ...] = ((14, 3), (21,4))
-DEFAULT_EMA_PERIODS:tuple[int, ...] = (32, 64, 128, 256)
+
+# DEFAULT_EMA_PERIODS:tuple[int, ...] = (2, 4, 8, 16, 32, 64, 128, 256, 512)
+
+def add_ema(
+    df:pd.DataFrame, 
+    columns:list[str],
+    periods:tuple[int, ...],
+    add_ema_colums_to_df:bool,
+    add_ema_dif_columns_to_df:bool,
+    add_ema_retio_columns_to_df:bool) -> tuple[pd.DataFrame, list[str], list[str], list[str]]:
+    if len(columns) == 0 or len(periods) == 0 or (not add_ema_colums_to_df and not add_ema_dif_columns_to_df and not add_ema_retio_columns_to_df):
+        logging.error(f"Columns or periods are empty or no columns to add to dataframe")
+        return (df, [], [], [])
+    
+    new_columns_ema = []
+    new_columns_difs = []
+    new_columns_ratios = []
+    
+    for period in periods:
+
+        for column in columns:
+            new_column_ema = f'_t_EMA_{column}_{period}'
+            ema = ta.ema(df[column], length=period)
+            
+            if not isinstance(ema, pd.Series):
+                logging.error(f"EMA for column {column} and period {period} is not a pandas series")
+                continue
+            
+            if add_ema_colums_to_df:
+                df[new_column_ema] = ema
+                new_columns_ema.append(new_column_ema)
+            
+            if add_ema_dif_columns_to_df:
+                new_column_dif = f'_t_EMA_dif_{column}_{period}'
+                df[new_column_dif] = df[column] - ema
+                new_columns_difs.append(new_column_dif)
+                
+            if add_ema_retio_columns_to_df:
+                new_column_ratio = f'_t_EMA_ratio_{column}_{period}'
+                df[new_column_ratio] = (df[column] / ema) - 1.0
+                new_columns_ratios.append(new_column_ratio)
+        
+    return (df, new_columns_ema, new_columns_difs, new_columns_ratios)
 
 # returns a tuple with:
 #  - the dataframe
-#  - the list coluns need to be normalized with price normalizer
-#  - volume denominator
+#  - the list colums need to be normalized with price normalizer
 def add_technical_indicators(
     df:pd.DataFrame,
     time_frame_minute_multiplier:int,
@@ -22,35 +63,12 @@ def add_technical_indicators(
     periods_3:tuple[int, ...] = DEFAULT_PERIODS_3,
     periods_4:tuple[tuple[int, int, int], ...] = DEFAULT_PERIODS_4,
     periods_5:tuple[tuple[int, int], ...] = DEFAULT_PERIODS_5,
-    ema_periods:tuple[int, ...] = DEFAULT_EMA_PERIODS,
     for_midpoint_price:bool = False,
-    for_trades_average:bool = True,
-    for_bid_low_ask_high:bool = False
-    ) -> tuple[pd.DataFrame, list[str], float]:
+    for_trades_average:bool = True
+    ) -> tuple[pd.DataFrame, list[str], list[str]]:
 
     price_normalized_columns = []
-    volume_denominator = df['TRADES_volume'].max()
-
-    for period in ema_periods:
-        df[f'_t_EMA_MIDPOINT_{period}'] = ta.ema(df['MIDPOINT_close'], length=period)
-        df[f'_t_EMA_TRADES_average_{period}'] = ta.ema(df['TRADES_average'], length=period)
-        df[f'_t_EMA_TRADES_close_{period}'] = ta.ema(df['TRADES_close'], length=period)
-        df[f'_t_EMA_ASK_high_{period}'] = ta.ema(df['ASK_high'], length=period)
-        df[f'_t_EMA_ASK_close_{period}'] = ta.ema(df['ASK_close'], length=period)
-        df[f'_t_EMA_BID_low_{period}'] = ta.ema(df['BID_low'], length=period)
-        df[f'_t_EMA_BID_close_{period}'] = ta.ema(df['BID_close'], length=period)
-        
-        price_normalized_columns.append(
-            [
-                f'_t_EMA_MIDPOINT_{period}', 
-                f'_t_EMA_TRADES_average_{period}', 
-                f'_t_EMA_TRADES_close_{period}', 
-                f'_t_EMA_ASK_high_{period}', 
-                f'_t_EMA_ASK_close_{period}', 
-                f'_t_EMA_BID_low_{period}', 
-                f'_t_EMA_BID_close_{period}'
-            ]
-        )
+    log_normalized_columns = []
 
     for period in periods_1:
         if for_midpoint_price:
@@ -59,9 +77,6 @@ def add_technical_indicators(
         if for_trades_average:
             df[f'_t_MFI_TRADES_average_{period}'] = ta.mfi(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], df['TRADES_volume'], length=period)
             df[f'_t_MFI_TRADES_average_{period}'] = (df[f'_t_MFI_TRADES_average_{period}'] - 50.0) / 50.0
-        if for_bid_low_ask_high:
-            df[f'_t_MFI_BID_low_ASK_high_MIDPOINT_{period}'] = ta.mfi(df['ASK_high'], df['BID_low'], df['MIDPOINT_close'], df['TRADES_volume'], length=period)
-            df[f'_t_MFI_BID_low_ASK_high_MIDPOINT_{period}'] = (df[f'_t_MFI_BID_low_ASK_high_MIDPOINT_{period}'] - 50.0) / 50.0    
 
     logging.info(f"Money flow index added to dataframe ...")    
 
@@ -72,9 +87,6 @@ def add_technical_indicators(
         if for_trades_average:
             df[f'_t_CCI_TRADES_average_{period}'] = ta.cci(df['TRADES_high'], df['TRADES_low'], df['TRADES_average'], length=period)
             df[f'_t_CCI_TRADES_average_{period}'] = df[f'_t_CCI_TRADES_average_{period}'] / 200.0
-        if for_bid_low_ask_high:
-            df[f'_t_CCI_BID_low_ASK_high_MIDPOINT_{period}'] = ta.cci(df['ASK_high'], df['BID_low'], df['MIDPOINT_close'], length=period)
-            df[f'_t_CCI_BID_low_ASK_high_MIDPOINT_{period}'] = df[f'_t_CCI_BID_low_ASK_high_MIDPOINT_{period}'] / 200.0
     
     logging.info(f"Commodity channel index added to dataframe ...")
 
@@ -103,8 +115,6 @@ def add_technical_indicators(
                 df[f'_t_CMF_MIDPOINT_{period}'] = ta.cmf(df['MIDPOINT_high'], df['MIDPOINT_low'], df['MIDPOINT_close'], df['TRADES_volume'], df['MIDPOINT_open'], length=period)
             if for_trades_average:
                 df[f'_t_CMF_TRADES_average_{period}'] = ta.cmf(df['TRADES_high'], df['TRADES_low'], df['TRADES_close'], df['TRADES_volume'], df['TRADES_open'], length=period)
-            if for_bid_low_ask_high:
-                df[f'_t_CMF_BID_low_ASK_high_MIDPOINT_{period}'] = ta.cmf(df['ASK_high'], df['BID_low'], df['MIDPOINT_close'], df['TRADES_volume'], df['MIDPOINT_open'], length=period)
 
         logging.info(f"Chaikin money flow added to dataframe ...")
 
@@ -112,18 +122,24 @@ def add_technical_indicators(
         logging.info(f"Dataframe copied 2 ...")
     
 
+    # requires volume denominator
     for period in periods_3:
         if for_midpoint_price:
-            df[f'_t_FI_MIDPOINT_{period}'] = ta.efi(df['MIDPOINT_close'], df['TRADES_volume'], length=period) / volume_denominator
+            df[f'_t_FI_MIDPOINT_{period}'] = ta.efi(df['MIDPOINT_close'], df['TRADES_volume'], length=period)
+            log_normalized_columns.append(f'_t_FI_MIDPOINT_{period}')
         if for_trades_average:
-            df[f'_t_FI_TRADES_average_{period}'] = ta.efi(df['TRADES_average'], df['TRADES_volume'], length=period) / volume_denominator
+            df[f'_t_FI_TRADES_average_{period}'] = ta.efi(df['TRADES_average'], df['TRADES_volume'], length=period)
+            log_normalized_columns.append(f'_t_FI_TRADES_average_{period}')
 
     logging.info(f"Force index added to dataframe ...")
 
+    # requires volume denominator
     if for_midpoint_price:
-        df['_t_VPT_MIDPOINT'] = ta.pvt(df['MIDPOINT_close'], df['TRADES_volume']) / volume_denominator
+        df['_t_VPT_MIDPOINT'] = ta.pvt(df['MIDPOINT_close'], df['TRADES_volume'])
+        log_normalized_columns.append('_t_VPT_MIDPOINT')
     if for_trades_average:
-        df['_t_VPT_TRADES_average'] = ta.pvt(df['TRADES_average'], df['TRADES_volume']) / volume_denominator
+        df['_t_VPT_TRADES_average'] = ta.pvt(df['TRADES_average'], df['TRADES_volume'])
+        log_normalized_columns.append('_t_VPT_TRADES_average')
 
     logging.info(f"Volume price trend added to dataframe ...")
 
@@ -188,14 +204,6 @@ def add_technical_indicators(
             df.loc[df[f'_t_STOCH_d_TRADES_average_{period}_{s}'] < -200.0, f'_t_STOCH_d_TRADES_average_{period}_{s}'] = -200.0
             df[f'_t_STOCH_k_TRADES_average_{period}_{s}'] = df[f'_t_STOCH_k_TRADES_average_{period}_{s}'] / 200.0
             df[f'_t_STOCH_d_TRADES_average_{period}_{s}'] = df[f'_t_STOCH_d_TRADES_average_{period}_{s}'] / 200.0
-        if for_bid_low_ask_high:
-            df[[f'_t_STOCH_k_BID_low_ASK_high_TRADES_average_{period}_{s}', f'STOCH_d_BID_low_ASK_high_TRADES_average_{period}_{s}']] = ta.stoch(df['ASK_high'], df['BID_low'], df['TRADES_average'], k=period, d=s, smooth_k=s)
-            df.loc[df[f'_t_STOCH_k_BID_low_ASK_high_TRADES_average_{period}_{s}'] > 200.0, f'_t_STOCH_k_BID_low_ASK_high_TRADES_average_{period}_{s}'] = 200.0
-            df.loc[df[f'_t_STOCH_k_BID_low_ASK_high_TRADES_average_{period}_{s}'] < -200.0, f'_t_STOCH_k_BID_low_ASK_high_TRADES_average_{period}_{s}'] = -200.0
-            df.loc[df[f'_t_STOCH_d_BID_low_ASK_high_TRADES_average_{period}_{s}'] > 200.0, f'_t_STOCH_d_BID_low_ASK_high_TRADES_average_{period}_{s}'] = 200.0
-            df.loc[df[f'_t_STOCH_d_BID_low_ASK_high_TRADES_average_{period}_{s}'] < -200.0, f'_t_STOCH_d_BID_low_ASK_high_TRADES_average_{period}_{s}'] = -200.0
-            df[f'_t_STOCH_k_BID_low_ASK_high_TRADES_average_{period}_{s}'] = df[f'_t_STOCH_k_BID_low_ASK_high_TRADES_average_{period}_{s}'] / 200.0
-            df[f'_t_STOCH_d_BID_low_ASK_high_TRADES_average_{period}_{s}'] = df[f'_t_STOCH_d_BID_low_ASK_high_TRADES_average_{period}_{s}'] / 200.0
 
     logging.info(f"Stochastic oscillator added to dataframe ...")
 
@@ -203,7 +211,6 @@ def add_technical_indicators(
 
     logging.info(f"Dataframe copied 4 ...")
 
-    """
     for slow, fast, signal in periods_4:
             if for_midpoint_price:
                 df[[
@@ -221,6 +228,5 @@ def add_technical_indicators(
     df = df.copy()
 
     logging.info(f"Dataframe copied 5 ...")
-    """
     
-    return (df, price_normalized_columns, volume_denominator)
+    return (df, price_normalized_columns, log_normalized_columns)

@@ -10,7 +10,7 @@ from sklearn.base import TransformerMixin
 
 import matplotlib.pyplot as plt
 
-import l_model as lm
+import l_module as l_module
 import l_common as lc
 import l_datamodule as ldm
 
@@ -30,7 +30,7 @@ def transform_predictions_to_numpy(predictions, number_of_variables:int) -> np.n
 def predict_and_show_with_expected_values(
     dataloader:DataLoader,
     expected_values:np.ndarray,
-    model:lm.TransformerEncoderModule):
+    model:l_module.TimeSeriesModule):
 
     # Create a Trainer instance
     trainer = L.Trainer()
@@ -73,8 +73,7 @@ if __name__ == "__main__":
 
     torch.set_float32_matmul_precision('high')
 
-    model = lc.load_model("lightning_logs/version_287/checkpoints/epoch=28-step=4205.ckpt")
-
+    model = lc.load_module("lightning_logs/version_368/checkpoints/epoch=14-step=1905.ckpt")
     
     data_module = ldm.StockPriceDataModule (
             "RY", "TSE",

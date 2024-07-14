@@ -1,5 +1,4 @@
-import pandas as pd
-import datetime as dt
+
 import lightning as L
 import torch
 from lightning.pytorch.tuner.tuning import Tuner
@@ -25,6 +24,7 @@ if __name__ == "__main__":
     torch.set_float32_matmul_precision('high')
 
     logging.info("Creating data module ...")
+    
     # Create data module
     data_module = ldm.StockPriceDataModule (
         "RY", "TSE",
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     )
 
     logging.info("Creating model ...")
-    model = lc.create_model()
+    module = lc.create_module()
 
     logging.info("Creating trainer ...")
     
@@ -51,8 +51,8 @@ if __name__ == "__main__":
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',  # Metric to monitor
         mode='min',  # 'min' for minimizing the monitored metric
-        save_top_k=5,  # Save only the best model
-        save_last=True,  # Save the last checkpoint
+        save_top_k=1,  # Save only the best model
+        save_last=False,  # Save the last checkpoint
         enable_version_counter=True
     )
     
@@ -71,8 +71,8 @@ if __name__ == "__main__":
         callbacks=[checkpoint_callback, lr_monitor, model_summary, ])
     
     logging.info("Fitting model ...")
-    trainer.fit(model, data_module)
+    trainer.fit(module, data_module)
     
     # Validate the model
     logging.info("Validating model ...")
-    trainer.validate(model, data_module)
+    trainer.validate(module, data_module)
