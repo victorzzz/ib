@@ -17,11 +17,20 @@ class StockPriceDataModule(L.LightningDataModule):
     def __init__(
         self, 
         ticker_symbvol:str, 
-        exchange:str,  
-        sequences:list[tuple[int, list[str]]],
-        pred_columns:list[str],
-        scaling_column_groups:dict[str, tuple[list[str], bool]], # {fiting_column: ([scaling1, column2, ...], Log_before_scaling)}
-        pred_distance:int,
+        exchange:str,
+        
+        # each tuple: (candle sticks time range, sequence length, data_types, ema_periods, data_columns) 
+        sequences:list[tuple[int, int, list[str], list[int], list[str]]],
+        
+        # each tuple: (candle sticks time range, prediction_distance, column_name, prediction type, prediction transform)
+        pred_columns:list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]],
+        
+        # list of columns to apply log() and log(log())
+        log_columns:list[str],
+        
+        # each tuple: ((candle sticks time range, column to fit), [columns to scale])
+        scaling_column_groups:list[tuple[tuple[int, str], list[str]]], # {fiting_column: ([scaling1, column2, ...], Log_before_scaling)}
+
         user_tensor_dataset:bool, 
         batch_size,
         tail:float,
@@ -44,7 +53,6 @@ class StockPriceDataModule(L.LightningDataModule):
         self.sequences = sequences
         self.pred_columns = pred_columns
         self.scaling_column_groups = scaling_column_groups
-        self.pred_distance = pred_distance
         self.user_tensor_dataset = user_tensor_dataset
         self.batch_size = batch_size
         self.tail = tail
@@ -75,9 +83,10 @@ class StockPriceDataModule(L.LightningDataModule):
         data_frames:list[pd.DataFrame] = StockPriceDataModule.load_prepared_raw_datasets(self.ticker_symbvol, self.exchange)
         df0:pd.DataFrame = data_frames[0].tail(round(len(data_frames[0]) * self.tail)).reset_index(drop=True)
         
-        used_columns = l_ds.TimeSeriesDataset.get_unique_strings(self.sequences)
-        used_columns.extend(self.pred_columns)
-        used_columns = list(set(used_columns))
+        used_columns = l_ds.TimeSeriesDataset.get_used_columns(self.sequences)
+        pred_columns = l_ds.TimeSeriesDataset.get_columns_from_pred_columns(self.pred_columns)
+
+        used_columns = l_ds.TimeSeriesDataset.merge_columns_for_time_ranges([used_columns, pred_columns])
         
         df0 = df0[used_columns].copy()
         

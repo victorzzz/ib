@@ -100,3 +100,44 @@ class TimeSeriesDataset(Dataset):
         for _, strings in data:
             unique_strings.update(strings)
         return list(unique_strings)
+    
+    @staticmethod
+    # each tuple: (candle sticks time range, sequence length, data_types, ema_periods, data_columns)
+    def get_used_columns(seq:list[tuple[int, int, list[str], list[int], list[str]]]) -> list[tuple[int, list[str]]]:
+        
+        # key: time range, value: set of columns
+        accumulator:dict[int, set[str]] = {}
+        
+        for time_range, seq_len, data_types, ema_periods, columns in seq:
+            if time_range not in accumulator:
+                accumulator[time_range] = set()
+            accumulator[time_range].update(columns)
+        
+        return [(time_range, list(columns)) for time_range, columns in accumulator.items()]
+    
+    @staticmethod
+    def get_columns_from_pred_columns(pred_columns:list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]]) -> list[tuple[int, list[str]]]:
+        
+        # key: time range, value: set of columns
+        accumulator:dict[int, set[str]] = {}
+        
+        for time_range, _, column, _, _ in pred_columns:
+            if time_range not in accumulator:
+                accumulator[time_range] = set()
+            accumulator[time_range].update([column])
+            
+        return [(time_range, list(columns)) for time_range, columns in accumulator.items()]
+    
+    @staticmethod
+    def merge_columns_for_time_ranges(columns_sets:list[list[tuple[int, list[str]]]]) -> list[tuple[int, list[str]]]:
+        
+        # key: time range, value: set of columns
+        accumulator:dict[int, set[str]] = {}
+        
+        for columns_set in columns_sets:
+            for time_range, columns in columns_set:
+                if time_range not in accumulator:
+                    accumulator[time_range] = set()
+                accumulator[time_range].update(columns)
+            
+        return [(time_range, list(columns)) for time_range, columns in accumulator.items()]

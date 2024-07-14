@@ -25,6 +25,7 @@ PRED_TRANSFORM_RATIO:str = "pred_transform_ratio"
 
 prediction_distance:int = 8
 
+# each tuple: (candle sticks time range, prediction_distance, data_types, ema_periods, data_columns)
 sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
     
     ######################################################
@@ -229,7 +230,8 @@ sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
             '10m__t_STOCH_k_TRADES_average_21_4', '10m__t_STOCH_d_TRADES_average_21_4',            
         ]  
     ),    
-    
+]
+"""
     ######################################################
     # 30m
     ######################################################
@@ -346,11 +348,12 @@ sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
             '120m__t_STOCH_k_TRADES_average_14_3', '120m__t_STOCH_d_TRADES_average_14_3',
             '120m__t_STOCH_k_TRADES_average_21_4', '120m__t_STOCH_d_TRADES_average_21_4',            
         ]  
-    ),           
-    
+    ),      
     ]
+    """
 
-pred_columns:list[tuple[int, int, str, tuple[str, ...], tuple[str,]]] = [
+# each tuple: (candle sticks time range, prediction_distance, column_name, prediction type, prediction transform)
+pred_columns:list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]] = [
     (1, prediction_distance, '1m_ASK_close', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,)), 
     (1, prediction_distance, '1m_BID_close', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,)),
     ]
@@ -374,8 +377,8 @@ log_log_columns:list[str] = [
     '120m_TRADES_volume',    
 ]
 
-scaling_column_groups:dict[str, list[str]] = {
-    '1m_ASK_close': 
+scaling_column_groups:list[tuple[tuple[int, str], list[str]]] = [
+    ((1, '1m_ASK_close'), 
         [
             # 1m
             ##################
@@ -425,60 +428,21 @@ scaling_column_groups:dict[str, list[str]] = {
             '10m_TRADES_average',
             
             '10m__t_BBL_TRADES_average_30', '10m__t_BBM_TRADES_average_30', '10m__t_BBU_TRADES_average_30', 
-            '10m__t_BBL_TRADES_average_20', '10m__t_BBM_TRADES_average_20', '10m__t_BBU_TRADES_average_20',     
-            
-            # 30m
-            ##################
-            
-            '30m_ASK_close'
-            '30m_BID_close',
-            
-            '30m_MIDPOINT_close', 
-            '30m_MIDPOINT_open', '30m_MIDPOINT_high', '30m_MIDPOINT_low', 
-            
-            '30m_TRADES_open', '30m_TRADES_high', '30m_TRADES_low', '30m_TRADES_close',
-            '30m_TRADES_average',
-            
-            '30m__t_BBL_TRADES_average_30', '30m__t_BBM_TRADES_average_30', '30m__t_BBU_TRADES_average_30', 
-            '30m__t_BBL_TRADES_average_20', '30m__t_BBM_TRADES_average_20', '30m__t_BBU_TRADES_average_20', 
-            
-            # 120m
-            ##################
-            
-            '120m_ASK_close'
-            '120m_BID_close',
-            
-            '120m_MIDPOINT_close', 
-            '120m_MIDPOINT_open', '120m_MIDPOINT_high', '120m_MIDPOINT_low', 
-            
-            '120m_TRADES_open', '120m_TRADES_high', '120m_TRADES_low', '120m_TRADES_close',
-            '120m_TRADES_average',
-            
-            '120m__t_BBL_TRADES_average_30', '120m__t_BBM_TRADES_average_30', '120m__t_BBU_TRADES_average_30', 
-            '120m__t_BBL_TRADES_average_20', '120m__t_BBM_TRADES_average_20', '120m__t_BBU_TRADES_average_20',                                   
-        ],
+            '10m__t_BBL_TRADES_average_20', '10m__t_BBM_TRADES_average_20', '10m__t_BBU_TRADES_average_20',                 
+        ]),
     
-    '1m_TRADES_volume': [],
-    '1m_TRADES_volume_LOG': [],  
-    '1m_TRADES_volume_LOG_LOG': [],
+    ((1,'1m_TRADES_volume'), []),
+    ((1,'1m_TRADES_volume_LOG'), []),  
+    ((1,'1m_TRADES_volume_LOG_LOG'), []),
     
-    '3m_TRADES_volume': [],
-    '3m_TRADES_volume_LOG': [],  
-    '3m_TRADES_volume_LOG_LOG': [],      
+    ((3,'3m_TRADES_volume'), []),
+    ((3,'3m_TRADES_volume_LOG'), []),  
+    ((3,'3m_TRADES_volume_LOG_LOG'), []),      
     
-    '10m_TRADES_volume': [],
-    '10m_TRADES_volume_LOG': [],  
-    '10m_TRADES_volume_LOG_LOG': [],      
-
-    '30m_TRADES_volume': [],
-    '30m_TRADES_volume_LOG': [],  
-    '30m_TRADES_volume_LOG_LOG': [],      
-
-    '120m_TRADES_volume': [],
-    '120m_TRADES_volume_LOG': [],  
-    '120m_TRADES_volume_LOG_LOG': [],      
-    
-    }
+    ((10,'10m_TRADES_volume'), []),
+    ((10,'10m_TRADES_volume_LOG'), []),  
+    ((10,'10m_TRADES_volume_LOG_LOG'), []),           
+]
 
 dataset_tail:float = 0.2
     
@@ -603,7 +567,7 @@ def load_l_module(path:str) -> lmodule.TimeSeriesModule:
 
 def create_l_ff_module() -> lmodule.TimeSeriesModule:
     
-    input_dim = sum(len(columns) for _, columns in sequences)
+    input_dim = sum(len(columns) for _, seq_len, _, _, columns in sequences)
     max_seq_len = max(seq[0] for seq in sequences)
     out_dim = len(pred_columns) * 2
     
