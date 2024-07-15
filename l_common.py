@@ -25,20 +25,31 @@ PRED_TRANSFORM_RATIO:str = "pred_transform_ratio"
 
 prediction_distance:int = 8
 
+time_ranges:list[int] = [1, 3, 10, 30]
+
 # each tuple: (candle sticks time range, prediction_distance, data_types, ema_periods, data_columns)
 sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
     
     ######################################################
     # 1m
     ######################################################
-    
+
     (
         1,
         prediction_distance * 16,
         [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
-            '1m_TRADES_average','1m_TRADES_high', '1m_TRADES_low'
+            '1m_TRADES_average'
+        ]
+    ),    
+    (
+        1,
+        prediction_distance * 12,
+        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        EMA_PERIODS_LONG_SEQ, 
+        [
+            '1m_TRADES_high', '1m_TRADES_low'
         ]
     ),
     (
@@ -123,7 +134,16 @@ sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
         [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
-            '3m_TRADES_average','3m_TRADES_high', '3m_TRADES_low'
+            '3m_TRADES_average'
+        ]
+    ),    
+    (
+        3,
+        prediction_distance * 10,
+        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        EMA_PERIODS_LONG_SEQ, 
+        [
+            '3m_TRADES_high', '3m_TRADES_low'
         ]
     ),
     (
@@ -182,7 +202,16 @@ sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
         [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
-            '10m_TRADES_average','10m_TRADES_high', '10m_TRADES_low'
+            '10m_TRADES_average'
+        ]
+    ),    
+    (
+        10,
+        prediction_distance * 8,
+        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        EMA_PERIODS_LONG_SEQ, 
+        [
+            '10m_TRADES_high', '10m_TRADES_low'
         ]
     ),
     (
@@ -229,9 +258,8 @@ sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
             '10m__t_STOCH_k_TRADES_average_14_3', '10m__t_STOCH_d_TRADES_average_14_3',
             '10m__t_STOCH_k_TRADES_average_21_4', '10m__t_STOCH_d_TRADES_average_21_4',            
         ]  
-    ),    
-]
-"""
+    ),  
+    
     ######################################################
     # 30m
     ######################################################
@@ -242,7 +270,16 @@ sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
         [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
-            '30m_TRADES_average','30m_TRADES_high', '30m_TRADES_low'
+            '30m_TRADES_average'
+        ]
+    ),    
+    (
+        30,
+        prediction_distance * 6,
+        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        EMA_PERIODS_LONG_SEQ, 
+        [
+            '30m_TRADES_high', '30m_TRADES_low'
         ]
     ),
     (
@@ -289,8 +326,9 @@ sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
             '30m__t_STOCH_k_TRADES_average_14_3', '30m__t_STOCH_d_TRADES_average_14_3',
             '30m__t_STOCH_k_TRADES_average_21_4', '30m__t_STOCH_d_TRADES_average_21_4',            
         ]  
-    ),        
-    
+    ),              
+]
+""" 
     ######################################################
     # 120m
     ######################################################
@@ -358,23 +396,18 @@ pred_columns:list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]] = [
     (1, prediction_distance, '1m_BID_close', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,)),
     ]
 
-log_columns:list[str] = [
-    '1m_TRADES_volume', 
-    #'1m__t_FI_TRADES_average_13', '1m__t_FI_TRADES_average_26', '1m__t_VPT_TRADES_average'
-    
-    '3m_TRADES_volume',
-    '10m_TRADES_volume',
-    '30m_TRADES_volume',
-    '120m_TRADES_volume',
+log_columns:list[tuple[int, str]] = [
+    (1, '1m_TRADES_volume'),     
+    (3, '3m_TRADES_volume'),
+    (10, '10m_TRADES_volume'),
+    (30, '30m_TRADES_volume'),
 ]
-log_log_columns:list[str] = [
-    '1m_TRADES_volume',
-    #'1m__t_FI_TRADES_average_13', '1m__t_FI_TRADES_average_26', '1m__t_VPT_TRADES_average'
-    
-    '3m_TRADES_volume',
-    '10m_TRADES_volume',
-    '30m_TRADES_volume',    
-    '120m_TRADES_volume',    
+
+log_log_columns:list[tuple[int, str]] = [
+    (1, '1m_TRADES_volume'),
+    (3, '3m_TRADES_volume'),
+    (10, '10m_TRADES_volume'),
+    (30, '30m_TRADES_volume'),      
 ]
 
 scaling_column_groups:list[tuple[tuple[int, str], list[str]]] = [
@@ -384,12 +417,12 @@ scaling_column_groups:list[tuple[tuple[int, str], list[str]]] = [
             ##################
             
             '1m_BID_close',
-            #'1m_BID_high', 
+            '1m_BID_high', 
             #'1m_BID_low',
             #'1m_ASK_high', 
-            #'1m_ASK_low',
-            #'1m_BID_open', 
-            #'1m_ASK_open',
+            '1m_ASK_low',
+            '1m_BID_open', 
+            '1m_ASK_open',
             
             '1m_MIDPOINT_close', 
             '1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
@@ -428,7 +461,22 @@ scaling_column_groups:list[tuple[tuple[int, str], list[str]]] = [
             '10m_TRADES_average',
             
             '10m__t_BBL_TRADES_average_30', '10m__t_BBM_TRADES_average_30', '10m__t_BBU_TRADES_average_30', 
-            '10m__t_BBL_TRADES_average_20', '10m__t_BBM_TRADES_average_20', '10m__t_BBU_TRADES_average_20',                 
+            '10m__t_BBL_TRADES_average_20', '10m__t_BBM_TRADES_average_20', '10m__t_BBU_TRADES_average_20', 
+            
+            # 30m
+            ##################
+            
+            '30m_ASK_close'
+            '30m_BID_close',
+            
+            '30m_MIDPOINT_close', 
+            '30m_MIDPOINT_open', '30m_MIDPOINT_high', '30m_MIDPOINT_low', 
+            
+            '30m_TRADES_open', '30m_TRADES_high', '30m_TRADES_low', '30m_TRADES_close',
+            '10m_TRADES_average',
+            
+            '30m__t_BBL_TRADES_average_30', '30m__t_BBM_TRADES_average_30', '30m__t_BBU_TRADES_average_30', 
+            '30m__t_BBL_TRADES_average_20', '30m__t_BBM_TRADES_average_20', '30m__t_BBU_TRADES_average_20',                             
         ]),
     
     ((1,'1m_TRADES_volume'), []),
@@ -441,7 +489,11 @@ scaling_column_groups:list[tuple[tuple[int, str], list[str]]] = [
     
     ((10,'10m_TRADES_volume'), []),
     ((10,'10m_TRADES_volume_LOG'), []),  
-    ((10,'10m_TRADES_volume_LOG_LOG'), []),           
+    ((10,'10m_TRADES_volume_LOG_LOG'), []), 
+    
+    ((30,'30m_TRADES_volume'), []),
+    ((30,'30m_TRADES_volume_LOG'), []),  
+    ((30,'30m_TRADES_volume_LOG_LOG'), []),               
 ]
 
 dataset_tail:float = 0.2

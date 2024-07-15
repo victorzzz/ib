@@ -19,14 +19,21 @@ class StockPriceDataModule(L.LightningDataModule):
         ticker_symbvol:str, 
         exchange:str,
         
+        time_ranges:list[int],
+        
         # each tuple: (candle sticks time range, sequence length, data_types, ema_periods, data_columns) 
         sequences:list[tuple[int, int, list[str], list[int], list[str]]],
         
         # each tuple: (candle sticks time range, prediction_distance, column_name, prediction type, prediction transform)
         pred_columns:list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]],
         
-        # list of columns to apply log() and log(log())
-        log_columns:list[str],
+        # list of columns to apply log() 
+        # each tuple: (candle sticks time range, column name)
+        log_columns:list[tuple[int, str]],
+        
+        # list of columns to apply log(log()) 
+        # each tuple: (candle sticks time range, column name)
+        log_log_columns:list[tuple[int, str]],
         
         # each tuple: ((candle sticks time range, column to fit), [columns to scale])
         scaling_column_groups:list[tuple[tuple[int, str], list[str]]], # {fiting_column: ([scaling1, column2, ...], Log_before_scaling)}
@@ -50,8 +57,13 @@ class StockPriceDataModule(L.LightningDataModule):
         self.ticker_symbvol = ticker_symbvol
         self.exchange = exchange
         
+        self.time_ranges = time_ranges
         self.sequences = sequences
         self.pred_columns = pred_columns
+        
+        self.log_columns = log_columns
+        self.log_log_columns = log_log_columns
+        
         self.scaling_column_groups = scaling_column_groups
         self.user_tensor_dataset = user_tensor_dataset
         self.batch_size = batch_size
@@ -78,9 +90,13 @@ class StockPriceDataModule(L.LightningDataModule):
             logging.info("Data was already prepared")
             return
         
-        logging.info(f"StockPriceDataModule.prepare_data : {self.ticker_symbvol} on {self.exchange} ...")
+        logging.info(f"StockPriceDataModule.prepare_data : {self.ticker_symbvol} on {self.exchange} for time ranges {self.time_ranges} ...")
         
-        data_frames:list[pd.DataFrame] = StockPriceDataModule.load_prepared_raw_datasets(self.ticker_symbvol, self.exchange)
+        data_frames:dict[int, pd.DataFrame] = StockPriceDataModule.load_prepared_raw_datasets(self.ticker_symbvol, self.exchange, self.time_ranges)
+        self.add_log_columns(data_frames, self.log_columns)
+        self.add_log_log_columns(data_frames, self.log_log_columns)
+        
+        
         df0:pd.DataFrame = data_frames[0].tail(round(len(data_frames[0]) * self.tail)).reset_index(drop=True)
         
         used_columns = l_ds.TimeSeriesDataset.get_used_columns(self.sequences)
@@ -280,15 +296,31 @@ class StockPriceDataModule(L.LightningDataModule):
         return df
     
     @staticmethod
-    def load_prepared_raw_datasets(ticker_symbvol:str, exchange:str) -> list[pd.DataFrame]:
+    def load_prepared_raw_datasets(ticker_symbvol:str, exchange:str, time_ranges:list[int]) -> dict[int, pd.DataFrame]:
         logging.info(f"Loading prepared raw datasets for {ticker_symbvol} on {exchange} ...")
         
-        dfs:list[pd.DataFrame] = []
+        dfs:dict[int, pd.DataFrame] = {}
 
         for minute_multiplier in cnts.minute_multipliers.keys():
+            int_minute_multiplier = int(minute_multiplier)
+            if int_minute_multiplier not in time_ranges:
+                continue
+            
             dataset_file_name = f"{cnts.data_sets_folder}/{ticker_symbvol}-{exchange}--ib--{minute_multiplier:.0f}--minute--dataset"
             df:pd.DataFrame | None = df_ls.load_df(dataset_file_name)
             if df is not None:
-                dfs.append(df)
-
+                dfs[int_minute_multiplier] = df
+                
         return dfs
+    
+    @staticmethod
+    def add_log_columns(data_frames:dict[int, pd.DataFrame], log_columns:list[tuple[int, str]]) -> None:
+        for time_range, column in log_columns:
+            df = data_frames[time_range]
+            df[f'{column}_LOG'] = np.log(df[column])
+            
+    @staticmethod
+    def add_log_log_columns(data_frames:dict[int, pd.DataFrame], log_log_columns:list[tuple[int, str]]) -> None:
+        for time_range, column in log_log_columns:
+            df = data_frames[time_range]
+            df[f'{column}_LOG_LOG'] = np.log(np.log(df[column]))
