@@ -49,12 +49,12 @@ sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
         [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
-            '1m_TRADES_high', '1m_TRADES_low'
+            '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_average'
         ]
     ),
     (
         1,
-        prediction_distance * 4,
+        prediction_distance * 6,
         [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ,
         [

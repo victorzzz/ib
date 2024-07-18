@@ -9,12 +9,10 @@ DEFAULT_PERIODS_3:tuple[int, ...] = (13, 26)
 DEFAULT_PERIODS_4:tuple[tuple[int, int, int], ...] = ((26, 12, 9), (39, 18, 13))
 DEFAULT_PERIODS_5:tuple[tuple[int, int], ...] = ((14, 3), (21,4))
 
-# DEFAULT_EMA_PERIODS:tuple[int, ...] = (2, 4, 8, 16, 32, 64, 128, 256, 512)
-
 def add_ema(
     df:pd.DataFrame, 
     columns:list[str],
-    periods:tuple[int, ...],
+    periods:list[int],
     add_ema_colums_to_df:bool,
     add_ema_dif_columns_to_df:bool,
     add_ema_retio_columns_to_df:bool) -> tuple[pd.DataFrame, list[str], list[str], list[str]]:
@@ -29,26 +27,28 @@ def add_ema(
     for period in periods:
 
         for column in columns:
-            new_column_ema = f'_t_EMA_{column}_{period}'
+            new_column_ema = f'{column}_ema_{period}'
             ema = ta.ema(df[column], length=period)
             
             if not isinstance(ema, pd.Series):
                 logging.error(f"EMA for column {column} and period {period} is not a pandas series")
                 continue
             
-            if add_ema_colums_to_df:
+            if add_ema_colums_to_df and new_column_ema not in df.columns:
                 df[new_column_ema] = ema
                 new_columns_ema.append(new_column_ema)
             
             if add_ema_dif_columns_to_df:
-                new_column_dif = f'_t_EMA_dif_{column}_{period}'
-                df[new_column_dif] = df[column] - ema
-                new_columns_difs.append(new_column_dif)
+                new_column_dif = f'{column}_ema_dif_{period}'
+                if new_column_dif not in df.columns:
+                    df[new_column_dif] = df[column] - ema
+                    new_columns_difs.append(new_column_dif)
                 
             if add_ema_retio_columns_to_df:
-                new_column_ratio = f'_t_EMA_ratio_{column}_{period}'
-                df[new_column_ratio] = (df[column] / ema) - 1.0
-                new_columns_ratios.append(new_column_ratio)
+                new_column_ratio = f'{column}_ema_ratio_{period}'
+                if new_column_ratio not in df.columns:
+                    df[new_column_ratio] = (df[column] / ema) - 1.0
+                    new_columns_ratios.append(new_column_ratio)
         
     return (df, new_columns_ema, new_columns_difs, new_columns_ratios)
 

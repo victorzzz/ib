@@ -12,6 +12,8 @@ import l_dataset as l_ds
 import df_loader_saver as df_ls
 
 import constants as cnts
+import l_common as lc
+import df_tech_indicator_utils as df_ti_utils
 
 class StockPriceDataModule(L.LightningDataModule):
     def __init__(
@@ -96,6 +98,7 @@ class StockPriceDataModule(L.LightningDataModule):
         self.add_log_columns(data_frames, self.log_columns)
         self.add_log_log_columns(data_frames, self.log_log_columns)
         
+        self.add_augmented_columns(data_frames, self.sequences)
         
         df0:pd.DataFrame = data_frames[0].tail(round(len(data_frames[0]) * self.tail)).reset_index(drop=True)
         
@@ -324,3 +327,29 @@ class StockPriceDataModule(L.LightningDataModule):
         for time_range, column in log_log_columns:
             df = data_frames[time_range]
             df[f'{column}_LOG_LOG'] = np.log(np.log(df[column]))
+    
+    # returns used columns for each time range
+    @staticmethod
+    def add_augmented_columns(data_frames:dict[int, pd.DataFrame], sequences:list[tuple[int, int, list[str], list[int], list[str]]]) -> list[tuple[int, list[str]]]:
+        for time_range, sequence_length, data_types, ema_periods, data_columns in sequences:
+            
+            if lc.DATA_CATEGORY in data_types:
+                continue
+            
+            df = data_frames[time_range]
+            
+            add_ema_colums_to_df:bool = lc.DATA_EMA in data_types
+            add_ema_dif_columns_to_df:bool = lc.DATA_EMA_DIFF in data_types
+            add_ema_retio_columns_to_df:bool = lc.DATA_EMA_RATIO in data_types
+            
+            _, ema_columns, ema_dif_columns, ema_ratio_columns = df_ti_utils.add_ema(
+                df, 
+                data_columns, 
+                ema_periods, 
+                add_ema_colums_to_df, 
+                add_ema_dif_columns_to_df, 
+                add_ema_retio_columns_to_df)
+
+            data_columns += ema_columns       
+            data_columns += ema_dif_columns
+            data_columns += ema_ratio_columns
