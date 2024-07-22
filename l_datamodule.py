@@ -98,39 +98,37 @@ class StockPriceDataModule(L.LightningDataModule):
         self.add_log_columns(data_frames, self.log_columns)
         self.add_log_log_columns(data_frames, self.log_log_columns)
         
-        self.add_augmented_columns(data_frames, self.sequences)
+        used_columns = self.add_augmented_columns(data_frames, self.sequences)
         
-        df0:pd.DataFrame = data_frames[0].tail(round(len(data_frames[0]) * self.tail)).reset_index(drop=True)
-        
-        used_columns = l_ds.TimeSeriesDataset.get_used_columns(self.sequences)
         pred_columns = l_ds.TimeSeriesDataset.get_columns_from_pred_columns(self.pred_columns)
-
         used_columns = l_ds.TimeSeriesDataset.merge_columns_for_time_ranges([used_columns, pred_columns])
         
-        df0 = df0[used_columns].copy()
+        data_frames = self.data_frames_with_columns(data_frames, used_columns)
         
         if self.keep_loaded_data:
-            self.df = df0.copy()
+            self.dfs = data_frames
         
-        logging.info(f"Used columns: {df0.columns}")
+        logging.info(f"Used columns: {used_columns}")
         
-        original_df_length:int = len(df0)
+        df1 = self.dfs[1]
+        
+        original_df_length:int = len(self.dfs[1])
         train_val_border:int = int(original_df_length * self.train_part)
         
         logging.info(f"Original dataset length: {original_df_length}, train_val_border: {train_val_border}")
         
-        training_df_orig:pd.DataFrame = df0[:train_val_border].reset_index(drop=True)
-        val_df_orig:pd.DataFrame = df0[train_val_border:].reset_index(drop=True)
+        training_df1_orig:pd.DataFrame = df1[:train_val_border].reset_index(drop=True)
+        val_df1_orig:pd.DataFrame = df1[train_val_border:].reset_index(drop=True)
     
         if self.keep_loaded_data:
-            self.training_df_orig = training_df_orig
-            self.val_df_orig = val_df_orig
+            self.training_df1_orig = training_df1_orig
+            self.val_df1_orig = val_df1_orig
     
         logging.info("Fitting scalers ...")
-        training_df = self.fit_transform(training_df_orig.copy())
+        training_df = self.fit_transform(training_df1_orig.copy())
         
         logging.info("Transforming data ...")
-        val_df = self.transform(val_df_orig.copy())
+        val_df = self.transform(val_df1_orig.copy())
         
         if self.keep_scaled_data:
             self.tdf = training_df
@@ -328,9 +326,22 @@ class StockPriceDataModule(L.LightningDataModule):
             df = data_frames[time_range]
             df[f'{column}_LOG_LOG'] = np.log(np.log(df[column]))
     
+    @staticmethod
+    def data_frames_with_columns(data_frames:dict[int, pd.DataFrame], used_columns:list[tuple[int, list[str]]]) -> dict[int, pd.DataFrame]:
+        result = {}
+        for time_range, columns in used_columns:
+            timestamp_column = f"{time_range}m_timestamp"
+            columns = [timestamp_column] + columns
+            df = data_frames[time_range]
+            result[time_range] = df[columns].copy()
+        
+        return result
+    
     # returns used columns for each time range
     @staticmethod
     def add_augmented_columns(data_frames:dict[int, pd.DataFrame], sequences:list[tuple[int, int, list[str], list[int], list[str]]]) -> list[tuple[int, list[str]]]:
+        result = []
+        
         for time_range, sequence_length, data_types, ema_periods, data_columns in sequences:
             
             if lc.DATA_CATEGORY in data_types:
@@ -353,3 +364,9 @@ class StockPriceDataModule(L.LightningDataModule):
             data_columns += ema_columns       
             data_columns += ema_dif_columns
             data_columns += ema_ratio_columns
+            
+            data_columns = list(set(data_columns))
+            
+            result.append((time_range, data_columns))
+        
+        return result

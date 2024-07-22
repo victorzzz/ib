@@ -410,8 +410,9 @@ log_log_columns:list[tuple[int, str]] = [
     (30, '30m_TRADES_volume'),      
 ]
 
-scaling_column_groups:list[tuple[tuple[int, str], list[str]]] = [
+scaling_column_groups:list[tuple[tuple[int, str], tuple[int, list[str]]]] = [
     ((1, '1m_ASK_close'), 
+        (1,
         [
             # 1m
             ##################
@@ -432,7 +433,9 @@ scaling_column_groups:list[tuple[tuple[int, str], list[str]]] = [
             
             '1m__t_BBL_TRADES_average_30', '1m__t_BBM_TRADES_average_30', '1m__t_BBU_TRADES_average_30', 
             '1m__t_BBL_TRADES_average_20', '1m__t_BBM_TRADES_average_20', '1m__t_BBU_TRADES_average_20', 
-            
+        ]),
+        (3,
+        [    
             # 3m
             ##################
             
@@ -447,7 +450,9 @@ scaling_column_groups:list[tuple[tuple[int, str], list[str]]] = [
             
             '3m__t_BBL_TRADES_average_30', '3m__t_BBM_TRADES_average_30', '3m__t_BBU_TRADES_average_30', 
             '3m__t_BBL_TRADES_average_20', '3m__t_BBM_TRADES_average_20', '3m__t_BBU_TRADES_average_20', 
-            
+        ]),
+        (10,
+         [
             # 10m
             ##################
             
@@ -462,7 +467,9 @@ scaling_column_groups:list[tuple[tuple[int, str], list[str]]] = [
             
             '10m__t_BBL_TRADES_average_30', '10m__t_BBM_TRADES_average_30', '10m__t_BBU_TRADES_average_30', 
             '10m__t_BBL_TRADES_average_20', '10m__t_BBM_TRADES_average_20', '10m__t_BBU_TRADES_average_20', 
-            
+         ]),
+        (1,
+         [
             # 30m
             ##################
             
@@ -477,23 +484,25 @@ scaling_column_groups:list[tuple[tuple[int, str], list[str]]] = [
             
             '30m__t_BBL_TRADES_average_30', '30m__t_BBM_TRADES_average_30', '30m__t_BBU_TRADES_average_30', 
             '30m__t_BBL_TRADES_average_20', '30m__t_BBM_TRADES_average_20', '30m__t_BBU_TRADES_average_20',                             
-        ]),
+        ])),
     
-    ((1,'1m_TRADES_volume'), []),
-    ((1,'1m_TRADES_volume_LOG'), []),  
-    ((1,'1m_TRADES_volume_LOG_LOG'), []),
+    ((1,'1m_TRADES_volume'), (1, [])),
+    ((1,'1m_TRADES_volume_LOG'), (1, [])),  
+    ((1,'1m_TRADES_volume_LOG_LOG'), (1, [])),
     
-    ((3,'3m_TRADES_volume'), []),
-    ((3,'3m_TRADES_volume_LOG'), []),  
-    ((3,'3m_TRADES_volume_LOG_LOG'), []),      
+    ((3,'3m_TRADES_volume'), (3, [])),
+    ((3,'3m_TRADES_volume_LOG'), (3, [])),  
+    ((3,'3m_TRADES_volume_LOG_LOG'), (3, [])),      
     
-    ((10,'10m_TRADES_volume'), []),
-    ((10,'10m_TRADES_volume_LOG'), []),  
-    ((10,'10m_TRADES_volume_LOG_LOG'), []), 
-    
-    ((30,'30m_TRADES_volume'), []),
-    ((30,'30m_TRADES_volume_LOG'), []),  
-    ((30,'30m_TRADES_volume_LOG_LOG'), []),               
+    ((10,'10m_TRADES_volume'), (10, [])),
+    ((10,'10m_TRADES_volume_LOG'), (10, [])),  
+    ((10,'10m_TRADES_volume_LOG_LOG'), (10, []))
+
+    """    
+    ((30,'30m_TRADES_volume'), (30, [])),
+    ((30,'30m_TRADES_volume_LOG'), (30, [])),  
+    ((30,'30m_TRADES_volume_LOG_LOG'), (30, []))               
+    """
 ]
 
 dataset_tail:float = 0.2

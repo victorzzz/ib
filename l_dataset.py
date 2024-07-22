@@ -101,6 +101,7 @@ class TimeSeriesDataset(Dataset):
             unique_strings.update(strings)
         return list(unique_strings)
     
+    """
     @staticmethod
     # each tuple: (candle sticks time range, sequence length, data_types, ema_periods, data_columns)
     def get_used_columns(seq:list[tuple[int, int, list[str], list[int], list[str]]]) -> list[tuple[int, list[str]]]:
@@ -114,6 +115,7 @@ class TimeSeriesDataset(Dataset):
             accumulator[time_range].update(columns)
         
         return [(time_range, list(columns)) for time_range, columns in accumulator.items()]
+    """
     
     @staticmethod
     def get_columns_from_pred_columns(pred_columns:list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]]) -> list[tuple[int, list[str]]]:
