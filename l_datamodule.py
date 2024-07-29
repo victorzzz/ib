@@ -23,22 +23,15 @@ class StockPriceDataModule(L.LightningDataModule):
         
         time_ranges:list[int],
         
-        # each tuple: (candle sticks time range, sequence length, data_types, ema_periods, data_columns) 
-        sequences:list[tuple[int, int, list[str], list[int], list[str]]],
+        sequences:lc.SEQUENCES_TYPE,
         
-        # each tuple: (candle sticks time range, prediction_distance, column_name, prediction type, prediction transform)
-        pred_columns:list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]],
+        pred_columns:lc.PRED_COLUMNS_TYPE,
         
-        # list of columns to apply log() 
-        # each tuple: (candle sticks time range, column name)
-        log_columns:list[tuple[int, str]],
+        log_columns:lc.LOG_COLUMNS_TYPE,
         
-        # list of columns to apply log(log()) 
-        # each tuple: (candle sticks time range, column name)
-        log_log_columns:list[tuple[int, str]],
+        log_log_columns:lc.LOG_COLUMNS_TYPE,
         
-        # each tuple: ((candle sticks time range, column to fit), [columns to scale])
-        scaling_column_groups:list[tuple[tuple[int, str], list[str]]], # {fiting_column: ([scaling1, column2, ...], Log_before_scaling)}
+        scaling_column_groups:lc.SCALING_COLUMN_GROUPS_TYPE,
 
         user_tensor_dataset:bool, 
         batch_size,
@@ -53,8 +46,7 @@ class StockPriceDataModule(L.LightningDataModule):
         
         logging.info(f"StockPriceDataModule.__init__ : {ticker_symbvol} on {exchange} ...")
         
-        self.price_scaler_type = MinMaxScaler
-        self.volume_scaler_type = MinMaxScaler
+        self.scaler_type = MinMaxScaler
         
         self.ticker_symbvol = ticker_symbvol
         self.exchange = exchange
@@ -76,9 +68,9 @@ class StockPriceDataModule(L.LightningDataModule):
         self.keep_validation_dataset = keep_validation_dataset
         self.keep_train_dataset = keep_train_dataset
 
-
         self.scalers:dict[str, StandardScaler | RobustScaler | MinMaxScaler] = {
-            fitting_column: (self.volume_scaler_type() if log_before_scaling else self.price_scaler_type()) for fitting_column, (_, log_before_scaling) in scaling_column_groups.items()
+            self.scaler_key(fitting_time_range, fitting_column): self.scaler_type()
+                for (fitting_time_range, fitting_column), _ in scaling_column_groups
             }
 
         self.train_dataset : Dataset | None = None
@@ -125,7 +117,7 @@ class StockPriceDataModule(L.LightningDataModule):
             self.val_df1_orig = val_df1_orig
     
         logging.info("Fitting scalers ...")
-        training_df = self.fit_transform(training_df1_orig.copy())
+        training_df = self.fit_transform(training_df1_orig)
         
         logging.info("Transforming data ...")
         val_df = self.transform(val_df1_orig.copy())
@@ -210,18 +202,23 @@ class StockPriceDataModule(L.LightningDataModule):
     def teardown(self, stage: str) -> None:
         logging.info(f"StockPriceDataModule.teardown : {stage}")
     
-    def fit_transform(self, df:pd.DataFrame) -> pd.DataFrame:
-        for fitting_column, (columns, log_before_scale) in self.scaling_column_groups.items():
-                if log_before_scale:
-                    df[columns + [fitting_column]] = np.log10(df[columns + [fitting_column]])
-                df = self.fit_transform_column(self.scalers[fitting_column], df, fitting_column)
-                df = self.transform_columns(self.scalers[fitting_column], df, columns)
+    def fit_transform(self, df_1:pd.DataFrame, dfs:dict[int, pd.DataFrame]) -> pd.DataFrame:
+        for (fitting_time_range, fitting_column), (scalling_time_range, columns) in self.scaling_column_groups:
+                scalers_dict_key = self.scaler_key(fitting_time_range, fitting_column)
+                if fitting_time_range == 1:
+                   fitting_df = df_1
+                else:
+                    fitting_df = dfs[fitting_time_range] 
+
+                scaler = self.scalers[scalers_dict_key]
+                df = self.fit_transform_column(scaler, df, fitting_column)
+                df = self.transform_columns(scaler, df, columns)
         
         self.was_fit = True
 
         return df.copy()
     
-    def fit(self, df:pd.DataFrame):
+    def fit(self, dfs:dict[int, pd.DataFrame]):
         for fitting_column, _ in self.scaling_column_groups.items():
                 self.fit_on_column(self.scalers[fitting_column], df, fitting_column)
         
@@ -229,7 +226,7 @@ class StockPriceDataModule(L.LightningDataModule):
 
         return
     
-    def transform(self, df:pd.DataFrame) -> pd.DataFrame:
+    def transform(self, dfs:dict[int, pd.DataFrame]) -> pd.DataFrame:
         for fitting_column, (columns, log_before_scale) in self.scaling_column_groups.items():
             if log_before_scale:
                 df[columns + [fitting_column]] = np.log10(df[columns + [fitting_column]])
@@ -287,8 +284,10 @@ class StockPriceDataModule(L.LightningDataModule):
         return df
     
     @staticmethod
-    def transform_columns(scaler:StandardScaler | RobustScaler | MinMaxScaler, df:pd.DataFrame, columns:list[str]) -> pd.DataFrame:
-        for column in columns:
+    def transform_columns(scaler:StandardScaler | RobustScaler | MinMaxScaler, dfs:pd.DataFrame, scaling_columns:list[tuple[int, list[str]]]) -> pd.DataFrame:
+        for time_range, columns in scaling_columns:
+            df =
+            for column in columns:
             values_to_transform = df[[column]].to_numpy()
             transformed_vale = scaler.transform(values_to_transform)
             if isinstance(transformed_vale, np.ndarray):
@@ -370,3 +369,7 @@ class StockPriceDataModule(L.LightningDataModule):
             result.append((time_range, data_columns))
         
         return result
+    
+    @staticmethod
+    def scaler_key(fitting_time_range:int, fitting_column:str) -> str:
+        return f"{fitting_time_range}_{fitting_column}"

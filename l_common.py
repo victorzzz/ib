@@ -28,7 +28,8 @@ prediction_distance:int = 8
 time_ranges:list[int] = [1, 3, 10, 30]
 
 # each tuple: (candle sticks time range, prediction_distance, data_types, ema_periods, data_columns)
-sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
+SEQUENCES_TYPE = list[tuple[int, int, list[str], list[int], list[str]]]
+sequences:SEQUENCES_TYPE = [
     
     ######################################################
     # 1m
@@ -391,28 +392,31 @@ sequences:list[tuple[int, int, list[str], list[int], list[str]]] = [
     """
 
 # each tuple: (candle sticks time range, prediction_distance, column_name, prediction type, prediction transform)
-pred_columns:list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]] = [
+PRED_COLUMNS_TYPE = list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]]
+pred_columns:PRED_COLUMNS_TYPE = [
     (1, prediction_distance, '1m_ASK_close', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,)), 
     (1, prediction_distance, '1m_BID_close', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,)),
     ]
 
-log_columns:list[tuple[int, str]] = [
+LOG_COLUMNS_TYPE = list[tuple[int, str]]
+log_columns:LOG_COLUMNS_TYPE = [
     (1, '1m_TRADES_volume'),     
     (3, '3m_TRADES_volume'),
     (10, '10m_TRADES_volume'),
     (30, '30m_TRADES_volume'),
 ]
 
-log_log_columns:list[tuple[int, str]] = [
+log_log_columns:LOG_COLUMNS_TYPE = [
     (1, '1m_TRADES_volume'),
     (3, '3m_TRADES_volume'),
     (10, '10m_TRADES_volume'),
     (30, '30m_TRADES_volume'),      
 ]
 
-scaling_column_groups:list[tuple[tuple[int, str], tuple[int, list[str]]]] = [
+SCALING_COLUMN_GROUPS_TYPE = list[tuple[tuple[int, str], list[tuple[int, list[str]]]]]
+scaling_column_groups:SCALING_COLUMN_GROUPS_TYPE = [
     ((1, '1m_ASK_close'), 
-        (1,
+        [(1,
         [
             # 1m
             ##################
@@ -468,7 +472,7 @@ scaling_column_groups:list[tuple[tuple[int, str], tuple[int, list[str]]]] = [
             '10m__t_BBL_TRADES_average_30', '10m__t_BBM_TRADES_average_30', '10m__t_BBU_TRADES_average_30', 
             '10m__t_BBL_TRADES_average_20', '10m__t_BBM_TRADES_average_20', '10m__t_BBU_TRADES_average_20', 
          ]),
-        (1,
+        (30,
          [
             # 30m
             ##################
@@ -484,25 +488,8 @@ scaling_column_groups:list[tuple[tuple[int, str], tuple[int, list[str]]]] = [
             
             '30m__t_BBL_TRADES_average_30', '30m__t_BBM_TRADES_average_30', '30m__t_BBU_TRADES_average_30', 
             '30m__t_BBL_TRADES_average_20', '30m__t_BBM_TRADES_average_20', '30m__t_BBU_TRADES_average_20',                             
-        ])),
-    
-    ((1,'1m_TRADES_volume'), (1, [])),
-    ((1,'1m_TRADES_volume_LOG'), (1, [])),  
-    ((1,'1m_TRADES_volume_LOG_LOG'), (1, [])),
-    
-    ((3,'3m_TRADES_volume'), (3, [])),
-    ((3,'3m_TRADES_volume_LOG'), (3, [])),  
-    ((3,'3m_TRADES_volume_LOG_LOG'), (3, [])),      
-    
-    ((10,'10m_TRADES_volume'), (10, [])),
-    ((10,'10m_TRADES_volume_LOG'), (10, [])),  
-    ((10,'10m_TRADES_volume_LOG_LOG'), (10, []))
-
-    """    
-    ((30,'30m_TRADES_volume'), (30, [])),
-    ((30,'30m_TRADES_volume_LOG'), (30, [])),  
-    ((30,'30m_TRADES_volume_LOG_LOG'), (30, []))               
-    """
+        ])]
+    ),               
 ]
 
 dataset_tail:float = 0.2
@@ -675,4 +662,4 @@ def load_l_ff_module(path:str) -> lmodule.TimeSeriesModule:
     return module
 
 if __name__ == "__main__":
-    print(len(sequences[0][1]))
+    pass
