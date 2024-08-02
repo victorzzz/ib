@@ -20,6 +20,9 @@ class TimeSeriesDataset(Dataset):
         sequences:lc.SEQUENCES_TYPE,
         pred_columns:lc.PRED_COLUMNS_TYPE):
 
+        if any([time_range != 1 for time_range, _, _, _, _, _ in pred_columns]):
+            raise ValueError("Only time range 1 is supported for prediction columns")
+
         self.df1 = df1
         self.data = data
         self.columns = columns
@@ -27,17 +30,20 @@ class TimeSeriesDataset(Dataset):
         self.pred_columns = pred_columns
         
         self.max_history1_len = max(seq_len for time_range, seq_len, _ in columns if time_range == 1)
-        self.max_pred1_distance = max(pred_distance for time_range, pred_distance, _, _, _ in pred_columns if time_range == 1)
+        self.max_pred1_distance = max(pred_distance for _, pred_distance, _, _, _, _ in pred_columns)
         self.df1_len = len(df1)
         
-        self.result_rows = self.df1_len - self.max_history1_len - self.max_pred1_distance
+        self.result_rows = self.df1_len - self.max_history1_len - self.max_pred1_distance - 1
         
     def __len__(self):
         return self.result_rows
 
     def __getitem__(self, idx):
 
-        result = []
+        i = idx + self.max_history1_len
+
+        x_result_tensor:torch.Tensor | None = None
+        y_result_tensor:torch.Tensor | None = None
         
         for time_range, seq_len, columns in self.columns:            
             if time_range == 1:
@@ -46,30 +52,55 @@ class TimeSeriesDataset(Dataset):
                 df = self.data[time_range]
             
             # Extract the input data for the current window
-            window = df.iloc[idx:(idx + seq_len)][columns].to_numpy()
+            window = df.iloc[(i-seq_len):i][columns].to_numpy().reshape(-1)
+                        
+            # Convert the input data to a tensor
+            x_tensor = torch.tensor(window, dtype=torch.float32)
+            
+            if x_result_tensor is None:
+                x_result_tensor = x_tensor
+            else:
+                x_result_tensor = torch.cat((x_result_tensor, x_tensor))
+            
+        for time_range, pred_distance, column, pred_aggregations, pred_transformations, retio_multiplier in self.pred_columns:
+
+            last_observed_prediction_value = df.iloc[i-1][column].to_numpy()
             
             # Extract the prediction data for the current window
-            pred_window = df.iloc[idx + self.history_len:idx + self.history_len + self.pred_distance][self.pred_columns].to_numpy()
+            pred_window = df.iloc[i:i + pred_distance][column].to_numpy()
             
-            # Convert the input data to a tensor
-            x_tensor = torch.tensor(window, dtype=torch.float32).view(self.history_len, self.x_len)
-            
-            # Initialize tensors to store min and max values for each prediction column
-            min_vals = torch.zeros(self.y_len, dtype=torch.float32)
-            max_vals = torch.zeros(self.y_len, dtype=torch.float32)
+            for pred_aggregation in pred_aggregations:
+                if pred_aggregation == lc.PRED_MIN:
+                    pred_value = np.min(pred_window)
+                elif pred_aggregation == lc.PRED_MAX:
+                    pred_value = np.max(pred_window)
+                elif pred_aggregation == lc.PRED_AVG:
+                    pred_value = np.mean(pred_window)
+                elif pred_aggregation == lc.PRED_LAST:
+                    pred_value = pred_window[-1]
+                elif pred_aggregation == lc.PRED_FIRST:
+                    pred_value = pred_window[0]
+                elif pred_aggregation == lc.PRED_LAST_OBSERVED:
+                    pred_value = last_observed_prediction_value
+                else:
+                    raise ValueError(f"Unsupported aggregation: {pred_aggregation}")
+                
+                for pred_transformation in pred_transformations:
+                    if pred_transformation == lc.PRED_TRANSFORM_NONE:
+                        result_pred_value = pred_value
+                    elif pred_transformation == lc.PRED_TRANSFORM_DIFF:
+                        result_pred_value = pred_value - last_observed_prediction_value
+                    elif pred_transformation == lc.PRED_TRANSFORM_RATIO:
+                        result_pred_value = (pred_value / last_observed_prediction_value - 1.0) * retio_multiplier
+                        
+                    y_tensor = torch.tensor(result_pred_value, dtype=torch.float32)
+                    
+                    if y_result_tensor is None:
+                        y_result_tensor = y_tensor
+                    else:
+                        y_result_tensor = torch.cat((y_result_tensor, y_tensor))
 
-            for i, col in enumerate(self.pred_columns):
-                # Extract the prediction column data for the current prediction column
-                pred_col_data = pred_window[:, i]
-
-                # Compute the min and max values for this column
-                min_vals[i] = torch.tensor(pred_col_data.min(), dtype=torch.float32)
-                max_vals[i] = torch.tensor(pred_col_data.max(), dtype=torch.float32)
-            
-            # Concatenate min and max values to form the target output tensor
-            y_tensor = torch.cat((min_vals, max_vals))
-            
-            return x_tensor, y_tensor
+        return x_result_tensor, y_result_tensor
     
     """
     @staticmethod
@@ -77,7 +108,7 @@ class TimeSeriesDataset(Dataset):
             data: pd.DataFrame, 
             sequences: list[tuple[int, list[str]]],
             pred_columns: list[str],
-            pred_distance: int):
+            pred_distance: int) -> tuple[np.ndarray, np.ndarray]:
         
         max_history_len = max(seq[0] for seq in sequences)
         y_len = len(pred_columns)
@@ -111,7 +142,7 @@ class TimeSeriesDataset(Dataset):
             y[i] = np.concatenate((min_vals, max_vals))
         
         return x, y
-    """
+        """
 
     """
     @staticmethod

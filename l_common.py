@@ -1,6 +1,7 @@
 import l_model as lm
 import l_ff_model as l_ff_m
 import l_module as lmodule
+import df_tech_indicator_utils as df_tiu
 
 EMA_PERIODS_LONG_SEQ:list[int] = [64, 128, 192, 256]
 EMA_PERIODS_SHORT_SEQ:list[int] = [8, 16, 32, 48]
@@ -15,9 +16,11 @@ DATA_EMA_RATIO:str = "ratio_ema"
 PRED_MIN:str = "pred_min"
 PRED_MAX:str = "pred_max"
 PRED_AVG:str = "pred_avg"
-PRED_0:str = "pred_0"
+PRED_FIRST:str = "pred_first"
 PRED_LAST:str = "pred_last"
-PRED_MINUS_1:str = "pred_minus_1"
+PRED_LAST_OBSERVED:str = "pred_last_observed"
+
+# PRED_MINUS_1:str = "pred_minus_1"
 
 PRED_TRANSFORM_NONE:str = "pred_transform_none"
 PRED_TRANSFORM_DIFF:str = "pred_transform_diff"
@@ -386,10 +389,10 @@ sequences:SEQUENCES_TYPE = [
     """
 
 # each tuple: (candle sticks time range, prediction_distance, column_name, prediction type, prediction transform)
-PRED_COLUMNS_TYPE = list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]]
+PRED_COLUMNS_TYPE = list[tuple[int, int, str, tuple[str, ...], tuple[str, ...], float]]
 pred_columns:PRED_COLUMNS_TYPE = [
-    (1, prediction_distance, '1m_ASK_close', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,)), 
-    (1, prediction_distance, '1m_BID_close', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,)),
+    (1, prediction_distance, '1m_ASK_close', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
+    (1, prediction_distance, '1m_BID_close', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER),
     ]
 
 LOG_COLUMNS_TYPE = list[tuple[int, str]]

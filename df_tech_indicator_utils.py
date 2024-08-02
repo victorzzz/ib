@@ -9,6 +9,9 @@ DEFAULT_PERIODS_3:tuple[int, ...] = (13, 26)
 DEFAULT_PERIODS_4:tuple[tuple[int, int, int], ...] = ((26, 12, 9), (39, 18, 13))
 DEFAULT_PERIODS_5:tuple[tuple[int, int], ...] = ((14, 3), (21,4))
 
+PRICE_RATIO_MULTIPLIER = 4.0
+VOLUME_RATIO_MULTIPLIER = 2.0
+
 def add_ema(
     df:pd.DataFrame, 
     columns:list[str],
@@ -46,7 +49,7 @@ def add_ema(
                     new_columns_difs.append(new_column_dif)
                 
             if add_ema_retio_columns_to_df:
-                ratio_scaler = 2.0 if 'volume' in column else 4.0
+                ratio_scaler = VOLUME_RATIO_MULTIPLIER if 'volume' in column else PRICE_RATIO_MULTIPLIER
                 
                 new_column_ratio = f'{column}_ema_ratio_{period}'
                 if new_column_ratio not in df.columns:
