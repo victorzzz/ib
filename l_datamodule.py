@@ -127,10 +127,10 @@ class StockPriceDataModule(L.LightningDataModule):
             self.vdf1 = val_df1_orig.copy()
             
         training_df_description = training_df1_orig.describe().T
-        logging.info(f"Scaled training df description:\n{training_df_description}")
+        logging.info(f"Scaled training df description:\n{training_df_description.sort_values(by=['max'], ascending=False)}")
 
         val_df_description = val_df1_orig.describe().T
-        logging.info(f"Scaled validation df description:\n {val_df_description}")
+        logging.info(f"Scaled validation df description:\n {val_df_description.sort_values(by=['max'], ascending=False)}")
         
         self.check_scaled_df_description(training_df_description)
         self.check_scaled_df_description(val_df_description)
@@ -140,7 +140,7 @@ class StockPriceDataModule(L.LightningDataModule):
                 continue
             
             df_description = df.describe().T
-            logging.info(f"Scaled df {time_range}:\n {df_description}")
+            logging.info(f"Scaled df {time_range}:\n {df_description.sort_values(by=['max'], ascending=False)}")
             self.check_scaled_df_description(df_description)
             
         logging.info("Creating datasets ...")
