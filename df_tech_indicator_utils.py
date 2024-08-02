@@ -16,8 +16,9 @@ def add_ema(
     add_ema_colums_to_df:bool,
     add_ema_dif_columns_to_df:bool,
     add_ema_retio_columns_to_df:bool) -> tuple[pd.DataFrame, list[str], list[str], list[str]]:
+
     if len(columns) == 0 or len(periods) == 0 or (not add_ema_colums_to_df and not add_ema_dif_columns_to_df and not add_ema_retio_columns_to_df):
-        logging.error(f"Columns or periods are empty or no columns to add to dataframe")
+        logging.warning(f"Columns or periods are empty or no columns to add to dataframe")
         return (df, [], [], [])
     
     new_columns_ema = []

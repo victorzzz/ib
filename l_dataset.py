@@ -5,55 +5,73 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
+import l_common as lc
+
+TIME_RANGE_DATA_FRAME_DICT = dict[int, pd.DataFrame]
+TIME_RANGE_COLUMNS_LIST = list[tuple[int, list[str]]]
+TIME_RANGE_COLUMNS_SEQ_LENGTH_LIST = list[tuple[int, int, list[str]]]
+
 class TimeSeriesDataset(Dataset):
     def __init__(
-        self, 
-        data:pd.DataFrame, 
-        sequences:list[tuple[int, list[str]]],
-        pred_columns:list[str],
-        pred_distance:int):
+        self,
+        df1:pd.DataFrame, 
+        data:TIME_RANGE_DATA_FRAME_DICT,
+        columns:TIME_RANGE_COLUMNS_SEQ_LENGTH_LIST, 
+        sequences:lc.SEQUENCES_TYPE,
+        pred_columns:lc.PRED_COLUMNS_TYPE):
 
+        self.df1 = df1
         self.data = data
+        self.columns = columns
         self.sequences = sequences
         self.pred_columns = pred_columns
-        self.pred_distance = pred_distance
         
-        self.history_len = max(seq[0] for seq in sequences)
-        self.y_len = len(pred_columns)
-        self.input_columns = TimeSeriesDataset.get_unique_strings(sequences)
-        self.x_len = len(self.input_columns)
-        self.result_rows = len(data) - self.history_len - pred_distance
-
+        self.max_history1_len = max(seq_len for time_range, seq_len, _ in columns if time_range == 1)
+        self.max_pred1_distance = max(pred_distance for time_range, pred_distance, _, _, _ in pred_columns if time_range == 1)
+        self.df1_len = len(df1)
+        
+        self.result_rows = self.df1_len - self.max_history1_len - self.max_pred1_distance
+        
     def __len__(self):
         return self.result_rows
 
     def __getitem__(self, idx):
-        # Extract the input data for the current window
-        window = self.data.iloc[idx:(idx + self.history_len)][self.input_columns].to_numpy()
-        
-        # Extract the prediction data for the current window
-        pred_window = self.data.iloc[idx + self.history_len:idx + self.history_len + self.pred_distance][self.pred_columns].to_numpy()
-        
-        # Convert the input data to a tensor
-        x_tensor = torch.tensor(window, dtype=torch.float32).view(self.history_len, self.x_len)
-        
-        # Initialize tensors to store min and max values for each prediction column
-        min_vals = torch.zeros(self.y_len, dtype=torch.float32)
-        max_vals = torch.zeros(self.y_len, dtype=torch.float32)
 
-        for i, col in enumerate(self.pred_columns):
-            # Extract the prediction column data for the current prediction column
-            pred_col_data = pred_window[:, i]
+        result = []
+        
+        for time_range, seq_len, columns in self.columns:            
+            if time_range == 1:
+                df = self.df1
+            else:
+                df = self.data[time_range]
+            
+            # Extract the input data for the current window
+            window = df.iloc[idx:(idx + seq_len)][columns].to_numpy()
+            
+            # Extract the prediction data for the current window
+            pred_window = df.iloc[idx + self.history_len:idx + self.history_len + self.pred_distance][self.pred_columns].to_numpy()
+            
+            # Convert the input data to a tensor
+            x_tensor = torch.tensor(window, dtype=torch.float32).view(self.history_len, self.x_len)
+            
+            # Initialize tensors to store min and max values for each prediction column
+            min_vals = torch.zeros(self.y_len, dtype=torch.float32)
+            max_vals = torch.zeros(self.y_len, dtype=torch.float32)
 
-            # Compute the min and max values for this column
-            min_vals[i] = torch.tensor(pred_col_data.min(), dtype=torch.float32)
-            max_vals[i] = torch.tensor(pred_col_data.max(), dtype=torch.float32)
-        
-        # Concatenate min and max values to form the target output tensor
-        y_tensor = torch.cat((min_vals, max_vals))
-        
-        return x_tensor, y_tensor
+            for i, col in enumerate(self.pred_columns):
+                # Extract the prediction column data for the current prediction column
+                pred_col_data = pred_window[:, i]
+
+                # Compute the min and max values for this column
+                min_vals[i] = torch.tensor(pred_col_data.min(), dtype=torch.float32)
+                max_vals[i] = torch.tensor(pred_col_data.max(), dtype=torch.float32)
+            
+            # Concatenate min and max values to form the target output tensor
+            y_tensor = torch.cat((min_vals, max_vals))
+            
+            return x_tensor, y_tensor
     
+    """
     @staticmethod
     def to_sequences(
             data: pd.DataFrame, 
@@ -93,13 +111,16 @@ class TimeSeriesDataset(Dataset):
             y[i] = np.concatenate((min_vals, max_vals))
         
         return x, y
+    """
 
+    """
     @staticmethod
     def get_unique_strings(data: list[tuple[int, list[str]]]) -> list[str]:
         unique_strings = set()
         for _, strings in data:
             unique_strings.update(strings)
         return list(unique_strings)
+    """
     
     """
     @staticmethod
@@ -118,7 +139,7 @@ class TimeSeriesDataset(Dataset):
     """
     
     @staticmethod
-    def get_columns_from_pred_columns(pred_columns:list[tuple[int, int, str, tuple[str, ...], tuple[str, ...]]]) -> list[tuple[int, list[str]]]:
+    def get_columns_from_pred_columns(pred_columns:lc.PRED_COLUMNS_TYPE) -> TIME_RANGE_COLUMNS_LIST:
         
         # key: time range, value: set of columns
         accumulator:dict[int, set[str]] = {}
@@ -131,7 +152,7 @@ class TimeSeriesDataset(Dataset):
         return [(time_range, list(columns)) for time_range, columns in accumulator.items()]
     
     @staticmethod
-    def merge_columns_for_time_ranges(columns_sets:list[list[tuple[int, list[str]]]]) -> list[tuple[int, list[str]]]:
+    def merge_columns_for_time_ranges(columns_sets:list[TIME_RANGE_COLUMNS_LIST]) -> TIME_RANGE_COLUMNS_LIST:
         
         # key: time range, value: set of columns
         accumulator:dict[int, set[str]] = {}
@@ -143,3 +164,4 @@ class TimeSeriesDataset(Dataset):
                 accumulator[time_range].update(columns)
             
         return [(time_range, list(columns)) for time_range, columns in accumulator.items()]
+    

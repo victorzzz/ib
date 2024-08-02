@@ -72,7 +72,7 @@ sequences:SEQUENCES_TYPE = [
             '1m_MIDPOINT_close',
             
             '1m_TRADES_open', '1m_TRADES_close',
-            '1m_TRADES_high', '1m_TRADES_low'
+            '1m_TRADES_high', '1m_TRADES_low',
             '1m_TRADES_average'
         ]
     ),
@@ -82,7 +82,7 @@ sequences:SEQUENCES_TYPE = [
         [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ_VOLUME,
         [            
-            '1m_TRADES_volume', '1m_TRADES_volume_LOG', '1m_TRADES_volume_LOG_LOG',
+            '1m_TRADES_volume_LOG', '1m_TRADES_volume_LOG_LOG',
         ]
     ),    
     (
@@ -160,7 +160,7 @@ sequences:SEQUENCES_TYPE = [
             '3m_MIDPOINT_close',
             
             '3m_TRADES_open', '3m_TRADES_close',
-            '3m_TRADES_high', '3m_TRADES_low'
+            '3m_TRADES_high', '3m_TRADES_low',
             '3m_TRADES_average'
         ]
     ),
@@ -170,7 +170,7 @@ sequences:SEQUENCES_TYPE = [
         [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ_VOLUME,
         [
-            '3m_TRADES_volume', '3m_TRADES_volume_LOG', '3m_TRADES_volume_LOG_LOG',
+            '3m_TRADES_volume_LOG', '3m_TRADES_volume_LOG_LOG',
         ]
     ),    
     (
@@ -181,11 +181,9 @@ sequences:SEQUENCES_TYPE = [
         [            
             '3m__t_MFI_TRADES_average_7', '3m__t_MFI_TRADES_average_14', '3m__t_MFI_TRADES_average_21',
             '3m__t_CCI_TRADES_average_7', '3m__t_CCI_TRADES_average_14', '3m__t_CCI_TRADES_average_21',
-            
             '3m__t_RSI_TRADES_average_7', '3m__t_RSI_TRADES_average_14', '3m__t_RSI_TRADES_average_21',
             
             '3m__t_BBL_TRADES_average_20', '3m__t_BBM_TRADES_average_20', '3m__t_BBU_TRADES_average_20', 
-            
             '3m__t_BBL_TRADES_average_30', '3m__t_BBM_TRADES_average_30', '3m__t_BBU_TRADES_average_30', 
             
             '3m__t_STOCH_k_TRADES_average_14_3', '3m__t_STOCH_d_TRADES_average_14_3',
@@ -228,7 +226,7 @@ sequences:SEQUENCES_TYPE = [
             '10m_MIDPOINT_close',
             
             '10m_TRADES_open', '10m_TRADES_close',
-            '10m_TRADES_high', '10m_TRADES_low'
+            '10m_TRADES_high', '10m_TRADES_low',
             '10m_TRADES_average'
         ]
     ),
@@ -238,7 +236,7 @@ sequences:SEQUENCES_TYPE = [
         [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ_VOLUME,
         [
-            '10m_TRADES_volume', '10m_TRADES_volume_LOG', '10m_TRADES_volume_LOG_LOG',
+            '10m_TRADES_volume_LOG', '10m_TRADES_volume_LOG_LOG',
         ]
     ),    
     (
@@ -249,11 +247,9 @@ sequences:SEQUENCES_TYPE = [
         [            
             '10m__t_MFI_TRADES_average_7', '10m__t_MFI_TRADES_average_14', '10m__t_MFI_TRADES_average_21',
             '10m__t_CCI_TRADES_average_7', '10m__t_CCI_TRADES_average_14', '10m__t_CCI_TRADES_average_21',
-            
             '10m__t_RSI_TRADES_average_7', '10m__t_RSI_TRADES_average_14', '10m__t_RSI_TRADES_average_21',
             
             '10m__t_BBL_TRADES_average_20', '10m__t_BBM_TRADES_average_20', '10m__t_BBU_TRADES_average_20', 
-            
             '10m__t_BBL_TRADES_average_30', '10m__t_BBM_TRADES_average_30', '10m__t_BBU_TRADES_average_30', 
             
             '10m__t_STOCH_k_TRADES_average_14_3', '10m__t_STOCH_d_TRADES_average_14_3',
@@ -296,7 +292,7 @@ sequences:SEQUENCES_TYPE = [
             '30m_MIDPOINT_close',
             
             '30m_TRADES_open', '30m_TRADES_close',
-            '30m_TRADES_high', '30m_TRADES_low'
+            '30m_TRADES_high', '30m_TRADES_low',
             '30m_TRADES_average'
         ]
     ),
@@ -306,7 +302,7 @@ sequences:SEQUENCES_TYPE = [
         [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ_VOLUME,
         [
-            '30m_TRADES_volume', '30m_TRADES_volume_LOG', '30m_TRADES_volume_LOG_LOG',
+            '30m_TRADES_volume_LOG', '30m_TRADES_volume_LOG_LOG',
         ]
     ),    
     (
@@ -317,11 +313,9 @@ sequences:SEQUENCES_TYPE = [
         [            
             '30m__t_MFI_TRADES_average_7', '30m__t_MFI_TRADES_average_14', '30m__t_MFI_TRADES_average_21',
             '30m__t_CCI_TRADES_average_7', '30m__t_CCI_TRADES_average_14', '30m__t_CCI_TRADES_average_21',
-            
-            '30m__t_RSI_TRADES_average_7', '30m__t_RSI_TRADES_average_34', '30m__t_RSI_TRADES_average_21',
+            '30m__t_RSI_TRADES_average_7', '30m__t_RSI_TRADES_average_14', '30m__t_RSI_TRADES_average_21',
             
             '30m__t_BBL_TRADES_average_20', '30m__t_BBM_TRADES_average_20', '30m__t_BBU_TRADES_average_20', 
-            
             '30m__t_BBL_TRADES_average_30', '30m__t_BBM_TRADES_average_30', '30m__t_BBU_TRADES_average_30', 
             
             '30m__t_STOCH_k_TRADES_average_14_3', '30m__t_STOCH_d_TRADES_average_14_3',
@@ -366,7 +360,7 @@ sequences:SEQUENCES_TYPE = [
         [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ_VOLUME,
         [
-            '120m_TRADES_volume', '120m_TRADES_volume_LOG', '120m_TRADES_volume_LOG_LOG',
+            '120m_TRADES_volume_LOG', '120m_TRADES_volume_LOG_LOG',
         ]
     ),    
     (
@@ -415,81 +409,136 @@ log_log_columns:LOG_COLUMNS_TYPE = [
 
 SCALING_COLUMN_GROUPS_TYPE = list[tuple[tuple[int, str], list[tuple[int, list[str]]]]]
 scaling_column_groups:SCALING_COLUMN_GROUPS_TYPE = [
-    ((1, '1m_ASK_close'), 
-        [(1,
+    (
+        (1, '1m_ASK_close'), 
         [
-            # 1m
-            ##################
-            
-            '1m_BID_close',
-            '1m_BID_high', 
-            #'1m_BID_low',
-            #'1m_ASK_high', 
-            '1m_ASK_low',
-            '1m_BID_open', 
-            '1m_ASK_open',
-            
-            '1m_MIDPOINT_close', 
-            '1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
-            
-            '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
-            '1m_TRADES_average',
-            
-            '1m__t_BBL_TRADES_average_30', '1m__t_BBM_TRADES_average_30', '1m__t_BBU_TRADES_average_30', 
-            '1m__t_BBL_TRADES_average_20', '1m__t_BBM_TRADES_average_20', '1m__t_BBU_TRADES_average_20', 
-        ]),
-        (3,
-        [    
-            # 3m
-            ##################
-            
-            '3m_ASK_close'
-            '3m_BID_close',
-            
-            '3m_MIDPOINT_close', 
-            '3m_MIDPOINT_open', '3m_MIDPOINT_high', '3m_MIDPOINT_low', 
-            
-            '3m_TRADES_open', '3m_TRADES_high', '3m_TRADES_low', '3m_TRADES_close',
-            '3m_TRADES_average',
-            
-            '3m__t_BBL_TRADES_average_30', '3m__t_BBM_TRADES_average_30', '3m__t_BBU_TRADES_average_30', 
-            '3m__t_BBL_TRADES_average_20', '3m__t_BBM_TRADES_average_20', '3m__t_BBU_TRADES_average_20', 
-        ]),
-        (10,
-         [
-            # 10m
-            ##################
-            
-            '10m_ASK_close'
-            '10m_BID_close',
-            
-            '10m_MIDPOINT_close', 
-            '10m_MIDPOINT_open', '10m_MIDPOINT_high', '10m_MIDPOINT_low', 
-            
-            '10m_TRADES_open', '10m_TRADES_high', '10m_TRADES_low', '10m_TRADES_close',
-            '10m_TRADES_average',
-            
-            '10m__t_BBL_TRADES_average_30', '10m__t_BBM_TRADES_average_30', '10m__t_BBU_TRADES_average_30', 
-            '10m__t_BBL_TRADES_average_20', '10m__t_BBM_TRADES_average_20', '10m__t_BBU_TRADES_average_20', 
-         ]),
-        (30,
-         [
-            # 30m
-            ##################
-            
-            '30m_ASK_close'
-            '30m_BID_close',
-            
-            '30m_MIDPOINT_close', 
-            '30m_MIDPOINT_open', '30m_MIDPOINT_high', '30m_MIDPOINT_low', 
-            
-            '30m_TRADES_open', '30m_TRADES_high', '30m_TRADES_low', '30m_TRADES_close',
-            '10m_TRADES_average',
-            
-            '30m__t_BBL_TRADES_average_30', '30m__t_BBM_TRADES_average_30', '30m__t_BBU_TRADES_average_30', 
-            '30m__t_BBL_TRADES_average_20', '30m__t_BBM_TRADES_average_20', '30m__t_BBU_TRADES_average_20',                             
-        ])]
-    ),               
+            (1,
+            [
+                # 1m
+                ##################
+                
+                '1m_BID_close',
+                '1m_BID_high', 
+                #'1m_BID_low',
+                #'1m_ASK_high', 
+                '1m_ASK_low',
+                '1m_BID_open', 
+                '1m_ASK_open',
+                
+                '1m_MIDPOINT_close', 
+                '1m_MIDPOINT_open', '1m_MIDPOINT_high', '1m_MIDPOINT_low', 
+                
+                '1m_TRADES_open', '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_close',
+                '1m_TRADES_average',
+                
+                '1m__t_BBL_TRADES_average_30', '1m__t_BBM_TRADES_average_30', '1m__t_BBU_TRADES_average_30', 
+                '1m__t_BBL_TRADES_average_20', '1m__t_BBM_TRADES_average_20', '1m__t_BBU_TRADES_average_20', 
+            ]),
+            (3,
+            [    
+                # 3m
+                ##################
+                
+                '3m_ASK_close',
+                '3m_BID_close',
+                
+                '3m_MIDPOINT_close', 
+                '3m_MIDPOINT_open', '3m_MIDPOINT_high', '3m_MIDPOINT_low', 
+                
+                '3m_TRADES_open', '3m_TRADES_high', '3m_TRADES_low', '3m_TRADES_close',
+                '3m_TRADES_average',
+                
+                '3m__t_BBL_TRADES_average_30', '3m__t_BBM_TRADES_average_30', '3m__t_BBU_TRADES_average_30', 
+                '3m__t_BBL_TRADES_average_20', '3m__t_BBM_TRADES_average_20', '3m__t_BBU_TRADES_average_20', 
+            ]),
+            (10,
+            [
+                # 10m
+                ##################
+                
+                '10m_ASK_close',
+                '10m_BID_close',
+                
+                '10m_MIDPOINT_close', 
+                '10m_MIDPOINT_open', '10m_MIDPOINT_high', '10m_MIDPOINT_low', 
+                
+                '10m_TRADES_open', '10m_TRADES_high', '10m_TRADES_low', '10m_TRADES_close',
+                '10m_TRADES_average',
+                
+                '10m__t_BBL_TRADES_average_30', '10m__t_BBM_TRADES_average_30', '10m__t_BBU_TRADES_average_30', 
+                '10m__t_BBL_TRADES_average_20', '10m__t_BBM_TRADES_average_20', '10m__t_BBU_TRADES_average_20', 
+            ]),
+            (30,
+            [
+                # 30m
+                ##################
+                
+                '30m_ASK_close',
+                '30m_BID_close',
+                
+                '30m_MIDPOINT_close', 
+                '30m_MIDPOINT_open', '30m_MIDPOINT_high', '30m_MIDPOINT_low', 
+                
+                '30m_TRADES_open', '30m_TRADES_high', '30m_TRADES_low', '30m_TRADES_close',
+                '30m_TRADES_average',
+                
+                '30m__t_BBL_TRADES_average_30', '30m__t_BBM_TRADES_average_30', '30m__t_BBU_TRADES_average_30', 
+                '30m__t_BBL_TRADES_average_20', '30m__t_BBM_TRADES_average_20', '30m__t_BBU_TRADES_average_20',                             
+            ])
+        ]
+    ),
+    (
+        (1, '1m_TRADES_volume_LOG'),
+        [
+            (3,
+             [
+                # 3m
+                ##################
+                
+                '3m_TRADES_volume_LOG',
+             ]),
+            (10,
+             [
+                # 10m
+                ##################
+                
+                '10m_TRADES_volume_LOG',
+             ]),
+            (30,
+             [
+                # 30m
+                ##################
+                
+                '30m_TRADES_volume_LOG',
+             ])
+        ]
+    ),
+    (
+        (1, '1m_TRADES_volume_LOG_LOG'),
+        [
+            (3,
+             [
+                # 3m
+                ##################
+                
+                '3m_TRADES_volume_LOG_LOG',
+             ]),
+            (10,
+             [
+                # 10m
+                ##################
+                
+                '10m_TRADES_volume_LOG_LOG',
+             ]),
+            (30,
+             [
+                # 30m
+                ##################
+                
+                '30m_TRADES_volume_LOG_LOG',
+             ])
+        ]
+    )               
 ]
 
 dataset_tail:float = 0.2
