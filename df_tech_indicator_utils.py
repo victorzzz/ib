@@ -46,9 +46,11 @@ def add_ema(
                     new_columns_difs.append(new_column_dif)
                 
             if add_ema_retio_columns_to_df:
+                ratio_scaler = 2.0 if 'volume' in column else 4.0
+                
                 new_column_ratio = f'{column}_ema_ratio_{period}'
                 if new_column_ratio not in df.columns:
-                    df[new_column_ratio] = (df[column] / ema) - 1.0
+                    df[new_column_ratio] = ((df[column] / ema) - 1.0) * ratio_scaler
                     new_columns_ratios.append(new_column_ratio)
         
     return (df, new_columns_ema, new_columns_difs, new_columns_ratios)

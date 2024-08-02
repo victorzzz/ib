@@ -3,14 +3,14 @@ import l_ff_model as l_ff_m
 import l_module as lmodule
 
 EMA_PERIODS_LONG_SEQ:list[int] = [64, 128, 192, 256]
-EMA_PERIODS_SHORT_SEQ:list[int] = [2, 4, 8, 16, 32, 48]
-EMA_PERIODS_SHORT_SEQ_VOLUME:list[int] = [2, 4]
+EMA_PERIODS_SHORT_SEQ:list[int] = [8, 16, 32, 48]
+EMA_PERIODS_SHORT_SEQ_VOLUME:list[int] = [2, 5]
 
 DATA_CATEGORY:str = "category"
 DATA_VALUE:str = "value"
-DATA_EMA:str = "ema"
-DATA_EMA_DIFF:str = "ema_diff"
-DATA_EMA_RATIO:str = "ema_ratio"
+DATA_EMA:str = "ema" # automatic scaling is not supported for this data type, should be explicitly specified in scaling_column_groups
+DATA_EMA_DIFF:str = "diff_ema"
+DATA_EMA_RATIO:str = "ratio_ema"
 
 PRED_MIN:str = "pred_min"
 PRED_MAX:str = "pred_max"
@@ -38,7 +38,7 @@ sequences:SEQUENCES_TYPE = [
     (
         1,
         prediction_distance * 16,
-        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
             '1m_TRADES_average'
@@ -47,7 +47,7 @@ sequences:SEQUENCES_TYPE = [
     (
         1,
         prediction_distance * 12,
-        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
             '1m_TRADES_high', '1m_TRADES_low', '1m_TRADES_average'
@@ -56,7 +56,7 @@ sequences:SEQUENCES_TYPE = [
     (
         1,
         prediction_distance * 6,
-        [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ,
         [
             '1m_BID_close', 
@@ -82,7 +82,7 @@ sequences:SEQUENCES_TYPE = [
         [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ_VOLUME,
         [            
-            '1m_TRADES_volume_LOG', '1m_TRADES_volume_LOG_LOG',
+            '1m_TRADES_volume_LOG'
         ]
     ),    
     (
@@ -132,7 +132,7 @@ sequences:SEQUENCES_TYPE = [
     (
         3,
         prediction_distance * 14,
-        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
             '3m_TRADES_average'
@@ -141,7 +141,7 @@ sequences:SEQUENCES_TYPE = [
     (
         3,
         prediction_distance * 10,
-        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
             '3m_TRADES_high', '3m_TRADES_low'
@@ -150,7 +150,7 @@ sequences:SEQUENCES_TYPE = [
     (
         3,
         prediction_distance * 4,
-        [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ,
         [
             '3m_BID_close', 
@@ -167,10 +167,10 @@ sequences:SEQUENCES_TYPE = [
     (
         3,
         prediction_distance * 2,
-        [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ_VOLUME,
         [
-            '3m_TRADES_volume_LOG', '3m_TRADES_volume_LOG_LOG',
+            '3m_TRADES_volume_LOG',
         ]
     ),    
     (
@@ -198,7 +198,7 @@ sequences:SEQUENCES_TYPE = [
     (
         10,
         prediction_distance * 12,
-        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
             '10m_TRADES_average'
@@ -207,7 +207,7 @@ sequences:SEQUENCES_TYPE = [
     (
         10,
         prediction_distance * 8,
-        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
             '10m_TRADES_high', '10m_TRADES_low'
@@ -216,7 +216,7 @@ sequences:SEQUENCES_TYPE = [
     (
         10,
         prediction_distance * 3,
-        [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ,
         [
             '10m_BID_close', 
@@ -233,10 +233,10 @@ sequences:SEQUENCES_TYPE = [
     (
         10,
         prediction_distance * 2,
-        [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ_VOLUME,
         [
-            '10m_TRADES_volume_LOG', '10m_TRADES_volume_LOG_LOG',
+            '10m_TRADES_volume_LOG',
         ]
     ),    
     (
@@ -264,7 +264,7 @@ sequences:SEQUENCES_TYPE = [
     (
         30,
         prediction_distance * 10,
-        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
             '30m_TRADES_average'
@@ -273,7 +273,7 @@ sequences:SEQUENCES_TYPE = [
     (
         30,
         prediction_distance * 6,
-        [DATA_VALUE, DATA_EMA, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_LONG_SEQ, 
         [
             '30m_TRADES_high', '30m_TRADES_low'
@@ -282,7 +282,7 @@ sequences:SEQUENCES_TYPE = [
     (
         30,
         prediction_distance * 2,
-        [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ,
         [
             '30m_BID_close', 
@@ -299,10 +299,10 @@ sequences:SEQUENCES_TYPE = [
     (
         30,
         prediction_distance,
-        [DATA_VALUE, DATA_EMA_DIFF, DATA_EMA_RATIO],
+        [DATA_VALUE, DATA_EMA_RATIO],
         EMA_PERIODS_SHORT_SEQ_VOLUME,
         [
-            '30m_TRADES_volume_LOG', '30m_TRADES_volume_LOG_LOG',
+            '30m_TRADES_volume_LOG',
         ]
     ),    
     (
@@ -400,13 +400,6 @@ log_columns:LOG_COLUMNS_TYPE = [
     (30, '30m_TRADES_volume'),
 ]
 
-log_log_columns:LOG_COLUMNS_TYPE = [
-    (1, '1m_TRADES_volume'),
-    (3, '3m_TRADES_volume'),
-    (10, '10m_TRADES_volume'),
-    (30, '30m_TRADES_volume'),      
-]
-
 SCALING_COLUMN_GROUPS_TYPE = list[tuple[tuple[int, str], list[tuple[int, list[str]]]]]
 scaling_column_groups:SCALING_COLUMN_GROUPS_TYPE = [
     (
@@ -490,6 +483,9 @@ scaling_column_groups:SCALING_COLUMN_GROUPS_TYPE = [
     (
         (1, '1m_TRADES_volume_LOG'),
         [
+            (1,
+             [                
+             ]),
             (3,
              [
                 # 3m
@@ -513,32 +509,6 @@ scaling_column_groups:SCALING_COLUMN_GROUPS_TYPE = [
              ])
         ]
     ),
-    (
-        (1, '1m_TRADES_volume_LOG_LOG'),
-        [
-            (3,
-             [
-                # 3m
-                ##################
-                
-                '3m_TRADES_volume_LOG_LOG',
-             ]),
-            (10,
-             [
-                # 10m
-                ##################
-                
-                '10m_TRADES_volume_LOG_LOG',
-             ]),
-            (30,
-             [
-                # 30m
-                ##################
-                
-                '30m_TRADES_volume_LOG_LOG',
-             ])
-        ]
-    )               
 ]
 
 dataset_tail:float = 0.2

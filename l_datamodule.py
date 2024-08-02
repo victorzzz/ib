@@ -28,7 +28,6 @@ class StockPriceDataModule(L.LightningDataModule):
         sequences:lc.SEQUENCES_TYPE,
         pred_columns:lc.PRED_COLUMNS_TYPE,
         log_columns:lc.LOG_COLUMNS_TYPE,
-        log_log_columns:lc.LOG_COLUMNS_TYPE,
         scaling_column_groups:lc.SCALING_COLUMN_GROUPS_TYPE,
 
         # user_tensor_dataset:bool, 
@@ -45,7 +44,8 @@ class StockPriceDataModule(L.LightningDataModule):
         
         logging.info(f"StockPriceDataModule.__init__ : {ticker_symbvol} on {exchange} ...")
         
-        self.scaler_type = MinMaxScaler
+        # lumbda functions for creating scalers
+        self.scaler_factory = lambda: MinMaxScaler((-1, 1))
         
         self.ticker_symbvol = ticker_symbvol
         self.exchange = exchange
@@ -55,7 +55,6 @@ class StockPriceDataModule(L.LightningDataModule):
         self.pred_columns = pred_columns
         
         self.log_columns = log_columns
-        self.log_log_columns = log_log_columns
         
         self.scaling_column_groups = scaling_column_groups
         # self.user_tensor_dataset = user_tensor_dataset
@@ -68,7 +67,7 @@ class StockPriceDataModule(L.LightningDataModule):
         self.keep_train_dataset = keep_train_dataset
 
         self.scalers:dict[str, StandardScaler | RobustScaler | MinMaxScaler] = {
-            self.scaler_key(fitting_time_range, fitting_column): self.scaler_type()
+            self.scaler_key(fitting_time_range, fitting_column): self.scaler_factory()
                 for (fitting_time_range, fitting_column), _ in scaling_column_groups
             }
 
@@ -87,7 +86,6 @@ class StockPriceDataModule(L.LightningDataModule):
         
         data_frames:dict[int, pd.DataFrame] = StockPriceDataModule.load_prepared_raw_datasets(self.ticker_symbvol, self.exchange, self.time_ranges)
         self.add_log_columns(data_frames, self.log_columns)
-        self.add_log_log_columns(data_frames, self.log_log_columns)
         
         used_columns, used_columns_seq_length = self.add_augmented_columns(data_frames, self.sequences)
         
@@ -118,7 +116,10 @@ class StockPriceDataModule(L.LightningDataModule):
         logging.info("Fitting scalers ...")
         self.fit(training_df1_orig)
         
-        logging.info("Transforming data ...")
+        logging.info("Transforming training data ...")
+        self.transform(training_df1_orig, data_frames)
+        
+        logging.info("Transforming validation data ...")
         self.transform(val_df1_orig, data_frames)
         
         if self.keep_scaled_data:
@@ -212,11 +213,15 @@ class StockPriceDataModule(L.LightningDataModule):
     def teardown(self, stage: str) -> None:
         logging.info(f"StockPriceDataModule.teardown : {stage}")
     
+    ######################
     def fit(self, df_1:pd.DataFrame) -> None:
         for (fitting_time_range, fitting_column), _ in self.scaling_column_groups:
+                if fitting_time_range != 1:
+                    raise ValueError("Fitting time range should be 1")
+                
                 scalers_dict_key = self.scaler_key(fitting_time_range, fitting_column)
                 scaler = self.scalers[scalers_dict_key]
-                self.fit_transform_column(scaler, df_1, fitting_column)
+                self.fit_on_column(scaler, df_1, fitting_column)
                 
         self.was_fit = True        
         
@@ -252,6 +257,7 @@ class StockPriceDataModule(L.LightningDataModule):
             for scaling_time_range, columns in scaling_columns:
                 if scaling_time_range == 1:
                     scaling_df = df_1
+                    columns = [fitting_column] + columns
                 else:
                     scaling_df = dfs[scaling_time_range]
 
@@ -294,24 +300,25 @@ class StockPriceDataModule(L.LightningDataModule):
     
     @staticmethod
     def check_scaled_df_description(scaled_df_description:pd.DataFrame):
-        if scaled_df_description["min"].min() < -5.0 or scaled_df_description["max"].max() > 5.0:
-            logging.critical("Scaled data is out of range [-5, 5]")
-            raise ValueError("Scaled data is out of range [-5, 5]")
-
+        desc_without_timestamp_df = scaled_df_description[~(scaled_df_description.index.str.endswith('_timestamp'))]
+        
+        desc_without_timestamp_df_min_5 = desc_without_timestamp_df[desc_without_timestamp_df["min"] < -5.0]
+        if len(desc_without_timestamp_df_min_5) > 0:
+            logging.info(f"Min < -5.0:\n {desc_without_timestamp_df_min_5}")
+            logging.critical("Scaled data is out of range [-5, 5] for columns: {min_errors}")
+            raise ValueError("Scaled data is out of range [-5, 5] for columns: {min_errors}")
+        
+        desc_without_timestamp_df_max_5 = desc_without_timestamp_df[desc_without_timestamp_df["max"] > 5.0]
+        if len(desc_without_timestamp_df_max_5) > 0:
+            logging.info(f"Max > 5.0:\n {desc_without_timestamp_df_max_5}")
+            logging.critical("Scaled data is out of range [-5, 5] for columns: {max_errors}")
+            raise ValueError("Scaled data is out of range [-5, 5] for columns: {max_errors}")
+        
     @staticmethod
     def fit_on_column(scaler:StandardScaler | RobustScaler | MinMaxScaler, df:pd.DataFrame, column:str):
-        values_to_fit = df[[column]].values
-        scaler.fit(values_to_fit)
-    
-    @staticmethod
-    def fit_transform_column(scaler:StandardScaler | RobustScaler | MinMaxScaler, df:pd.DataFrame, column:str) -> None:
         values_to_fit = df[[column]].to_numpy()
-        
-        max_values_to_fit = np.max(values_to_fit)
-        min_values_to_fit = np.min(values_to_fit)
-        
-        df[[column]]= scaler.fit_transform(values_to_fit)
-    
+        scaler.fit(values_to_fit)
+
     @staticmethod
     def transform_columns(scaler:StandardScaler | RobustScaler | MinMaxScaler, 
                           df:pd.DataFrame,
@@ -345,28 +352,6 @@ class StockPriceDataModule(L.LightningDataModule):
         for time_range, column in log_columns:
             df = data_frames[time_range]
             df[f'{column}_LOG'] = np.log(df[column] + 0.0001)
-            
-            min_value = df[column].min()
-            max_value = df[column].max()
-            
-            min_log_value = df[f'{column}_LOG'].min()
-            max_log_value = df[f'{column}_LOG'].max()
-            
-            a = 1
-            
-    @staticmethod
-    def add_log_log_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT, log_log_columns:list[tuple[int, str]]) -> None:
-        for time_range, column in log_log_columns:
-            df = data_frames[time_range]
-            df[f'{column}_LOG_LOG'] = np.log(np.log(df[column] + 0.0001) + 0.0001)
-            
-            min_value = df[column].min()
-            max_value = df[column].max()
-            
-            min_log_log_value = df[f'{column}_LOG_LOG'].min()
-            max_log_log_value = df[f'{column}_LOG_LOG'].max()
-            
-            a = 1
     
     @staticmethod
     def data_frames_with_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT, used_columns:list[tuple[int, list[str]]]) -> l_ds.TIME_RANGE_DATA_FRAME_DICT:
@@ -455,7 +440,6 @@ if __name__ == "__main__":
         sequences=lc.sequences,
         pred_columns=lc.pred_columns,
         log_columns=lc.log_columns,
-        log_log_columns=lc.log_log_columns,
         scaling_column_groups=lc.scaling_column_groups,
         # pred_distance=lc.prediction_distance,
         # user_tensor_dataset=True,
