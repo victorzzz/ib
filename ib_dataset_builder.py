@@ -22,7 +22,10 @@ ask_fields = ["ASK_open", "ASK_high", "ASK_low", "ASK_close"]
 trades_price_fields = ["TRADES_open", "TRADES_high", "TRADES_low", "TRADES_close", "TRADES_average"]
 trades_volume_fields = ["TRADES_volume", "TRADES_barCount"]
 
+all_price_fields = midpoint_fields + bid_fields + ask_fields + trades_price_fields
 all_price_volume_fields = midpoint_fields + bid_fields + ask_fields + trades_price_fields + trades_volume_fields
+
+PRICE_MISPRINTS_RATIO_THRESHOLD = 4.0
 
 PRICES_DEPTH = 60
 TECH_INDICATORS_DEPTH = 15
@@ -79,16 +82,16 @@ def process_empty_values(df:pd.DataFrame) -> pd.DataFrame:
 def fix_trading_price_misprints(df:pd.DataFrame) -> pd.DataFrame:
     df_copy = df.copy()
     
-    for column in trades_price_fields:
+    for column in all_price_fields:
         if column not in df_copy.columns:
             continue
         
         column_data = df_copy[column]
         column_data_shifted = column_data.shift(-1, fill_value=np.nan)
         ratio_change = column_data / column_data_shifted
-        misprints = (ratio_change > 15.0)
+        misprints = (ratio_change > PRICE_MISPRINTS_RATIO_THRESHOLD)
         
-        df_copy.loc[misprints, column] = np.nan
+        df_copy.loc[misprints, column] = column_data_shifted[misprints]
     
     return df_copy
 
@@ -137,39 +140,40 @@ def create_datasets(
 
                 logging.info(f"Processing '{ticker_symbvol}' - '{exchange}' - {minute_multiplier} ...")
 
-                logging.info(f"Adding normalized time columns ...")
+                logging.info(f"Adding normalized time columns {minute_multiplier} ...")
                 df = df_dt_utils.add_normalized_time_columns(df)
 
                 if minute_multiplier < 390:
-                    logging.info("Deleting non-trading hours records")
+                    logging.info("Deleting non-trading hours records {minute_multiplier} ...")
                     df = df[(df['normalized_trading_time'] >= 0) & (df['normalized_trading_time'] < 1)]
 
-                logging.info(f"Fixing trading price misprints ...")
+                logging.info(f"Fixing trading price misprints {minute_multiplier} ...")
                 df = fix_trading_price_misprints(df)
 
-                logging.info(f"Processing empty values...")
+                logging.info(f"Processing empty values {minute_multiplier} ...")
                 df = process_empty_values(df)
 
-                logging.info(f"Reversing dataframe ...")
+                logging.info(f"Reversing dataframe {minute_multiplier} ...")
                 df = reverse_dataframe(df)
                 
-                logging.info(f"Adding technical indicators ...")
+                logging.info(f"Adding technical indicators {minute_multiplier} ...")
                 df, price_normalizing_columns, log_normalized_columns = df_tech_utils.add_technical_indicators(df, minute_multiplier)
                 
                 if minute_multiplier == 1:
                 
-                    logging.info(f"Adding price change labels ...")
+                    logging.info(f"Adding price change labels {minute_multiplier} ...")
                     df = df_pa.addPriceChangeLabelsToDataFrame(df)                
                 
-                    logging.info(f"Adding volume profile ...")
+                if minute_multiplier in [1, 3, 10, 30]:
+                    logging.info(f"Adding volume profile {minute_multiplier} ...")
                     df = df_vp_utils.add_top_of_volume_profile(df)
                 
-                logging.info(f"Adding minute multiplier to column names ...")
+                logging.info(f"Adding minute multiplier to column names {minute_multiplier} ...")
                 df = add_minute_multiplier_to_column_names(df, minute_multiplier)
 
                 enriched_dfs[minute_multiplier] = df
 
-                logging.info(f"Saving dataset ...")
+                logging.info(f"Saving dataset {minute_multiplier} ...")
                 result_file_name = f"{cnts.data_sets_folder}/{ticker_symbvol}-{exchange}--ib--{minute_multiplier:.0f}--minute--dataset"
                 df_ls.save_df(df, result_file_name)
 
