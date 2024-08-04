@@ -1,6 +1,8 @@
 import logging
 
 import numpy as np
+import numpy.typing as npt
+
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
@@ -25,6 +27,14 @@ class TimeSeriesDataset(Dataset):
 
         self.df1 = df1
         self.data = data
+
+        # timestamp values for each time range
+        timestamp1_values = df1["1m_timestamp"].to_numpy(dtype=np.int32)
+        time_stamp_values_by_time_ranges = {time_range: df["1m_timestamp"].to_numpy(dtype=np.int32) for time_range, df in data.items() if time_range != 1}
+        
+        # find indexes in data-frames for each time range for each timestamp in the first data-frame
+        self.time_stamp_indexes = TimeSeriesDataset.find_time_stamp_indexes(time_stamp_values_by_time_ranges, timestamp1_values)
+        
         self.columns = columns
         self.sequences = sequences
         self.pred_columns = pred_columns
@@ -39,20 +49,23 @@ class TimeSeriesDataset(Dataset):
         return self.result_rows
 
     def __getitem__(self, idx):
-
-        i = idx + self.max_history1_len
-
         x_result_tensor:torch.Tensor | None = None
         y_result_tensor:torch.Tensor | None = None
+        
+        i1 = idx + self.max_history1_len
         
         for time_range, seq_len, columns in self.columns:            
             if time_range == 1:
                 df = self.df1
+                i = i1
             else:
                 df = self.data[time_range]
+                
+                # find the closest (greate or equal) index in the data frame
+                i = self.time_stamp_indexes[time_range]
             
             # Extract the input data for the current window
-            window = df.iloc[(i-seq_len):i][columns].to_numpy().reshape(-1)
+            window = df.iloc[(i-seq_len):i][columns].to_numpy(dtype=np.float32).reshape(-1)
                         
             # Convert the input data to a tensor
             x_tensor = torch.tensor(window, dtype=torch.float32)
@@ -64,10 +77,10 @@ class TimeSeriesDataset(Dataset):
             
         for time_range, pred_distance, column, pred_aggregations, pred_transformations, retio_multiplier in self.pred_columns:
 
-            last_observed_prediction_value = df.iloc[i-1][column].to_numpy()
+            last_observed_prediction_value = self.df1.iloc[i1-1][column].to_numpy(dtype=np.float32)
             
             # Extract the prediction data for the current window
-            pred_window = df.iloc[i:i + pred_distance][column].to_numpy()
+            pred_window =self.df1.iloc[i1:i1 + pred_distance][column].to_numpy(dtype=np.float32)
             
             for pred_aggregation in pred_aggregations:
                 if pred_aggregation == lc.PRED_MIN:
@@ -175,12 +188,27 @@ class TimeSeriesDataset(Dataset):
         # key: time range, value: set of columns
         accumulator:dict[int, set[str]] = {}
         
-        for time_range, _, column, _, _ in pred_columns:
+        for time_range, _, column, _, _, _ in pred_columns:
             if time_range not in accumulator:
                 accumulator[time_range] = set()
             accumulator[time_range].update([column])
             
         return [(time_range, list(columns)) for time_range, columns in accumulator.items()]
+
+    @staticmethod    
+    def find_index_for_timestamp(array:npt.NDArray[np.int32], timestamp:np.int32) -> np.int32:
+        index = np.searchsorted(array, timestamp, side='right') - 1
+        if index >= 0 and array[index] == timestamp:
+            return index
+        else:
+            raise ValueError(f"Corresponding timestamp for {timestamp} not found in array.")
+    
+    @staticmethod 
+    def find_time_stamp_indexes(time_stamp_values:dict[int, npt.NDArray[np.int32]], time_stamp_value1:npt.NDArray[np.int32]) -> dict[int, npt.NDArray[np.int32]]:
+        time_stamp_indexes = {}
+        for time_range, ts_values in time_stamp_values.items():
+            time_stamp_indexes[time_range] = np.array([TimeSeriesDataset.find_index_for_timestamp(time_stamp_value1, time_stamp) for time_stamp in ts_values], dtype=np.int32)
+        return time_stamp_indexes
     
     @staticmethod
     def merge_columns_for_time_ranges(columns_sets:list[TIME_RANGE_COLUMNS_LIST]) -> TIME_RANGE_COLUMNS_LIST:

@@ -84,15 +84,23 @@ class StockPriceDataModule(L.LightningDataModule):
         
         logging.info(f"StockPriceDataModule.prepare_data : {self.ticker_symbvol} on {self.exchange} for time ranges {self.time_ranges} ...")
         
+        # Load prepared raw datasets
         data_frames:dict[int, pd.DataFrame] = StockPriceDataModule.load_prepared_raw_datasets(self.ticker_symbvol, self.exchange, self.time_ranges)
+        
+        # Add log columns
         self.add_log_columns(data_frames, self.log_columns)
         
+        # Add augmented columns
         used_columns, used_columns_seq_length = self.add_augmented_columns(data_frames, self.sequences)
         
         pred_columns:l_ds.TIME_RANGE_COLUMNS_LIST = l_ds.TimeSeriesDataset.get_columns_from_pred_columns(self.pred_columns)
         used_columns = l_ds.TimeSeriesDataset.merge_columns_for_time_ranges([used_columns, pred_columns])
         
+        # Get the only used colums from leaded datasets
         data_frames = self.data_frames_with_columns(data_frames, used_columns)
+        
+        # Set appropriate indexes
+        data_frames = self.set_indexes(data_frames)
         
         if self.keep_loaded_data:
             self.loaded_fs = self.copy_dataframes(data_frames)
@@ -363,6 +371,18 @@ class StockPriceDataModule(L.LightningDataModule):
             result[time_range] = df[columns].copy()
         
         return result
+    
+    @staticmethod
+    def set_indexes(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT) -> l_ds.TIME_RANGE_DATA_FRAME_DICT:
+        for time_range, df in data_frames.items():
+
+            if time_range != 1:
+                df.set_index(f"{time_range}m_timestamp", drop=False, inplace=True)
+            else:
+                df.sort_values(by="1m_timestamp", ascending=True, inplace=True)
+                df.reset_index(drop=True, inplace=True)
+        
+        return data_frames    
     
     # returns used columns for each time range
     @staticmethod

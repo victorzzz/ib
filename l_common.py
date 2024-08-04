@@ -388,7 +388,7 @@ sequences:SEQUENCES_TYPE = [
     ]
     """
 
-# each tuple: (candle sticks time range, prediction_distance, column_name, prediction type, prediction transform)
+# each tuple: (candle sticks time range, prediction_distance, column_name, prediction type, prediction transform, price ratio multiplier)
 PRED_COLUMNS_TYPE = list[tuple[int, int, str, tuple[str, ...], tuple[str, ...], float]]
 pred_columns:PRED_COLUMNS_TYPE = [
     (1, prediction_distance, '1m_ASK_close', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
