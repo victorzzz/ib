@@ -356,10 +356,13 @@ class StockPriceDataModule(L.LightningDataModule):
         return dfs
     
     @staticmethod
-    def add_log_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT, log_columns:list[tuple[int, str]]) -> None:
-        for time_range, column in log_columns:
+    def add_log_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT, log_columns:lc.LOG_COLUMNS_TYPE) -> None:
+        for time_range, column, is_time_range_scalled in log_columns:
             df = data_frames[time_range]
-            df[f'{column}_LOG'] = np.log(df[column] + 0.0001)
+            column_values = df[column]
+            if is_time_range_scalled:
+                column_values = column_values / time_range
+            df[f'{column}_LOG'] = np.log(column_values + 0.0001)
     
     @staticmethod
     def data_frames_with_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT, used_columns:list[tuple[int, list[str]]]) -> l_ds.TIME_RANGE_DATA_FRAME_DICT:
