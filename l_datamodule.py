@@ -68,7 +68,7 @@ class StockPriceDataModule(L.LightningDataModule):
 
         self.scalers:dict[str, StandardScaler | RobustScaler | MinMaxScaler] = {
             self.scaler_key(fitting_time_range, fitting_column): self.scaler_factory()
-                for (fitting_time_range, fitting_column), _ in scaling_column_groups
+                for (fitting_time_range, fitting_column, is_default_price_group), _ in scaling_column_groups
             }
 
         self.train_dataset : Dataset | None = None
@@ -85,7 +85,12 @@ class StockPriceDataModule(L.LightningDataModule):
         logging.info(f"StockPriceDataModule.prepare_data : {self.ticker_symbvol} on {self.exchange} for time ranges {self.time_ranges} ...")
         
         # Load prepared raw datasets
-        data_frames:dict[int, pd.DataFrame] = StockPriceDataModule.load_prepared_raw_datasets(self.ticker_symbvol, self.exchange, self.time_ranges)
+        data_frames:dict[int, pd.DataFrame] = self.load_prepared_raw_datasets(self.ticker_symbvol, self.exchange, self.time_ranges)
+        
+        # Add VP price columns to the defualt price scaling group
+        default_price_scaling_group = self.scaling_column_groups[0]
+        vp_price_columns = self.get_vp_price_columns(data_frames)
+        self.add_columns_to_scaling_group(default_price_scaling_group, vp_price_columns)
         
         # Add log columns
         self.add_log_columns(data_frames, self.log_columns)
@@ -223,7 +228,7 @@ class StockPriceDataModule(L.LightningDataModule):
     
     ######################
     def fit(self, df_1:pd.DataFrame) -> None:
-        for (fitting_time_range, fitting_column), _ in self.scaling_column_groups:
+        for (fitting_time_range, fitting_column, is_default_price_group), _ in self.scaling_column_groups:
                 if fitting_time_range != 1:
                     raise ValueError("Fitting time range should be 1")
                 
@@ -258,7 +263,7 @@ class StockPriceDataModule(L.LightningDataModule):
     
     ######################
     def transform(self, df_1:pd.DataFrame, dfs:dict[int, pd.DataFrame]) -> None:
-        for (fitting_time_range, fitting_column), scaling_columns in self.scaling_column_groups:
+        for (fitting_time_range, fitting_column, is_default_price_group), scaling_columns in self.scaling_column_groups:
             scalers_dict_key = self.scaler_key(fitting_time_range, fitting_column)
             scaler = self.scalers[scalers_dict_key]
 
@@ -305,6 +310,49 @@ class StockPriceDataModule(L.LightningDataModule):
         else:
             raise ValueError("val_scr and val_y are not initialized")
     """
+    
+    @staticmethod
+    def get_vp_price_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT) -> lc.SCALING_COLUMN_GROUP_CONTENT_TYPE:
+        result = []
+        for time_range, df in data_frames.items():
+            vp_price_columns = [column for column in df.columns if (column.startswith("vp_") and column.endswith("_price"))]
+            if len(vp_price_columns) > 0:
+                result.append((time_range, vp_price_columns))
+        
+        return result
+    
+    @staticmethod
+    def get_vp_volume_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT) -> lc.SCALING_COLUMN_GROUP_CONTENT_TYPE:
+        result = []
+        for time_range, df in data_frames.items():
+            vp_volume_columns = [column for column in df.columns if (column.startswith("vp_") and column.endswith("_volume"))]
+            if len(vp_volume_columns) > 0:
+                result.append((time_range, vp_volume_columns))
+        
+        return result    
+
+    @staticmethod
+    def get_vp_width_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT) -> lc.SCALING_COLUMN_GROUP_CONTENT_TYPE:
+        result = []
+        for time_range, df in data_frames.items():
+            vp_width_columns = [column for column in df.columns if (column.startswith("vp_") and column.endswith("_width"))]
+            if len(vp_width_columns) > 0:
+                result.append((time_range, vp_width_columns))
+        
+        return result    
+
+    @staticmethod
+    def add_columns_to_scaling_group(default_price_scaling_group:lc.SCALING_COLUMN_GROUP_TYPE, vp_price_columns:lc.SCALING_COLUMN_GROUP_CONTENT_TYPE) -> None:
+        group_metadata, group_columns = default_price_scaling_group
+        
+        for time_range, columns in vp_price_columns:
+            # find the group for the time range
+            time_range_groups = [group for group in group_columns if group[0] == time_range]
+            if len(time_range_groups) != 1:
+                raise ValueError(f"Group for time range {time_range} not found")
+            time_range_group = time_range_groups[0]
+            time_range_column_list = time_range_group[1]
+            time_range_column_list += columns
     
     @staticmethod
     def check_scaled_df_description(scaled_df_description:pd.DataFrame):

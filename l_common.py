@@ -420,10 +420,13 @@ log_columns:LOG_COLUMNS_TYPE = [
     (390, '390m_TRADES_barCount', True),    
 ]
 
-SCALING_COLUMN_GROUPS_TYPE = list[tuple[tuple[int, str], list[tuple[int, list[str]]]]]
+SCALING_COLUMN_GROUP_METADATA_TYPE = tuple[int, str, bool]
+SCALING_COLUMN_GROUP_CONTENT_TYPE = list[tuple[int, list[str]]]
+SCALING_COLUMN_GROUP_TYPE = tuple[SCALING_COLUMN_GROUP_METADATA_TYPE, SCALING_COLUMN_GROUP_CONTENT_TYPE]
+SCALING_COLUMN_GROUPS_TYPE = list[SCALING_COLUMN_GROUP_TYPE]
 scaling_column_groups:SCALING_COLUMN_GROUPS_TYPE = [
     (
-        (1, '1m_ASK_close'), 
+        (1, '1m_ASK_close', True), # default scaling group for prices 
         [
             (1,
             [
@@ -550,7 +553,7 @@ scaling_column_groups:SCALING_COLUMN_GROUPS_TYPE = [
         ]
     ),
     (
-        (1, '1m_TRADES_volume_LOG'),
+        (1, '1m_TRADES_volume_LOG', False),
         [
             (1,
              [                
@@ -586,7 +589,7 @@ scaling_column_groups:SCALING_COLUMN_GROUPS_TYPE = [
         ]
     ),
     (
-        (1, '1m_TRADES_barCount_LOG'),
+        (1, '1m_TRADES_barCount_LOG', False),
         [
             (1,
              [                
