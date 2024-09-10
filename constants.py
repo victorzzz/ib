@@ -54,6 +54,6 @@ loss_level_for_training = 0.625
 gain_level_for_training = 1.125
 
 
-complex_processing_batch_size = 12
+complex_processing_batch_size = 3
 
 float_nan = float("nan")

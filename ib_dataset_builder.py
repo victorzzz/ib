@@ -119,6 +119,8 @@ def create_datasets(
         lock, 
         shared_tickers_cache:dict[str, int]) -> None:
     
+    ib_log.configure_logging("ib_dataset_builder")
+    
     logging.info(f"Processing tickers: {tickers}")
 
     for ticker in tickers:
@@ -183,6 +185,7 @@ def create_datasets(
 
 
 def do_step():
+    logging.info("Do step ...")
     processes = []
 
     lock = multiprocessing.Lock()
@@ -228,7 +231,7 @@ print(df_fixed)
 
 if __name__ == "__main__":
     
-    ib_log.configure_logging("ib_raw_data_merger")
+    ib_log.configure_logging("ib_dataset_builder")
 
     logging.info(f"Starting {__file__} ...")
 

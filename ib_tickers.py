@@ -18,72 +18,92 @@ ticker_groups = {
 
 selected_ticker_group_names:list[str] = [
     "bank_financial",
-    "usa_banks",
     "tech_software",
-    "usa",
-    "tech_data_processing",
-    "transportation",
-    "oil_gas"    
+    #"tech_data_processing",
+    #"oil_gas",
+    #"transportation",        
+    #"canadian_etf",
+    #"canadian_leveraged_etf",
+    # "usa",
 ]
 
 ticker_groups:dict[str, dict[str, list[str]]] = {
     "bank_financial": 
         {
-            "RY": [ "TSE", "NYSE"],
-            "TD": [ "TSE", "NYSE"],
-            "BNS": [ "NYSE", "TSE"], # +++++
-            "BMO": [ "NYSE", "TSE"], # +++++
-            "MFC": [ "NYSE", "TSE"], # +++++
-            "SLF": [ "NYSE", "TSE"],
-            "CM": [ "NYSE", "TSE"], # +++++
+            "RY": [ "TSE"], # "NYSE"
+            "TD": [ "TSE"], # "NYSE"
+            "BNS": [ "TSE"], # +++++ # "NYSE"
+            "BMO": [  "TSE"], # +++++ # "NYSE"
+            "MFC": [  "TSE"], # +++++ # "NYSE"
+            "SLF": [  "TSE"], # "NYSE"
+            "CM": [  "TSE"], # +++++ # "NYSE"
             "NA": [ "TSE"],
-            "ENB": [ "NYSE", "TSE"]
-        },
+            "ENB": [ "TSE"] , # "NYSE"
+         },
 
     "oil_gas": 
         {
             "ARX" : ["TSE"],  # ++++++++++
-            "SU" :  ["NYSE", "TSE"], # ++++++
-            "TRP" : ["NYSE", "TSE"], # ++++++
-            "VET" : ["NYSE", "TSE"],
-            "ERF" : ["NYSE", "TSE"],
-            "OVV" : ["NYSE", "TSE"],
-            "CVE" : ["NYSE", "TSE"],
-            "CNQ" : ["NYSE", "TSE"]
+            "SU" :  ["TSE"], # ++++++ # "NYSE"
+            "TRP" : ["TSE"], # ++++++ # "NYSE"
+            "VET" : ["TSE"], # "NYSE"
+            "ERF" : ["TSE"], # "NYSE"
+            "OVV" : ["TSE"], # "NYSE"
+            "CVE" : ["TSE"], # "NYSE"
+            "CNQ" : ["TSE"] # "NYSE"
         },
 
     "tech_software": 
         {
-            "SHOP" : ["NYSE", "TSE"],
-            "OTEX" : ["NYSE", "TSE"],
-            "CDAY" : ["NYSE", "TSE"],
-            "TRI" : ["NYSE", "TSE"]
+            "SHOP" : ["TSE"], # "NYSE"
+            "OTEX" : ["TSE"], # "NYSE"
+            "TRI" : ["TSE"] # "NYSE"
         },
 
     "tech_data_processing": 
         {
-            "HUT": ["NASDAQ", "TSE"], 
-            "BITF": ["NASDAQ", "TSE"]
+            "HUT": ["TSE"], # "NASDAQ"
+            "BITF": ["TSE"] # "NASDAQ"
         },
 
     "transportation": 
         {
-            "TFII" : ["NYSE", "TSE"],
-            "WCN" : ["NYSE", "TSE"],
-            "CP" : ["NYSE", "TSE"],
+            "TFII" : ["TSE"], # "NYSE"
+            "WCN" : ["TSE"], # "NYSE"
+            "CP" : ["TSE"], # "NYSE"
         },
 
         "canadian_etf": 
         {
-            "ZSP" : ["TSE"],
-            "XIU" : ["TSE"], 
-            "XIC" : ["TSE"], 
+            "XIC" : ["TSE"], # ISHARES CORE S&P/TSX CAPPED COMPOSITE INDEX ETF 
+            "XIU" : ["TSE"], # ISHARES S&P/TSX 60 INDEX ETF
+            "VFV" : ["TSE"], # VANGUARD S&P 500 INDEX ETF
+            "ZSP" : ["TSE"], # BMO S&P 500 INDEX ETF          
+            "ZCN" : ["TSE"], # BMO S&P/TSX CAPPED COMPOSITE IDX ETF
+            
+            "XEI" : ["TSE"], # ISHARES S&P/TSX COMPOSITE HIGH DIV UNITS
+            
+            "ZWB" : ["TSE"], # BMO COVERED CALL CANADIAN BANKS ETF UNIT
+            "ZWC" : ["TSE"], # BMO CDN HIGH DIVID COVERED CALL ETF CAD UNIT
+            "ZWU" : ["TSE"], # BMO COVERED CALL UTILITIES ETF UNIT
+            "ZRP" : ["TSE"], # BMO LADDERED PREFERRED SHS IDX ETF UNITS ETF
+            "HHL" : ["TSE"], # HARVEST HEALTHCARE LEADERS INCM ETF CLASS A UNITS
+            "HMAX" : ["TSE"], # HAMILTON CDN FINANCIAL YLD MAXIMIZER ETF
+            "HTA" : ["TSE"], # HARVEST TECH ACHIEVRS GWT & INM ETF CLASS A UNITS
+            "TXF" : ["TSE"], # CI TECH GIANTS COVERED CALL ETF HEDGED COMMON UNITS
+            "HDIV" : ["TSE"], # HAMILTON ENHANCED MLTI SCTR COVE CA EL E UNIT
+            "HPYT" : ["TSE"], # HARVEST PREMIUM YIELD TREASURY ETF UNIT CL A
+            "UMAX" : ["TSE"], # HAMILTON UTILS YIELD MAXIMIZER ETF UNIT CL E
+            "ZMMK" : ["TSE"], # BMO MONEY MKT FD ETF SER UNIT
             "XUU" : ["TSE"], 
             "XRE" : ["TSE"], 
             "XBB" : ["TSE"], 
             "XPF" : ["TSE"], 
             "XIT" : ["TSE"], 
-            "XSP" : ["TSE"]
+            "XSP" : ["TSE"],
+            "HDIF" : ["TSE"],
+            "FIE" : ["TSE"], # ISHARES CDN FINANCIAL MTHLY INC FD COM UNIT
+
         },
 
         "canadian_leveraged_etf" : 

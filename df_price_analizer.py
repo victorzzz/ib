@@ -135,6 +135,7 @@ def addPriceChangeLabelsToDataFrame(
         
     return df
 
+"""
 prices = np.array([100,120,130,140,150,120,115,110,105,104,103,101,130,140,150,160,170,180,190,170,150,130,110,150,170,190,185,180,175,170,165,160,155,150,160,
                    170,175,170,150,140,130,150,170,180,190])
 days   = np.array([1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3, 
@@ -144,5 +145,5 @@ inc, dec = calculateDayPriceChangeWithTrailingStopLoss(prices, days, np.array([0
 
 print(inc)
 print(dec)
-
+"""
 
