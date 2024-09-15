@@ -161,6 +161,9 @@ sequences:SEQUENCES_TYPE = [
             '3m_BID_close', 
             '3m_ASK_close',
             
+            '3m_BID_open',  
+            '3m_ASK_open',            
+            
             '3m_MIDPOINT_open', '3m_MIDPOINT_high', '3m_MIDPOINT_low', 
             '3m_MIDPOINT_close',
             
@@ -231,6 +234,9 @@ sequences:SEQUENCES_TYPE = [
             '10m_BID_close', 
             '10m_ASK_close',
             
+            '10m_BID_open',  
+            '10m_ASK_open',
+            
             '10m_MIDPOINT_open', '10m_MIDPOINT_high', '10m_MIDPOINT_low', 
             '10m_MIDPOINT_close',
             
@@ -299,6 +305,9 @@ sequences:SEQUENCES_TYPE = [
         [
             '30m_BID_close', 
             '30m_ASK_close',
+            
+            '30m_BID_open',  
+            '30m_ASK_open',
             
             '30m_MIDPOINT_open', '30m_MIDPOINT_high', '30m_MIDPOINT_low', 
             '30m_MIDPOINT_close',
@@ -382,15 +391,15 @@ sequences:SEQUENCES_TYPE = [
         [
             '390m_TRADES_high', '390m_TRADES_low', '390m_TRADES_average',               
                         
-            '390__t_MFI_TRADES_average_7', '390__t_MFI_TRADES_average_14', '390__t_MFI_TRADES_average_21',
-            '390__t_CCI_TRADES_average_7', '390__t_CCI_TRADES_average_14', '390__t_CCI_TRADES_average_21',
-            '390__t_RSI_TRADES_average_7', '390__t_RSI_TRADES_average_14', '390__t_RSI_TRADES_average_21',
+            '390m__t_MFI_TRADES_average_7', '390m__t_MFI_TRADES_average_14', '390m__t_MFI_TRADES_average_21',
+            '390m__t_CCI_TRADES_average_7', '390m__t_CCI_TRADES_average_14', '390m__t_CCI_TRADES_average_21',
+            '390m__t_RSI_TRADES_average_7', '390m__t_RSI_TRADES_average_14', '390m__t_RSI_TRADES_average_21',
             
-            '390__t_BBL_TRADES_average_20', '390__t_BBM_TRADES_average_20', '390__t_BBU_TRADES_average_20', 
-            '390__t_BBL_TRADES_average_30', '390__t_BBM_TRADES_average_30', '390__t_BBU_TRADES_average_30', 
+            '390m__t_BBL_TRADES_average_20', '390m__t_BBM_TRADES_average_20', '390m__t_BBU_TRADES_average_20', 
+            '390m__t_BBL_TRADES_average_30', '390m__t_BBM_TRADES_average_30', '390m__t_BBU_TRADES_average_30', 
             
-            '390__t_STOCH_k_TRADES_average_14_3', '390__t_STOCH_d_TRADES_average_14_3',
-            '390__t_STOCH_k_TRADES_average_21_4', '390__t_STOCH_d_TRADES_average_21_4',            
+            '390m__t_STOCH_k_TRADES_average_14_3', '390m__t_STOCH_d_TRADES_average_14_3',
+            '390m__t_STOCH_k_TRADES_average_21_4', '390m__t_STOCH_d_TRADES_average_21_4',            
         ]  
     ),                      
 ]
@@ -617,7 +626,7 @@ scaling_column_groups:SCALING_COLUMN_GROUPS_TYPE = [
              ]),
             (390,
              [
-                # 30m
+                # 390m - 1 day
                 ##################
                 
                 '390m_TRADES_barCount_LOG',

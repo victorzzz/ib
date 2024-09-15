@@ -30,7 +30,7 @@ class TimeSeriesDataset(Dataset):
 
         # timestamp values for each time range
         timestamp1_values = df1["1m_timestamp"].to_numpy(dtype=np.int32)
-        time_stamp_values_by_time_ranges = {time_range: df["1m_timestamp"].to_numpy(dtype=np.int32) for time_range, df in data.items() if time_range != 1}
+        time_stamp_values_by_time_ranges = {time_range: df[f"{time_range}m_timestamp"].to_numpy(dtype=np.int32) for time_range, df in data.items() if time_range != 1}
         
         # find indexes in data-frames for each time range for each timestamp in the first data-frame
         self.time_stamp_indexes = TimeSeriesDataset.find_time_stamp_indexes(time_stamp_values_by_time_ranges, timestamp1_values)

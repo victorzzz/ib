@@ -87,8 +87,9 @@ class StockPriceDataModule(L.LightningDataModule):
         # Load prepared raw datasets
         data_frames:dict[int, pd.DataFrame] = self.load_prepared_raw_datasets(self.ticker_symbvol, self.exchange, self.time_ranges)
         
-        # Add VP price columns to the defualt price scaling group
         default_price_scaling_group = self.scaling_column_groups[0]
+        
+        # Add VP price columns to the defualt price scaling group
         vp_price_columns = self.get_vp_price_columns(data_frames)
         self.add_columns_to_scaling_group(default_price_scaling_group, vp_price_columns)
         
@@ -101,7 +102,7 @@ class StockPriceDataModule(L.LightningDataModule):
         pred_columns:l_ds.TIME_RANGE_COLUMNS_LIST = l_ds.TimeSeriesDataset.get_columns_from_pred_columns(self.pred_columns)
         used_columns = l_ds.TimeSeriesDataset.merge_columns_for_time_ranges([used_columns, pred_columns])
         
-        # Get the only used colums from leaded datasets
+        # Get the only used colums from loaded datasets
         data_frames = self.data_frames_with_columns(data_frames, used_columns)
         
         # Set appropriate indexes
@@ -380,6 +381,9 @@ class StockPriceDataModule(L.LightningDataModule):
                           df:pd.DataFrame,
                           columns:list[str]) -> None:
         for column in columns:
+            if column not in df.columns:
+                continue
+            
             values_to_transform = df[[column]].to_numpy()
             transformed_vale = scaler.transform(values_to_transform)
             if isinstance(transformed_vale, np.ndarray):
@@ -419,6 +423,14 @@ class StockPriceDataModule(L.LightningDataModule):
             timestamp_column = f"{time_range}m_timestamp"
             columns = [timestamp_column] + columns
             df = data_frames[time_range]
+            
+            df_colums = df.columns
+            absent_df_columns = [column for column in columns if column not in df_colums]
+            
+            if len(absent_df_columns) > 0:
+                logging.critical(f"Columns {absent_df_columns} are absent in the dataset for time range {time_range}")
+                raise ValueError(f"Columns {absent_df_columns} are absent in the dataset for time range {time_range}")
+            
             result[time_range] = df[columns].copy()
         
         return result
@@ -496,7 +508,7 @@ class StockPriceDataModule(L.LightningDataModule):
     
 if __name__ == "__main__":
     
-    ib_log.configure_logging("training")
+    ib_log.configure_logging("l_datamodule")
 
     logging.info(f"Starting {__file__} ...")
 
@@ -506,7 +518,7 @@ if __name__ == "__main__":
     data_module = StockPriceDataModule (
         ticker_symbvol="RY", 
         exchange="TSE",
-        time_ranges=[1, 3, 10, 30],
+        time_ranges=[1, 3, 10, 30, 390],
         tail=lc.dataset_tail,
         sequences=lc.sequences,
         pred_columns=lc.pred_columns,
@@ -521,3 +533,4 @@ if __name__ == "__main__":
     )
     
     data_module.prepare_data()
+    
