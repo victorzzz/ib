@@ -7,10 +7,17 @@ DATA_EMA_DIFF:str = "diff_ema"
 DATA_EMA_RATIO:str = "ratio_ema"
 DATA_BASE_EMA_RATIO:str = "ratio_base_ema"
 
+DATA_BB1:str = "bb1"
+DATA_BB1_DIFF:str = "diff_bb1"
+DATA_BB1_RATIO:str = "ratio_bb1"
 
-DATA_BB:str = "bb"
-DATA_BB_DIFF:str = "diff_bb"
-DATA_BB_RATIO:str = "ratio_bb"
+DATA_BB1_5:str = "bb1_5"
+DATA_BB1_5_DIFF:str = "diff_bb1_5"
+DATA_BB1_5_RATIO:str = "ratio_bb1_5"
+
+DATA_BB2:str = "bb2"
+DATA_BB2_DIFF:str = "diff_bb2"
+DATA_BB2_RATIO:str = "ratio_bb2"
 
 PRED_MIN:str = "pred_min"
 PRED_MAX_BEFORE_MIN:str = "pred_max_before_min"

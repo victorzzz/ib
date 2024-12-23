@@ -53,7 +53,7 @@ sequences:SEQUENCES_TYPE = [
     (
         1,
         day_trading_prediction_distance_1,
-        [DATA_BB_RATIO],
+        [DATA_BB1_RATIO, DATA_BB1_5_RATIO, DATA_BB2_RATIO],
         BB_PERIODS_1m_SEQ, 
         [
             '1m_TRADES_average'
@@ -131,7 +131,7 @@ sequences:SEQUENCES_TYPE = [
     (
         10,
         day_trading_prediction_distance_1,
-        [DATA_BB_RATIO],
+        [DATA_BB1_RATIO, DATA_BB1_5_RATIO, DATA_BB2_RATIO],
         BB_PERIODS_10m_SEQ, 
         [
             '10m_TRADES_average'
@@ -195,7 +195,7 @@ sequences:SEQUENCES_TYPE = [
     (
         30,
         day_trading_prediction_distance_1,
-        [DATA_BB_RATIO],
+        [DATA_BB1_RATIO, DATA_BB1_5_RATIO, DATA_BB2_RATIO],
         BB_PERIODS_30m_SEQ, 
         [
             '30m_TRADES_average'
@@ -259,7 +259,7 @@ sequences:SEQUENCES_TYPE = [
     (
         390,
         swing_prediction_distance_days * 8,
-        [DATA_BB_RATIO],
+        [DATA_BB1_RATIO, DATA_BB1_5_RATIO, DATA_BB2_RATIO],
         BB_PERIODS_390m_SEQ,
         [            
             '390m_TRADES_average'
@@ -267,7 +267,7 @@ sequences:SEQUENCES_TYPE = [
     ),
     (
         390,
-        swing_prediction_distance_days * 8,
+        swing_prediction_distance_days * 4,
         [DATA_BASE_EMA_RATIO],
         EMA_PERIODS_390m_LONG_SEQ,
         [
@@ -314,6 +314,7 @@ pred_columns:PRED_COLUMNS_TYPE = [
     (1, day_trading_prediction_distance_2, '1m_TRADES_average', (PRED_MIN, PRED_MAX_BEFORE_MIN, PRED_MAX, PRED_MIN_BEFORE_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
     (1, swing_prediction_distance_0, '1m_TRADES_average', (PRED_MIN, PRED_MAX_BEFORE_MIN, PRED_MAX, PRED_MIN_BEFORE_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
     (1, swing_prediction_distance_1, '1m_TRADES_average', (PRED_MIN, PRED_MAX_BEFORE_MIN, PRED_MAX, PRED_MIN_BEFORE_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
+    (1, swing_prediction_distance_2, '1m_TRADES_average', (PRED_MIN, PRED_MAX_BEFORE_MIN, PRED_MAX, PRED_MIN_BEFORE_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
     ]
 
 log_columns:LOG_COLUMNS_TYPE = []
