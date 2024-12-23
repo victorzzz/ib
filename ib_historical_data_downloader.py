@@ -23,15 +23,16 @@ import df_loader_saver as df_ls
 
 #from_date:dt.date = dt.datetime.now().date()
 
-from_date:dt.date = dt.date(2024, 8, 29)
+from_date:dt.date = dt.date(2024, 12, 18)
 
 fb_from_date:dt.date = dt.date(2022, 6, 8)
 meta_to_day:dt.date = dt.date(2022, 6, 9)
 
-# ten_years_days:int = 366 * 10
+ten_years_days:int = 366 * 10
 # fifteen_years_days:int = 366 * 15
 
-twenty_years_days:int = 366 * 20
+# twenty_years_days:int = 366 * 20
+
 minute_to_days_for_iteration = 10
 
 max_request_attempts:int = 20
@@ -332,7 +333,7 @@ def download_stock_bars(
         lock, 
         shared_tickers_cache:dict[str, int],
         save_as:str | None = None, 
-        max_days_history:int = twenty_years_days):
+        max_days_history:int =ten_years_days):
     
     iteration_time_delta_days = int(minute_to_days_for_iteration * minute_multiplier)
     iteration_time_delta = dt.timedelta(days = iteration_time_delta_days)

@@ -275,7 +275,7 @@ class StockPriceDataModule(L.LightningDataModule):
                 else:
                     scaling_df = dfs[scaling_time_range]
 
-                self.transform_columns(scaler, scaling_df, columns)
+                self.transform_columns(scaler, scaling_df, columns, use_ema_value=True)
 
     #####################    
     def inverse_transform_predictions(self, predictions:np.ndarray, fiting_column:str, number_of_columns:int) -> np.ndarray:
@@ -379,15 +379,34 @@ class StockPriceDataModule(L.LightningDataModule):
     @staticmethod
     def transform_columns(scaler:StandardScaler | RobustScaler | MinMaxScaler, 
                           df:pd.DataFrame,
-                          columns:list[str]) -> None:
+                          columns:list[str],
+                          use_ema_value:bool) -> None:
+        
         for column in columns:
+            
+            if use_ema_value:
+                ema_value_columns = [column for column in df.columns if f"_{df_ti_utils.EMA_VALUE_SUFIX}_" in column]
+            
+                for ema_value_column in ema_value_columns:
+                    if ema_value_column not in df.columns:
+                        continue
+                    
+                    StockPriceDataModule.transform_column(scaler, df, ema_value_column)
+                        
             if column not in df.columns:
                 continue
             
-            values_to_transform = df[[column]].to_numpy()
-            transformed_vale = scaler.transform(values_to_transform)
-            if isinstance(transformed_vale, np.ndarray):
-                df[[column]] = transformed_vale
+            StockPriceDataModule.transform_column(scaler, df, column)
+                        
+    @staticmethod
+    def transform_column(scaler:StandardScaler | RobustScaler | MinMaxScaler, 
+                        df:pd.DataFrame,
+                        column:str) -> None:
+        
+        values_to_transform = df[[column]].to_numpy()
+        transformed_vale = scaler.transform(values_to_transform)
+        if isinstance(transformed_vale, np.ndarray):
+            df[[column]] = transformed_vale
     
     @staticmethod
     def load_prepared_raw_datasets(ticker_symbvol:str, exchange:str, time_ranges:list[int]) -> l_ds.TIME_RANGE_DATA_FRAME_DICT:

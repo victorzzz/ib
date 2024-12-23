@@ -12,6 +12,10 @@ DEFAULT_PERIODS_5:tuple[tuple[int, int], ...] = ((14, 3), (21,4))
 PRICE_RATIO_MULTIPLIER = 4.0
 VOLUME_RATIO_MULTIPLIER = 2.0
 
+EMA_VALUE_SUFIX = 'ema_value_'
+EMA_DIF_SUFIX = 'ema_dif_'
+EMA_RATIO_SUFIX = 'ema_ratio_'
+
 def add_ema(
     df:pd.DataFrame, 
     columns:list[str],
@@ -31,7 +35,7 @@ def add_ema(
     for period in periods:
 
         for column in columns:
-            new_column_ema = f'{column}_ema_{period}'
+            new_column_ema = f'{column}_{EMA_VALUE_SUFIX}_{period}'
             ema = ta.ema(df[column], length=period)
             
             if not isinstance(ema, pd.Series):
@@ -43,7 +47,7 @@ def add_ema(
                 new_columns_ema.append(new_column_ema)
             
             if add_ema_dif_columns_to_df:
-                new_column_dif = f'{column}_ema_dif_{period}'
+                new_column_dif = f'{column}_{EMA_DIF_SUFIX}_{period}'
                 if new_column_dif not in df.columns:
                     df[new_column_dif] = df[column] - ema
                     new_columns_difs.append(new_column_dif)
@@ -51,7 +55,7 @@ def add_ema(
             if add_ema_retio_columns_to_df:
                 ratio_scaler = VOLUME_RATIO_MULTIPLIER if 'volume' in column else PRICE_RATIO_MULTIPLIER
                 
-                new_column_ratio = f'{column}_ema_ratio_{period}'
+                new_column_ratio = f'{column}_{EMA_RATIO_SUFIX}_{period}'
                 if new_column_ratio not in df.columns:
                     df[new_column_ratio] = ((df[column] / ema) - 1.0) * ratio_scaler
                     new_columns_ratios.append(new_column_ratio)

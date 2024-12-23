@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     #tickers_to_test = tickers[1:2]
     
-    tickers_to_test: list[tuple[str, list[str]]] = [("RY", ["NYSE", "TSE"],),]
+    tickers_to_test: list[tuple[str, list[str]]] = [("RY", ["TSE"],),]
 
     lock = multiprocessing.Lock()
     manager = multiprocessing.Manager()

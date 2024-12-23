@@ -19,8 +19,10 @@ ticker_groups = {
 selected_ticker_group_names:list[str] = [
     "bank_financial",
     "tech_software",
+    "oil_gas",
+    "minerals",
+    "energy",
     #"tech_data_processing",
-    #"oil_gas",
     #"transportation",        
     #"canadian_etf",
     #"canadian_leveraged_etf",
@@ -32,13 +34,18 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
         {
             "RY": [ "TSE"], # "NYSE"
             "TD": [ "TSE"], # "NYSE"
-            "BNS": [ "TSE"], # +++++ # "NYSE"
+            "BNS": [ "TSE"], # +++++ # "NYSE" # !
             "BMO": [  "TSE"], # +++++ # "NYSE"
             "MFC": [  "TSE"], # +++++ # "NYSE"
             "SLF": [  "TSE"], # "NYSE"
             "CM": [  "TSE"], # +++++ # "NYSE"
             "NA": [ "TSE"],
             "ENB": [ "TSE"] , # "NYSE"
+            
+            "FC": [ "TSE"], # !
+            "AI": [ "TSE"], # !
+            
+            "GLXY": [ "TSE"], # !
          },
 
     "oil_gas": 
@@ -47,14 +54,65 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "SU" :  ["TSE"], # ++++++ # "NYSE"
             "TRP" : ["TSE"], # ++++++ # "NYSE"
             "VET" : ["TSE"], # "NYSE"
-            "ERF" : ["TSE"], # "NYSE"
             "OVV" : ["TSE"], # "NYSE"
             "CVE" : ["TSE"], # "NYSE"
-            "CNQ" : ["TSE"] # "NYSE"
+            "CNQ" : ["TSE"], # "NYSE"
+            "IPO" : ["TSE"],
+            "RBY" : ["TSE"],
+            "AKT.A": [ "TSE"], # !
+            
+        },
+
+    "minerals":
+        {
+            "MND": ["TSE"], # !
+            "WM": ["TSE"], # !
+            "PTM": ["TSE"], # !
+            "LN": ["TSE"], # !
+            
+            
+            
+            "MSA" : ["TSE"], # !
+            "ALV" : ["TSE"], # !
+            "ORA" : ["TSE"], # !
+        },
+        
+    "building":
+        {
+          "DRX": ["TSE"], # !
+        },
+       
+       "entertainment":
+           {
+                "CJR.B": ["TSE"], # !
+                "CGX": ["TSE"], # !
+           },
+
+    "apparel":
+        {
+          "GOOS": ["TSE"], # !
+          "ATZ": ["TSE"], # !
+          
+        },
+        
+    "energy":
+        {
+            "EMA": ["TSE"], # !
+            "E": ["TSE"], # !
+            "DRX": ["TSE"], # !
+            "KEI": ["TSE"], # !
+            
         },
 
     "tech_software": 
         {
+            "BB": ["TSE"], # !
+            "DTOL": ["TSE"], # !
+            "ECN": [ "TSE"], # !
+            "WNDR": ["TSE"], # !
+            "GRID": ["TSE"], # !
+            
+            
             "SHOP" : ["TSE"], # "NYSE"
             "OTEX" : ["TSE"], # "NYSE"
             "TRI" : ["TSE"] # "NYSE"
@@ -75,6 +133,16 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
 
         "canadian_etf": 
         {
+            "HYLD" : ["TSE"], # HAMILTON ENHANCED US COVE CALL ETF UNIT UNHEDGED CAD
+            "USCL" : ["TSE"], # GLOBAL X ENHANCED S&P 500 COVERED C CL A UNIT
+            "QQCL" : ["TSE"], # GLOBAL X ENHANCED NASDAQ 100 COVERE UNIT CL A
+            "HDIV" : ["TSE"], # HAMILTON ENHANCED MLTI SCTR COVE CA EL E UNIT
+            "HDIF" : ["TSE"], # HAMILTON ENHANCED DIVIDIDEND FINANCIALS ETF
+            
+            "BMAX" : ["TSE"], # BROMPTON ENHANCED MUL ASSET INC ETF UNIT
+            
+            "HUTS" : ["TSE"], # HORIZONS BLOCKCHAIN TECH ETF CLASS E UNITS  
+            
             "XIC" : ["TSE"], # ISHARES CORE S&P/TSX CAPPED COMPOSITE INDEX ETF 
             "XIU" : ["TSE"], # ISHARES S&P/TSX 60 INDEX ETF
             "VFV" : ["TSE"], # VANGUARD S&P 500 INDEX ETF
@@ -91,7 +159,6 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "HMAX" : ["TSE"], # HAMILTON CDN FINANCIAL YLD MAXIMIZER ETF
             "HTA" : ["TSE"], # HARVEST TECH ACHIEVRS GWT & INM ETF CLASS A UNITS
             "TXF" : ["TSE"], # CI TECH GIANTS COVERED CALL ETF HEDGED COMMON UNITS
-            "HDIV" : ["TSE"], # HAMILTON ENHANCED MLTI SCTR COVE CA EL E UNIT
             "HPYT" : ["TSE"], # HARVEST PREMIUM YIELD TREASURY ETF UNIT CL A
             "UMAX" : ["TSE"], # HAMILTON UTILS YIELD MAXIMIZER ETF UNIT CL E
             "ZMMK" : ["TSE"], # BMO MONEY MKT FD ETF SER UNIT
@@ -101,8 +168,12 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "XPF" : ["TSE"], 
             "XIT" : ["TSE"], 
             "XSP" : ["TSE"],
-            "HDIF" : ["TSE"],
+            
             "FIE" : ["TSE"], # ISHARES CDN FINANCIAL MTHLY INC FD COM UNIT
+            
+            "ZHY" : ["TSE"], # BMO HIGH YIELD US CORP BOND HEDGED TO CAD ETF # !
+            "ZFH" : ["TSE"], # BMO FLOATING RATE HIGH YIELD ETF CAD UNITS
+            
 
         },
 
@@ -123,6 +194,7 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
 
     "usa": 
         {
+            "AVGO" : ["NASDAQ"],
             "TSLA" : ["NASDAQ"], 
             "AAPL" : ["NASDAQ"], 
             "NVDA" : ["NASDAQ"], 
