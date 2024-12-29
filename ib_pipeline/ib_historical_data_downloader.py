@@ -13,13 +13,13 @@ import pandas as pd
 import constants as cnts
 import ib_constants as ib_cnts
 import ib_tickers as ib_tckrs
-import date_time_utils as dt_utils
-import file_system_utils as fs_utils
+from ..utils import date_time_utils as dt_utils
+from ..utils import file_system_utils as fs_utils
 import logging
-import ib_logging as ib_log
+from ..utils import logging_util as log_util
 import ib_tickers_cache as ib_tickers_cache
 
-import df_loader_saver as df_ls
+from ..utils import df_loader_saver as df_ls
 
 #from_date:dt.date = dt.datetime.now().date()
 
@@ -430,7 +430,7 @@ def download_stock_bars_for_tickers(
         lock,
         shared_tickers_cache:dict[str, int]) :
     
-    ib_log.configure_logging("ib_historical_data_downloader")
+    log_util.configure_logging("ib_historical_data_downloader")
 
     logging.info(f"download_stock_bars_for_tickers port:{port} client_id:{client_id} host:{host} -- tickers:{tickers}")
 
@@ -511,7 +511,7 @@ def do_step():
             
 if __name__ == "__main__":
     
-    ib_log.configure_logging("ib_historical_data_downloader")
+    log_util.configure_logging("ib_historical_data_downloader")
 
     logging.info(f"Starting {__file__} ...")
 

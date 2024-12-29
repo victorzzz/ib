@@ -2,11 +2,11 @@ import multiprocessing
 import constants as cnts
 import pandas as pd
 import ib_tickers as ib_tckrs
-import file_system_utils as fsu
+from ..utils import file_system_utils as fsu
 import logging
-import ib_logging as ib_log
+from ..utils import logging_util as log_util
 import ib_tickers_cache as ib_tickers_cache
-import df_loader_saver as df_ls
+from ..utils import df_loader_saver as df_ls
 
 def merge_csv_files(
         tickers:list[tuple[str, list[str]]],
@@ -14,7 +14,7 @@ def merge_csv_files(
         lock, 
         shared_tickers_cache:dict[str, int]):
     
-    ib_log.configure_logging("ib_raw_data_merger")
+    log_util.configure_logging("ib_raw_data_merger")
 
     processed_ticker_symbols = [ticker[0] for ticker in tickers]
     logging.info(f"Starting rocessing '{', '.join(processed_ticker_symbols)}' ...")

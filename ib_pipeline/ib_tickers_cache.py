@@ -1,6 +1,6 @@
 import constants as cnts
 import json
-import file_system_utils as fsu
+from ..utils import file_system_utils as fsu
 
 import logging
 

@@ -1,9 +1,9 @@
 import constants as cnts
 import pandas as pd
-import file_system_utils as fsu
+from ..utils import file_system_utils as fsu
 import logging
-import ib_logging as ib_log 
-import df_loader_saver as df_ls
+from ..utils import logging_util as log_util
+from ..utils import df_loader_saver as df_ls
 
 colmns_to_check = ["timestamp",
                    "MIDPOINT_open", "MIDPOINT_high", "MIDPOINT_low", "MIDPOINT_close",
@@ -49,7 +49,7 @@ def do_step() -> bool:
 
 if __name__ == "__main__":
     
-    ib_log.configure_logging("ib_downloaded_data_checker")
+    log_util.configure_logging("ib_downloaded_data_checker")
 
     logging.info(f"Starting {__file__} ...")
 
