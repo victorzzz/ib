@@ -2,11 +2,11 @@ import multiprocessing
 import constants as cnts
 import pandas as pd
 import ib_tickers as ib_tckrs
-from ..utils import file_system_utils as fsu
+from utils import file_system_utils as fsu
 import logging
-from ..utils import logging_util as log_util
+from utils import logging_util as log_util
 import ib_tickers_cache as ib_tickers_cache
-from ..utils import df_loader_saver as df_ls
+from utils import df_loader_saver as df_ls
 
 def merge_csv_files(
         tickers:list[tuple[str, list[str]]],

@@ -1,16 +1,10 @@
-import ib_historical_data_downloader as ib_hdd
-import ib_constants as ib_cnts
-import ib_tickers as ib_tckrs
+from ib_pipeline import ib_historical_data_downloader as ib_hdd
+from ib_pipeline import ib_constants as ib_cnts
 
 import multiprocessing
-from typing import Sequence
 
-if __name__ == "__main__":
-
-    # tickers = ib_tckrs.get_all_tickers_list()
-
-    #tickers_to_test = tickers[1:2]
-    
+def test_ib_historical_data_downloader():
+        
     tickers_to_test: list[tuple[str, list[str]]] = [("RY", ["TSE"],),]
 
     lock = multiprocessing.Lock()

@@ -1,9 +1,9 @@
 import constants as cnts
 import pandas as pd
-from ..utils import file_system_utils as fsu
+from utils import file_system_utils as fsu
 import logging
-from ..utils import logging_util as log_util
-from ..utils import df_loader_saver as df_ls
+from utils import logging_util as log_util
+from utils import df_loader_saver as df_ls
 
 colmns_to_check = ["timestamp",
                    "MIDPOINT_open", "MIDPOINT_high", "MIDPOINT_low", "MIDPOINT_close",

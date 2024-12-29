@@ -2,18 +2,18 @@ import multiprocessing
 import logging
 import pandas as pd
 
-from ..utils import np_utils as np_utils
+from utils import np_utils as np_utils
 import numpy as np
 import ib_tickers_cache as ib_tickers_cache
 import constants as cnts
 import ib_tickers as ib_tckrs
-from ..utils import logging_util as log_util
-from ..utils import file_system_utils as fsu
-from ..utils import df_date_time_utils as df_dt_utils
-from ..utils import df_tech_indicator_utils as df_tech_utils
-from ..utils import df_volume_profile_utils as df_vp_utils
-from ..utils import df_price_analizer as df_pa
-from ..utils import df_loader_saver as df_ls
+from utils import logging_util as log_util
+from utils import file_system_utils as fsu
+from utils import df_date_time_utils as df_dt_utils
+from utils import df_tech_indicator_utils as df_tech_utils
+from utils import df_volume_profile_utils as df_vp_utils
+from utils import df_price_analizer as df_pa
+from utils import df_loader_saver as df_ls
 
 midpoint_fields = ["MIDPOINT_open", "MIDPOINT_high", "MIDPOINT_low", "MIDPOINT_close"]
 bid_fields = ["BID_open", "BID_high", "BID_low", "BID_close"]
