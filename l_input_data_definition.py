@@ -7,24 +7,32 @@ DATA_EMA_DIFF:str = "diff_ema"
 DATA_EMA_RATIO:str = "ratio_ema"
 DATA_BASE_EMA_RATIO:str = "ratio_base_ema"
 
-DATA_BB1:str = "bb1"
-DATA_BB1_DIFF:str = "diff_bb1"
-DATA_BB1_RATIO:str = "ratio_bb1"
+DATA_BB1_LOW:str = "bb1_low"
+DATA_BB1_LOW_DIFF:str = "diff_bb1_low"
+DATA_BB1_LOW_RATIO:str = "ratio_bb1_low"
 
-DATA_BB1_5:str = "bb1_5"
-DATA_BB1_5_DIFF:str = "diff_bb1_5"
-DATA_BB1_5_RATIO:str = "ratio_bb1_5"
+DATA_BB1_MID:str = "bb1_mid"
+DATA_BB1_MID_DIFF:str = "diff_bb1_mid"
+DATA_BB1_MID_RATIO:str = "ratio_bb1_mid"
 
-DATA_BB2:str = "bb2"
-DATA_BB2_DIFF:str = "diff_bb2"
-DATA_BB2_RATIO:str = "ratio_bb2"
+DATA_BB1_HI:str = "bb1_hi"
+DATA_BB1_HI_DIFF:str = "diff_bb1_hi"
+DATA_BB1_HI_RATIO:str = "ratio_bb1_hi"
+
+DATA_BB2_LOW:str = "bb2_low"
+DATA_BB2_LOW_DIFF:str = "diff_bb2_low"
+DATA_BB2_LOW_RATIO:str = "ratio_bb2_low"
+
+DATA_BB2_MID:str = "bb2_mid"
+DATA_BB2_MID_DIFF:str = "diff_bb2_mid"
+DATA_BB2_MID_RATIO:str = "ratio_bb2_mid"
+
+DATA_BB2_HI:str = "bb2_hi"
+DATA_BB2_HI_DIFF:str = "diff_bb2_hi"
+DATA_BB2_HI_RATIO:str = "ratio_bb2_hi"
 
 PRED_MIN:str = "pred_min"
-PRED_MAX_BEFORE_MIN:str = "pred_max_before_min"
-
 PRED_MAX:str = "pred_max"
-PRED_MIN_BEFORE_MAX:str = "pred_min_before_max"
-
 PRED_AVG:str = "pred_avg"
 PRED_FIRST:str = "pred_first"
 PRED_LAST:str = "pred_last"
