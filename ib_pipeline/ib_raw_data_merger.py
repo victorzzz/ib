@@ -98,7 +98,7 @@ def do_step():
 
 if __name__ == "__main__":
     
-    ib_log.configure_logging("ib_raw_data_merger")
+    log_util.configure_logging("ib_raw_data_merger")
 
     logging.info(f"Starting {__file__} ...")
 

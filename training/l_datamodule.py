@@ -4,18 +4,19 @@ import pandas as pd
 import numpy as np
 import torch
 import lightning as L
-from torch.utils.data import DataLoader, Dataset, TensorDataset
+from torch.utils.data import DataLoader, Dataset
 from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
-import matplotlib.pyplot as plt
 
 import l_dataset as l_ds
-import df_loader_saver as df_ls
+from utils import df_loader_saver as df_ls
 
 import constants as cnts
-import l_common as lc
-import df_tech_indicator_utils as df_ti_utils
+from training import l_common as lc
+from training import l_input_data_definition as l_input_data_def
+from training import l_input_data__short_seq as l_input_data
+from utils import df_tech_indicator_utils as df_ti_utils
 
-import ib_logging as ib_log
+from utils import logging_util as log_util
 
 class StockPriceDataModule(L.LightningDataModule):
     def __init__(
@@ -25,10 +26,10 @@ class StockPriceDataModule(L.LightningDataModule):
         
         time_ranges:list[int],
         
-        sequences:lc.SEQUENCES_TYPE,
-        pred_columns:lc.PRED_COLUMNS_TYPE,
-        log_columns:lc.LOG_COLUMNS_TYPE,
-        scaling_column_groups:lc.SCALING_COLUMN_GROUPS_TYPE,
+        sequences:l_input_data_def.SEQUENCES_TYPE,
+        pred_columns:l_input_data_def.PRED_COLUMNS_TYPE,
+        log_columns:l_input_data_def.LOG_COLUMNS_TYPE,
+        scaling_column_groups:l_input_data_def.SCALING_COLUMN_GROUPS_TYPE,
 
         # user_tensor_dataset:bool, 
         
@@ -313,7 +314,7 @@ class StockPriceDataModule(L.LightningDataModule):
     """
     
     @staticmethod
-    def get_vp_price_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT) -> lc.SCALING_COLUMN_GROUP_CONTENT_TYPE:
+    def get_vp_price_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT) -> l_input_data_def.SCALING_COLUMN_GROUP_CONTENT_TYPE:
         result = []
         for time_range, df in data_frames.items():
             vp_price_columns = [column for column in df.columns if (column.startswith("vp_") and column.endswith("_price"))]
@@ -323,7 +324,7 @@ class StockPriceDataModule(L.LightningDataModule):
         return result
     
     @staticmethod
-    def get_vp_volume_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT) -> lc.SCALING_COLUMN_GROUP_CONTENT_TYPE:
+    def get_vp_volume_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT) -> l_input_data_def.SCALING_COLUMN_GROUP_CONTENT_TYPE:
         result = []
         for time_range, df in data_frames.items():
             vp_volume_columns = [column for column in df.columns if (column.startswith("vp_") and column.endswith("_volume"))]
@@ -333,7 +334,7 @@ class StockPriceDataModule(L.LightningDataModule):
         return result    
 
     @staticmethod
-    def get_vp_width_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT) -> lc.SCALING_COLUMN_GROUP_CONTENT_TYPE:
+    def get_vp_width_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT) -> l_input_data_def.SCALING_COLUMN_GROUP_CONTENT_TYPE:
         result = []
         for time_range, df in data_frames.items():
             vp_width_columns = [column for column in df.columns if (column.startswith("vp_") and column.endswith("_width"))]
@@ -343,7 +344,7 @@ class StockPriceDataModule(L.LightningDataModule):
         return result    
 
     @staticmethod
-    def add_columns_to_scaling_group(default_price_scaling_group:lc.SCALING_COLUMN_GROUP_TYPE, vp_price_columns:lc.SCALING_COLUMN_GROUP_CONTENT_TYPE) -> None:
+    def add_columns_to_scaling_group(default_price_scaling_group:l_input_data_def.SCALING_COLUMN_GROUP_TYPE, vp_price_columns:l_input_data_def.SCALING_COLUMN_GROUP_CONTENT_TYPE) -> None:
         group_metadata, group_columns = default_price_scaling_group
         
         for time_range, columns in vp_price_columns:
@@ -427,7 +428,7 @@ class StockPriceDataModule(L.LightningDataModule):
         return dfs
     
     @staticmethod
-    def add_log_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT, log_columns:lc.LOG_COLUMNS_TYPE) -> None:
+    def add_log_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT, log_columns:l_input_data_def.LOG_COLUMNS_TYPE) -> None:
         for time_range, column, is_time_range_scalled in log_columns:
             df = data_frames[time_range]
             column_values = df[column]
@@ -469,20 +470,20 @@ class StockPriceDataModule(L.LightningDataModule):
     # returns used columns for each time range
     @staticmethod
     def add_augmented_columns(data_frames:l_ds.TIME_RANGE_DATA_FRAME_DICT,
-                              sequences:lc.SEQUENCES_TYPE) -> tuple[l_ds.TIME_RANGE_COLUMNS_LIST, l_ds.TIME_RANGE_COLUMNS_SEQ_LENGTH_LIST]:
+                              sequences:l_input_data_def.SEQUENCES_TYPE) -> tuple[l_ds.TIME_RANGE_COLUMNS_LIST, l_ds.TIME_RANGE_COLUMNS_SEQ_LENGTH_LIST]:
         result_columns = []
         result_columns_seq_length = []
         
         for time_range, sequence_length, data_types, ema_periods, data_columns in sequences:
             
-            if lc.DATA_CATEGORY in data_types:
+            if l_input_data_def.DATA_CATEGORY in data_types:
                 continue
             
             df = data_frames[time_range]
             
-            add_ema_colums_to_df:bool = lc.DATA_EMA in data_types
-            add_ema_dif_columns_to_df:bool = lc.DATA_EMA_DIFF in data_types
-            add_ema_retio_columns_to_df:bool = lc.DATA_EMA_RATIO in data_types
+            add_ema_colums_to_df:bool = l_input_data_def.DATA_EMA in data_types
+            add_ema_dif_columns_to_df:bool = l_input_data_def.DATA_EMA_DIFF in data_types
+            add_ema_retio_columns_to_df:bool = l_input_data_def.DATA_EMA_RATIO in data_types
             
             new_df, ema_columns, ema_dif_columns, ema_ratio_columns = df_ti_utils.add_ema(
                 df, 
@@ -502,7 +503,7 @@ class StockPriceDataModule(L.LightningDataModule):
             
             result_columns.append((time_range, data_columns))
             
-            use_data_column:bool = lc.DATA_VALUE in data_types
+            use_data_column:bool = l_input_data_def.DATA_VALUE in data_types
             used_columns:list[str] = [] if not use_data_column else data_columns
             used_columns = used_columns if not add_ema_colums_to_df else used_columns + ema_columns
             used_columns = used_columns if not add_ema_dif_columns_to_df else used_columns + ema_dif_columns
@@ -527,7 +528,7 @@ class StockPriceDataModule(L.LightningDataModule):
     
 if __name__ == "__main__":
     
-    ib_log.configure_logging("l_datamodule")
+    log_util.configure_logging("l_datamodule")
 
     logging.info(f"Starting {__file__} ...")
 
@@ -539,10 +540,10 @@ if __name__ == "__main__":
         exchange="TSE",
         time_ranges=[1, 3, 10, 30, 390],
         tail=lc.dataset_tail,
-        sequences=lc.sequences,
-        pred_columns=lc.pred_columns,
-        log_columns=lc.log_columns,
-        scaling_column_groups=lc.scaling_column_groups,
+        sequences=l_input_data.sequences,
+        pred_columns=l_input_data.pred_columns,
+        log_columns=l_input_data.log_columns,
+        scaling_column_groups=l_input_data.scaling_column_groups,
         # pred_distance=lc.prediction_distance,
         # user_tensor_dataset=True,
         batch_size=lc.batch_size_param,

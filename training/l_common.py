@@ -1,7 +1,8 @@
 import l_model as lm
 import l_ff_model as l_ff_m
 import l_module as lmodule
-import l_input_data_definition as l_input_data_def
+from training import l_input_data_definition as l_input_data_def
+from training import l_input_data__short_seq as l_input_data
 
 dataset_tail:float = 0.2
     
@@ -24,7 +25,7 @@ dropout_param:float = 0.1
 dropout_for_decoder:float = 0.1
 first_decoder_denominator:int = 1
 next_decoder_denominator:int = 1
-n_inputs_for_decoder_param:int = l_input_data_def.prediction_distance * 2
+n_inputs_for_decoder_param:int = l_input_data.day_trading_prediction_distance_0 * 2
 
 ff_denominators_param:tuple[int, int, int, int]=(4, 1, 1, 2)
 ff_mum_layers_param:int = 2

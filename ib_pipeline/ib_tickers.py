@@ -45,7 +45,7 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "FC": [ "TSE"], # !
             "AI": [ "TSE"], # !
             
-            "GLXY": [ "TSE"], # !
+            "GLXY": [ "TSE"], # !?
          },
 
     "oil_gas": 
@@ -69,8 +69,6 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "WM": ["TSE"], # !
             "PTM": ["TSE"], # !
             "LN": ["TSE"], # !
-            
-            
             
             "MSA" : ["TSE"], # !
             "ALV" : ["TSE"], # !
@@ -111,7 +109,6 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "ECN": [ "TSE"], # !
             "WNDR": ["TSE"], # !
             "GRID": ["TSE"], # !
-            
             
             "SHOP" : ["TSE"], # "NYSE"
             "OTEX" : ["TSE"], # "NYSE"

@@ -28,9 +28,11 @@ from_date:dt.date = dt.date(2024, 12, 27)
 fb_from_date:dt.date = dt.date(2022, 6, 8)
 meta_to_day:dt.date = dt.date(2022, 6, 9)
 
-ten_years_days:int = 366 * 10
-# fifteen_years_days:int = 366 * 15
+# 8 years
+eight_years_days:int = 366 * 8
 
+# ten_years_days:int = 366 * 10
+# fifteen_years_days:int = 366 * 15
 # twenty_years_days:int = 366 * 20
 
 minute_to_days_for_iteration = 10
@@ -333,7 +335,7 @@ def download_stock_bars(
         lock, 
         shared_tickers_cache:dict[str, int],
         save_as:str | None = None, 
-        max_days_history:int =ten_years_days):
+        max_days_history:int =eight_years_days):
     
     iteration_time_delta_days = int(minute_to_days_for_iteration * minute_multiplier)
     iteration_time_delta = dt.timedelta(days = iteration_time_delta_days)
@@ -354,10 +356,10 @@ def download_stock_bars(
         processing_date = date
 
         nearest_data_head = get_nearest_data_head(ib_client, contract, data_types_to_download)
-        logging.info(f"No merged data: IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
+        logging.info(f"IBRK data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
     
         nearest_data_head = nearest_data_head.date() + dt.timedelta(days=1)
-        logging.info(f"No merged data: Nearest data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
+        logging.info(f"Nearest data head for {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute: {nearest_data_head}")
         
         limit_date_for_contract = max(LIMIT_DATE, nearest_data_head)
 
@@ -508,7 +510,8 @@ def do_step():
         for multiplier in cnts.minute_multipliers:
             download_stock_bars(from_date, ib_client, ticker_info, multiplier, meta_to_day)
     """
-            
+
+"""            
 if __name__ == "__main__":
     
     log_util.configure_logging("ib_historical_data_downloader")
@@ -518,3 +521,4 @@ if __name__ == "__main__":
     fs_utils.create_required_folders()
 
     do_step()
+"""

@@ -1,5 +1,5 @@
-from l_input_data_definition import *
-import df_tech_indicator_utils as df_tiu
+from training.l_input_data_definition import *
+from utils import df_tech_indicator_utils as df_tiu
 
 EMA_PERIODS_LONG_SEQ:list[int] = [16, 32, 64, 128, 192, 256]
 EMA_PERIODS_DAY_LONG_SEQ:list[int] = [16, 32, 64, 128, 192]

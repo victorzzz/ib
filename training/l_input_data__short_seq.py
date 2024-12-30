@@ -1,5 +1,5 @@
 from l_input_data_definition import *
-import df_tech_indicator_utils as df_tiu
+from utils import df_tech_indicator_utils as df_tiu
 
 EMA_PERIODS_1m_SHORT_SEQ:list[int] = [2, 4, 8]
 EMA_PERIODS_1m_LONG_SEQ:list[int] = [16, 32, 64, 128, 192, 256]
@@ -53,7 +53,8 @@ sequences:SEQUENCES_TYPE = [
     (
         1,
         day_trading_prediction_distance_1,
-        [DATA_BB1_LOW_RATIO, DATA_BB1_MID_RATIO, DATA_BB2_HI_RATIO, DATA_BB2_LOW_RATIO, DATA_BB2_HI_RATIO],
+        [DATA_BB1_LOW_RATIO, DATA_BB1_MID_RATIO, DATA_BB2_HI_RATIO,
+         DATA_MIN_RATIO, DATA_MAX_RATIO],
         BB_PERIODS_1m_SEQ, 
         [
             '1m_TRADES_average'
@@ -108,10 +109,20 @@ sequences:SEQUENCES_TYPE = [
         [
             "1m_day_of_week", 
             "1m_week_of_year", 
+            "1m_in_3m",
             "1m_in_10m",
             "1m_in_30m",
             "1m_day_15_minute_period",
-            "1m_day_26_minute_period"            
+            "1m_day_26_minute_period",            
+        ]
+    ),
+    (
+        1,
+        1, ## symbol is constant, so distance = 1
+        [DATA_CATEGORY],
+        [],
+        [
+            "symbol"
         ]
     ),
 
@@ -131,7 +142,8 @@ sequences:SEQUENCES_TYPE = [
     (
         10,
         day_trading_prediction_distance_1,
-        [DATA_BB1_LOW_RATIO, DATA_BB1_MID_RATIO, DATA_BB2_HI_RATIO, DATA_BB2_LOW_RATIO, DATA_BB2_HI_RATIO],
+        [DATA_BB1_LOW_RATIO, DATA_BB1_MID_RATIO, DATA_BB1_HI_RATIO, 
+         DATA_MIN_RATIO, DATA_MAX_RATIO],
         BB_PERIODS_10m_SEQ, 
         [
             '10m_TRADES_average'

@@ -31,6 +31,14 @@ DATA_BB2_HI:str = "bb2_hi"
 DATA_BB2_HI_DIFF:str = "diff_bb2_hi"
 DATA_BB2_HI_RATIO:str = "ratio_bb2_hi"
 
+DATA_MIN:str = "min"
+DATA_MIN_DIFF:str = "diff_min"
+DATA_MIN_RATIO:str = "ratio_min"
+
+DATA_MAX:str = "max"
+DATA_MAX_DIFF:str = "diff_max"
+DATA_MAX_RATIO:str = "ratio_max"
+
 PRED_MIN:str = "pred_min"
 PRED_MAX:str = "pred_max"
 PRED_AVG:str = "pred_avg"
