@@ -1,6 +1,6 @@
 
 from typing import Generator
-import constants as cnts
+from common import constants as cnts
 
 """
 ticker_groups = {
@@ -19,9 +19,9 @@ ticker_groups = {
 selected_ticker_group_names:list[str] = [
     "bank_financial",
     "tech_software",
-    "oil_gas",
-    "minerals",
-    "energy",
+    #"oil_gas",
+    #"minerals",
+    #"energy",
     #"tech_data_processing",
     #"transportation",        
     #"canadian_etf",
@@ -211,6 +211,11 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "V" : ["NYSE"],
             "MA" : ["NYSE"]
         },
+
+    "usa_cad_hadged":
+    {
+
+    },
 
     "etf": 
         {

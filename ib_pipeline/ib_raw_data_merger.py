@@ -1,11 +1,11 @@
 import multiprocessing
-import constants as cnts
+from common import constants as cnts
 import pandas as pd
-import ib_tickers as ib_tckrs
+from ib_pipeline import ib_tickers as ib_tckrs
 from utils import file_system_utils as fsu
 import logging
 from utils import logging_util as log_util
-import ib_tickers_cache as ib_tickers_cache
+from ib_pipeline import ib_tickers_cache as ib_tickers_cache
 from utils import df_loader_saver as df_ls
 
 def merge_csv_files(
@@ -89,13 +89,14 @@ def do_step():
         process.start()
 
     # Wait for all processes to finish
-    logging.info("Waiting for all processes to finish ...")
+    logging.info("Waiting for all merging processes to finish ...")
     for process in processes:
         process.join()
 
-    logging.info("All processes finished ...")
+    logging.info("All merging processes are finished ...")
 # ----------------------------
 
+"""
 if __name__ == "__main__":
     
     log_util.configure_logging("ib_raw_data_merger")
@@ -105,3 +106,4 @@ if __name__ == "__main__":
     fsu.create_required_folders()
 
     do_step()
+"""

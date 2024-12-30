@@ -2,7 +2,7 @@ import os
 import shutil
 import datetime
 
-import constants as cnts
+from common import constants as cnts
 from utils import logging_util as log_util
 
 def is_file_exists(file_path:str) -> bool:

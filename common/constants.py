@@ -1,5 +1,4 @@
 import numpy as np
-from typing import List
 
 data_folder = "IB_Data"
 data_archived_folder = "IB_Data_Archived"

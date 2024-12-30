@@ -10,7 +10,7 @@ from ib_insync import IB, Contract, BarData, ContractDetails
 import multiprocessing
 import pandas as pd
 
-import constants as cnts
+from common import constants as cnts
 from ib_pipeline import ib_constants as ib_cnts
 from ib_pipeline import ib_tickers as ib_tckrs
 from utils import date_time_utils as dt_utils

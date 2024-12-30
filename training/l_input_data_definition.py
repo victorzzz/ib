@@ -5,7 +5,8 @@ DATA_VALUE:str = "value"
 DATA_EMA:str = "ema"
 DATA_EMA_DIFF:str = "diff_ema"
 DATA_EMA_RATIO:str = "ratio_ema"
-DATA_BASE_EMA_RATIO:str = "ratio_base_ema"
+
+DATA_BASE_EMA_RATIO:str = "ratio_base_value"
 
 DATA_BB1_LOW:str = "bb1_low"
 DATA_BB1_LOW_DIFF:str = "diff_bb1_low"
@@ -38,6 +39,12 @@ DATA_MIN_RATIO:str = "ratio_min"
 DATA_MAX:str = "max"
 DATA_MAX_DIFF:str = "diff_max"
 DATA_MAX_RATIO:str = "ratio_max"
+
+DATA_VP_64:str = "vp_64"
+DATA_VP_128:str = "vp_128"
+DATA_VP_192:str = "vp_192"
+DATA_VP_256:str = "vp_256"
+DATA_VP_384:str = "vp_384"
 
 PRED_MIN:str = "pred_min"
 PRED_MAX:str = "pred_max"

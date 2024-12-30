@@ -9,6 +9,8 @@ day_trading_prediction_distance_0:int = 64
 day_trading_prediction_distance_1:int = day_trading_prediction_distance_0 + day_trading_prediction_distance_0 // 2
 day_trading_prediction_distance_2:int = day_trading_prediction_distance_0 * 2
 
+vp_distance:int = 1
+
 ti_1m_distance:int = day_trading_prediction_distance_0 // 8
 category_1m_distance:int = day_trading_prediction_distance_0 // 16
 
@@ -59,11 +61,20 @@ sequences:SEQUENCES_TYPE = [
         [
             '1m_TRADES_average'
         ]
-    ),   
+    ),  
     (
         1,
         day_trading_prediction_distance_0,
-        [DATA_BASE_EMA_RATIO],
+        [DATA_EMA_RATIO],
+        EMA_PERIODS_1m_LONG_SEQ, 
+        [
+            '1m_TRADES_average'
+        ]
+    ),  
+    (
+        1,
+        day_trading_prediction_distance_0,
+        [DATA_BASE_VALUE_RATIO],
         EMA_PERIODS_1m_LONG_SEQ,
         [
             '1m_TRADES_average',
@@ -94,12 +105,17 @@ sequences:SEQUENCES_TYPE = [
         [            
             '1m__t_MFI_TRADES_average_7', '1m__t_MFI_TRADES_average_14', '1m__t_MFI_TRADES_average_21',
             '1m__t_CCI_TRADES_average_7', '1m__t_CCI_TRADES_average_14', '1m__t_CCI_TRADES_average_21',
-            
             '1m__t_RSI_TRADES_average_7', '1m__t_RSI_TRADES_average_14', '1m__t_RSI_TRADES_average_21',
-            
             '1m__t_STOCH_k_TRADES_average_14_3', '1m__t_STOCH_d_TRADES_average_14_3',
             '1m__t_STOCH_k_TRADES_average_21_4', '1m__t_STOCH_d_TRADES_average_21_4',            
         ]  
+    ),
+    (
+        1,
+        vp_distance,
+        [DATA_VP_64, DATA_VP_128, DATA_VP_192, DATA_VP_256, DATA_VP_384],
+        [],
+        []
     ),
     (
         1,
@@ -148,6 +164,15 @@ sequences:SEQUENCES_TYPE = [
         [
             '10m_TRADES_average'
         ]
+    ),
+    (
+        10,
+        day_trading_prediction_distance_0,
+        [DATA_EMA_RATIO],
+        EMA_PERIODS_1m_LONG_SEQ, 
+        [
+            '1m_TRADES_average'
+        ]
     ),   
     (
         10,
@@ -183,12 +208,17 @@ sequences:SEQUENCES_TYPE = [
         [            
             '10m__t_MFI_TRADES_average_7', '10m__t_MFI_TRADES_average_14', '10m__t_MFI_TRADES_average_21',
             '10m__t_CCI_TRADES_average_7', '10m__t_CCI_TRADES_average_14', '10m__t_CCI_TRADES_average_21',
-            
             '10m__t_RSI_TRADES_average_7', '10m__t_RSI_TRADES_average_14', '10m__t_RSI_TRADES_average_21',
-            
             '10m__t_STOCH_k_TRADES_average_14_3', '10m__t_STOCH_d_TRADES_average_14_3',
             '10m__t_STOCH_k_TRADES_average_21_4', '10m__t_STOCH_d_TRADES_average_21_4',            
         ]  
+    ),
+    (
+        10,
+        vp_distance,
+        [DATA_VP_64, DATA_VP_128, DATA_VP_192, DATA_VP_256, DATA_VP_384],
+        [],
+        []
     ),
       
     ######################################################
@@ -207,10 +237,20 @@ sequences:SEQUENCES_TYPE = [
     (
         30,
         day_trading_prediction_distance_1,
-        [DATA_BB1_LOW_RATIO, DATA_BB1_MID_RATIO, DATA_BB2_HI_RATIO, DATA_BB2_LOW_RATIO, DATA_BB2_HI_RATIO],
+        [DATA_BB1_LOW_RATIO, DATA_BB1_MID_RATIO, DATA_BB1_HI_RATIO, 
+         DATA_MIN_RATIO, DATA_MAX_RATIO],
         BB_PERIODS_30m_SEQ, 
         [
             '30m_TRADES_average'
+        ]
+    ),
+    (
+        30,
+        day_trading_prediction_distance_0,
+        [DATA_EMA_RATIO],
+        EMA_PERIODS_1m_LONG_SEQ, 
+        [
+            '1m_TRADES_average'
         ]
     ),   
     (
@@ -247,12 +287,17 @@ sequences:SEQUENCES_TYPE = [
         [            
             '30m__t_MFI_TRADES_average_7', '30m__t_MFI_TRADES_average_14', '30m__t_MFI_TRADES_average_21',
             '30m__t_CCI_TRADES_average_7', '30m__t_CCI_TRADES_average_14', '30m__t_CCI_TRADES_average_21',
-            
             '30m__t_RSI_TRADES_average_7', '30m__t_RSI_TRADES_average_14', '30m__t_RSI_TRADES_average_21',
-            
             '30m__t_STOCH_k_TRADES_average_14_3', '30m__t_STOCH_d_TRADES_average_14_3',
             '30m__t_STOCH_k_TRADES_average_21_4', '30m__t_STOCH_d_TRADES_average_21_4',            
         ]  
+    ),
+    (
+        30,
+        vp_distance,
+        [DATA_VP_192, DATA_VP_256, DATA_VP_384],
+        [],
+        []
     ),
    
     ######################################################
@@ -271,10 +316,20 @@ sequences:SEQUENCES_TYPE = [
     (
         390,
         swing_prediction_distance_days * 8,
-        [DATA_BB1_LOW_RATIO, DATA_BB1_MID_RATIO, DATA_BB2_HI_RATIO, DATA_BB2_LOW_RATIO, DATA_BB2_HI_RATIO],
+        [DATA_BB1_LOW_RATIO, DATA_BB1_MID_RATIO, DATA_BB1_HI_RATIO, 
+         DATA_MIN_RATIO, DATA_MAX_RATIO],
         BB_PERIODS_390m_SEQ,
         [            
             '390m_TRADES_average'
+        ]
+    ),
+    (
+        390,
+        swing_prediction_distance_days * 4,
+        [DATA_EMA_RATIO],
+        EMA_PERIODS_1m_LONG_SEQ, 
+        [
+            '1m_TRADES_average'
         ]
     ),
     (
@@ -311,22 +366,27 @@ sequences:SEQUENCES_TYPE = [
         [            
             '390m__t_MFI_TRADES_average_7', '390m__t_MFI_TRADES_average_14', '390m__t_MFI_TRADES_average_21',
             '390m__t_CCI_TRADES_average_7', '390m__t_CCI_TRADES_average_14', '390m__t_CCI_TRADES_average_21',
-            
             '390m__t_RSI_TRADES_average_7', '390m__t_RSI_TRADES_average_14', '390m__t_RSI_TRADES_average_21',
-            
             '390m__t_STOCH_k_TRADES_average_14_3', '390m__t_STOCH_d_TRADES_average_14_3',
             '390m__t_STOCH_k_TRADES_average_21_4', '390m__t_STOCH_d_TRADES_average_21_4',            
         ]  
+    ),
+    (
+        390,
+        vp_distance,
+        [DATA_VP_64, DATA_VP_128, DATA_VP_192],
+        [],
+        []
     ),
 ]
 
 pred_columns:PRED_COLUMNS_TYPE = [
     (1, day_trading_prediction_distance_0, '1m_TRADES_average', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
-    (1, day_trading_prediction_distance_1, '1m_TRADES_average', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
-    (1, day_trading_prediction_distance_2, '1m_TRADES_average', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
+ #   (1, day_trading_prediction_distance_1, '1m_TRADES_average', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
+ #   (1, day_trading_prediction_distance_2, '1m_TRADES_average', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
     (1, swing_prediction_distance_0, '1m_TRADES_average', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
-    (1, swing_prediction_distance_1, '1m_TRADES_average', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
-    (1, swing_prediction_distance_2, '1m_TRADES_average', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
+ #   (1, swing_prediction_distance_1, '1m_TRADES_average', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
+ #   (1, swing_prediction_distance_2, '1m_TRADES_average', (PRED_MIN, PRED_MAX), (PRED_TRANSFORM_RATIO,), df_tiu.PRICE_RATIO_MULTIPLIER), 
     ]
 
 log_columns:LOG_COLUMNS_TYPE = []
