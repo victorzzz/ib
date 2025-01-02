@@ -61,20 +61,20 @@ sequences:SEQUENCES_TYPE = [
         [
             '1m_TRADES_average'
         ]
-    ),  
+    ),
     (
         1,
         day_trading_prediction_distance_0,
-        [DATA_EMA_RATIO],
-        EMA_PERIODS_1m_LONG_SEQ, 
+        [DATA_LOG_EMA_RATIO],
+        EMA_PERIODS_1m_SHORT_SEQ, 
         [
-            '1m_TRADES_average'
+            '1m_TRADES_volume'
         ]
-    ),  
+    ),        
     (
         1,
         day_trading_prediction_distance_0,
-        [DATA_BASE_VALUE_RATIO],
+        [DATA_BASE_EMA_RATIO],
         EMA_PERIODS_1m_LONG_SEQ,
         [
             '1m_TRADES_average',
@@ -125,7 +125,6 @@ sequences:SEQUENCES_TYPE = [
         [
             "1m_day_of_week", 
             "1m_week_of_year", 
-            "1m_in_3m",
             "1m_in_10m",
             "1m_in_30m",
             "1m_day_15_minute_period",
@@ -134,7 +133,7 @@ sequences:SEQUENCES_TYPE = [
     ),
     (
         1,
-        1, ## symbol is constant, so distance = 1
+        1, ## symbol is constant, so distance == 1
         [DATA_CATEGORY],
         [],
         [
@@ -168,12 +167,12 @@ sequences:SEQUENCES_TYPE = [
     (
         10,
         day_trading_prediction_distance_0,
-        [DATA_EMA_RATIO],
-        EMA_PERIODS_1m_LONG_SEQ, 
+        [DATA_LOG_EMA_RATIO],
+        EMA_PERIODS_10m_SHORT_SEQ, 
         [
-            '1m_TRADES_average'
+            '10m_TRADES_volume'
         ]
-    ),   
+    ),       
     (
         10,
         day_trading_prediction_distance_0,
@@ -247,12 +246,12 @@ sequences:SEQUENCES_TYPE = [
     (
         30,
         day_trading_prediction_distance_0,
-        [DATA_EMA_RATIO],
-        EMA_PERIODS_1m_LONG_SEQ, 
+        [DATA_LOG_EMA_RATIO],
+        EMA_PERIODS_30m_SHORT_SEQ, 
         [
-            '1m_TRADES_average'
+            '30m_TRADES_volume'
         ]
-    ),   
+    ),       
     (
         30,
         day_trading_prediction_distance_0,
@@ -326,12 +325,12 @@ sequences:SEQUENCES_TYPE = [
     (
         390,
         swing_prediction_distance_days * 4,
-        [DATA_EMA_RATIO],
-        EMA_PERIODS_1m_LONG_SEQ, 
+        [DATA_LOG_EMA_RATIO],
+        EMA_PERIODS_390m_SHORT_SEQ, 
         [
-            '1m_TRADES_average'
+            '390m_TRADES_volume'
         ]
-    ),
+    ), 
     (
         390,
         swing_prediction_distance_days * 4,

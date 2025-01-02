@@ -23,7 +23,7 @@ from utils import df_loader_saver as df_ls
 
 #from_date:dt.date = dt.datetime.now().date()
 
-from_date:dt.date = dt.date(2024, 12, 27)
+from_date:dt.date = dt.date(2024, 12, 31)
 
 fb_from_date:dt.date = dt.date(2022, 6, 8)
 meta_to_day:dt.date = dt.date(2022, 6, 9)

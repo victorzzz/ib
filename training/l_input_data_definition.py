@@ -6,7 +6,9 @@ DATA_EMA:str = "ema"
 DATA_EMA_DIFF:str = "diff_ema"
 DATA_EMA_RATIO:str = "ratio_ema"
 
-DATA_BASE_EMA_RATIO:str = "ratio_base_value"
+DATA_LOG_EMA_RATIO:str = "ratio_log_ema"
+
+DATA_BASE_EMA_RATIO:str = "ratio_base_ema"
 
 DATA_BB1_LOW:str = "bb1_low"
 DATA_BB1_LOW_DIFF:str = "diff_bb1_low"

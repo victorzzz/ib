@@ -18,9 +18,9 @@ ticker_groups = {
 
 selected_ticker_group_names:list[str] = [
     "bank_financial",
+    #"minerals",
     "tech_software",
     #"oil_gas",
-    #"minerals",
     #"energy",
     #"tech_data_processing",
     #"transportation",        
@@ -46,6 +46,8 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "AI": [ "TSE"], # !
             
             "GLXY": [ "TSE"], # !?
+            
+            "AD.UN": [ "TSE"], # !
          },
 
     "oil_gas": 
@@ -65,6 +67,8 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
 
     "minerals":
         {
+            "AFM": ["CDNX"], # !
+            
             "MND": ["TSE"], # !
             "WM": ["TSE"], # !
             "PTM": ["TSE"], # !
