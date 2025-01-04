@@ -126,9 +126,6 @@ sequences:SEQUENCES_TYPE = [
             "1m_day_of_week", 
             "1m_week_of_year", 
             "1m_in_10m",
-            "1m_in_30m",
-            "1m_day_15_minute_period",
-            "1m_day_26_minute_period",            
         ]
     ),
     (

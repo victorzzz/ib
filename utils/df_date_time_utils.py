@@ -25,3 +25,22 @@ def add_normalized_time_columns(df:pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
     return df
+
+def add_date_time_components(df:pd.DataFrame) -> pd.DataFrame:
+        # Normalize timestamps to midnight
+    toronto_time = pd.to_datetime(df['timestamp'], unit='s', utc=True).dt.tz_convert('America/Toronto')
+
+    normalized_dt = toronto_time.dt.normalize()
+    time_since_930 = (toronto_time - normalized_dt) - pd.Timedelta(hours=9, minutes=30)
+    
+    df['day_of_week'] = toronto_time.dt.dayofweek.astype(np.int16)
+    df['week_of_year'] = (toronto_time.dt.isocalendar().week - 1).astype(np.int16)
+    df['trading_time_minute'] = (time_since_930.dt.total_seconds() // 60).astype(np.int32)
+    
+    df["candle_1m_in_30m"] = df["trading_time_minute"] % 30
+    df["period_13m"] = df["trading_time_minute"] // 13
+    df["period_15m"] = df["trading_time_minute"] // 15
+    
+    df = df.copy()
+
+    return df

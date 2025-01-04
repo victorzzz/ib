@@ -5,7 +5,7 @@ import multiprocessing
 
 def test_ib_historical_data_downloader():
         
-    tickers_to_test: list[tuple[str, list[str]]] = [("RY", ["TSE"],),]
+    tickers_to_test: list[tuple[str, list[str]]] = [("GRID", ["TSE"],),]
 
     lock = multiprocessing.Lock()
     manager = multiprocessing.Manager()

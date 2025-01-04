@@ -17,7 +17,7 @@ if __name__ == "__main__":
     logging.info(f"Downloading historical prices ...")
     ib_hist_data_dl.do_step()
     
-    logging.info(f"Merging historical data ...")
-    ib_raw_data_merger.do_step()
+    # logging.info(f"Merging historical data ...")
+    # ib_raw_data_merger.do_step()
     
     logging.info(f"Finished {__file__} ...")

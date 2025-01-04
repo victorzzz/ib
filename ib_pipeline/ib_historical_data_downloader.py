@@ -272,6 +272,8 @@ def download_stock_bars_for_ticker_in_date_range(
 
             oldest_dates:list[dt.date] = []
 
+            was_break:bool = False
+
             for data_type in data_types_to_download:
 
                 bars:list[BarData] | None
@@ -285,9 +287,14 @@ def download_stock_bars_for_ticker_in_date_range(
                     date_to,
                     minute_multiplier)
 
-                if (bars is None or len(bars) == 0):
-                    logging.error(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
-                    raise Exception(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                if (bars is None):
+                    logging.error(f"DOWNLOADER !!!! NO data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                    raise Exception(f"DOWNLOADER !!!! NO data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+
+                if (len(bars) == 0):
+                   logging.warning(f"DOWNLOADER !!!! Empty data for {data_type} {ticker}-{ticker_con_id}--ib--{minute_multiplier:.0f}--minute--{iteration_time_delta_days}--{date_to_str}")
+                   was_break = True
+                   break 
 
                 oldest_date = dt_utils.bar_date_to_date(bars[0].date)
                 oldest_dates.append(oldest_date)
@@ -318,7 +325,7 @@ def download_stock_bars_for_ticker_in_date_range(
                 logging.info(f"Saving file {file_name}. {len(final_data_frame)}")
 
                 df_ls.save_df(final_data_frame, file_name)
-
+            
             if (len(oldest_dates) > 0):
                 min_oldest_date = min(oldest_dates)
                 processing_date = min_oldest_date - dt.timedelta(days=1)

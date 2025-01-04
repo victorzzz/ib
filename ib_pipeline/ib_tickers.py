@@ -18,10 +18,12 @@ ticker_groups = {
 
 selected_ticker_group_names:list[str] = [
     "bank_financial",
-    #"minerals",
+    "investment",
+    "retail",
     "tech_software",
-    #"oil_gas",
-    #"energy",
+    "minerals",
+    "oil_gas",
+    "energy",
     #"tech_data_processing",
     #"transportation",        
     #"canadian_etf",
@@ -50,8 +52,20 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "AD.UN": [ "TSE"], # !
          },
 
+    "investment":
+        {
+            "BN": ["TSE"], # !
+        },
+        
+    "retail":
+        {
+            "DOL": ["TSE"], # !
+        },
+
     "oil_gas": 
         {
+            # "SOBO": [ "TSE"], # ! ??
+            
             "ARX" : ["TSE"],  # ++++++++++
             "SU" :  ["TSE"], # ++++++ # "NYSE"
             "TRP" : ["TSE"], # ++++++ # "NYSE"
@@ -67,7 +81,7 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
 
     "minerals":
         {
-            "AFM": ["CDNX"], # !
+            "AFM": ["VENTURE"], # !
             
             "MND": ["TSE"], # !
             "WM": ["TSE"], # !
@@ -111,8 +125,8 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "BB": ["TSE"], # !
             "DTOL": ["TSE"], # !
             "ECN": [ "TSE"], # !
-            "WNDR": ["TSE"], # !
-            "GRID": ["TSE"], # !
+            # "WNDR": ["TSE"], # ! # not enough data
+            # "GRID": ["TSE"], # ! # not enough data
             
             "SHOP" : ["TSE"], # "NYSE"
             "OTEX" : ["TSE"], # "NYSE"
@@ -122,7 +136,7 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
     "tech_data_processing": 
         {
             "HUT": ["TSE"], # "NASDAQ"
-            "BITF": ["TSE"] # "NASDAQ"
+            "BITF": ["TSE"] # "NASDAQ" # ??? CRYPTO
         },
 
     "transportation": 
@@ -175,6 +189,13 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
             "ZHY" : ["TSE"], # BMO HIGH YIELD US CORP BOND HEDGED TO CAD ETF # !
             "ZFH" : ["TSE"], # BMO FLOATING RATE HIGH YIELD ETF CAD UNITS
             
+            "PIE" : ["TSE"], # About ISHARES CDN FINANCIAL MTHLY INC FD COM UNIT
+            "ZPAY" : ["TSE"], # BMO PREM YIELD ETF UNIT CAD
+            "SPLT" : ["TSE"], # BROMPTON SPLIT CORP PFD SH ETF CAD UNIT
+            "NHYB" : ["TSE"], # NBI HIGH YIELD BD ETF UNIT
+            
+            "RPF" : ["TSE"], # About RBC QUANT ESG CDN EQY LEADERS ETF
+            "BND" : ["TSE"], # About BMO CANADIAN BD ETF
 
         },
 
@@ -241,7 +262,9 @@ ticker_groups:dict[str, dict[str, list[str]]] = {
 
     "canadian_fixed_income":
         {
-            "XHY" : ["TSE"]
+            "XHY" : ["TSE"],
+            "TGFI" : ["TSE"],
+            "ZJK" : ["TSE"], # BMO HIGH YIELD US CORP BD IDX ETF CAD UNITS #!!!
         }  
 }
 
